@@ -1,0 +1,11 @@
+.slider .track {
+    -fx-background-color: #4F4F4F;
+}
+
+.slider .thumb {
+    -fx-background-color: #C4C4C4;
+}
+
+.slider .thumb:hover{
+    -fx-background-color: #E7E7E7;
+}
