@@ -3,6 +3,7 @@ package marrf.iscte;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
@@ -11,10 +12,14 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.Pair;
+
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Objects;
 
 
@@ -24,7 +29,16 @@ import java.util.Objects;
 public class App extends Application {
 
     public static final int SCALE = 40;
+
     private final Rectangle beingDrawnRectangle = new Rectangle(SCALE,SCALE);
+    private double initialRectangleHorizontalDrag =  0;
+    private double initialRectangleVerticalDrag = 0;
+
+    private double horizontalOffset = 0;
+    private double verticalOffset = 0;
+
+    private final ArrayList<Double> initialHorizontalDrag = new ArrayList<>();
+    private final ArrayList<Double> initialVerticalDrag = new ArrayList<>();
 
     @Override
     public void start(Stage stage) {
@@ -54,6 +68,22 @@ public class App extends Application {
 
         stage.setScene(scene);
         stage.show();
+
+
+        for(int i = 0; i < Screen.getScreens().size(); i++){
+            Screen screen = Screen.getScreens().get(i);
+            Rectangle2D bounds = screen.getVisualBounds();
+
+            System.out.println("screen: " + screen);
+
+            if(i == 1){
+                stage.setX(bounds.getMinX() + 100);
+                stage.setY(bounds.getMinY() + 100);
+
+            }
+
+        }
+
     }
 
 
@@ -197,6 +227,45 @@ public class App extends Application {
           double yTranslation = (newValue.doubleValue() - 10*SCALE)/2;
           pane.setTranslateY(yTranslation);
         });
+
+
+        parent.setOnMousePressed(event -> {
+            System.out.println("clicked");
+
+            horizontalOffset = event.getX();
+            verticalOffset = event.getY();
+
+
+            for (int i = 0; i < pane.getChildren().size(); i++) {
+                initialHorizontalDrag.add(i, pane.getChildren().get(i).getTranslateX());
+                initialVerticalDrag.add(i, pane.getChildren().get(i).getTranslateY());
+            }
+
+            initialRectangleHorizontalDrag = beingDrawnRectangle.getTranslateX();
+            initialRectangleVerticalDrag = beingDrawnRectangle.getTranslateY();
+
+        });
+
+        parent.setOnMouseDragged(event -> {
+            System.out.println("dragged");
+
+            for (int i = 0; i < pane.getChildren().size(); i++) {
+                pane.getChildren().get(i).setTranslateX(initialHorizontalDrag.get(i) + event.getX() - horizontalOffset);
+                pane.getChildren().get(i).setTranslateY(initialVerticalDrag.get(i) + event.getY() - verticalOffset);
+            }
+
+            beingDrawnRectangle.setTranslateX(initialRectangleHorizontalDrag + event.getX() - horizontalOffset);
+            beingDrawnRectangle.setTranslateY(initialRectangleVerticalDrag + event.getY() - verticalOffset);
+
+        });
+
+        parent.setOnMouseReleased(event ->  {
+            System.out.println("released!");
+            horizontalOffset = verticalOffset = 0;
+        });
+
+
+        //pane.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
 
         return pane;
     }
