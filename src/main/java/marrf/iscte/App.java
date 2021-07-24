@@ -1,5 +1,7 @@
 package marrf.iscte;
 
+import javafx.animation.Interpolator;
+import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -8,6 +10,8 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.ZoomEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -16,6 +20,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -40,6 +45,8 @@ public class App extends Application {
 
     private final ArrayList<Double> initialHorizontalDrag = new ArrayList<>();
     private final ArrayList<Double> initialVerticalDrag = new ArrayList<>();
+
+    private final StackPane centerRectangle = new StackPane();
 
     @Override
     public void start(Stage stage) {
@@ -164,6 +171,22 @@ public class App extends Application {
         anchorPane.getChildren().add(bottomLeft);
         anchorPane.getChildren().add(topLeft);
 
+
+
+        Circle firstCircle = new Circle(10);
+        firstCircle.setFill(Color.web("#4F4F4F"));
+        Circle secondCircle = new Circle(5);
+        secondCircle.setFill(Color.web("#333333"));
+
+        centerRectangle.getChildren().addAll(firstCircle, secondCircle);
+        centerRectangle.setAlignment(Pos.CENTER);
+        centerRectangle.setPrefSize(30,30);
+        centerRectangle.setStyle("-fx-background-color: #737373; -fx-background-radius: 10");
+
+        AnchorPane.setBottomAnchor(centerRectangle, 10.0);
+        AnchorPane.setRightAnchor(centerRectangle, 10.0);
+        anchorPane.getChildren().add(centerRectangle);
+
     }
 
     public Shape getRectangleClip(Pane parent){
@@ -235,7 +258,6 @@ public class App extends Application {
           pane.setTranslateY(yTranslation);
         });
 
-
         parent.setOnMousePressed(event -> {
             horizontalOffset = event.getX();
             verticalOffset = event.getY();
@@ -250,15 +272,26 @@ public class App extends Application {
 
         });
 
-
         parent.setOnMouseDragged(event -> {
-            for (int i = 0; i < pane.getChildren().size(); i++) {
-                pane.getChildren().get(i).setTranslateX(initialHorizontalDrag.get(i) + event.getX() - horizontalOffset);
-                pane.getChildren().get(i).setTranslateY(initialVerticalDrag.get(i) + event.getY() - verticalOffset);
+            boolean notExceedingHorizontally = Math.abs(initialHorizontalDrag.get(1) + event.getX() - horizontalOffset) <= (NUMBER_COLUMNS_AND_ROWS * SCALE - parent.getWidth())/2;
+            boolean notExceedingVertically = Math.abs(initialVerticalDrag.get(1) + event.getY() - verticalOffset) <= (NUMBER_COLUMNS_AND_ROWS * SCALE - parent.getHeight())/2;
+
+            if(notExceedingHorizontally){
+                for (int i = 0; i < pane.getChildren().size(); i++) {
+                    pane.getChildren().get(i).setTranslateX(initialHorizontalDrag.get(i) + event.getX() - horizontalOffset);
+                }
+
+                beingDrawnRectangle.setTranslateX(initialRectangleHorizontalDrag + event.getX() - horizontalOffset);
+
             }
 
-            beingDrawnRectangle.setTranslateX(initialRectangleHorizontalDrag + event.getX() - horizontalOffset);
-            beingDrawnRectangle.setTranslateY(initialRectangleVerticalDrag + event.getY() - verticalOffset);
+            if(notExceedingVertically){
+                for (int i = 0; i < pane.getChildren().size(); i++) {
+                    pane.getChildren().get(i).setTranslateY(initialVerticalDrag.get(i) + event.getY() - verticalOffset);
+                }
+                beingDrawnRectangle.setTranslateY(initialRectangleVerticalDrag + event.getY() - verticalOffset);
+            }
+
 
         });
 
@@ -266,8 +299,28 @@ public class App extends Application {
             horizontalOffset = verticalOffset = 0;
         });
 
+        centerRectangle.setOnMouseClicked(mouseEvent -> {
+            for (int i = 0; i < pane.getChildren().size(); i++) {
+                TranslateTransition paneTranslateTransition = new TranslateTransition(Duration.millis(500), pane.getChildren().get(i));
+                paneTranslateTransition.setToX(0);
+                paneTranslateTransition.setToY(0);
+                paneTranslateTransition.play();
+                paneTranslateTransition.setInterpolator(Interpolator.EASE_IN);
+            }
 
-        //pane.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)));
+
+            TranslateTransition translateTransition = new TranslateTransition(Duration.millis(500), beingDrawnRectangle);
+            translateTransition.setToX(NUMBER_COLUMNS_AND_ROWS*SCALE/2.0);
+            translateTransition.setToY(NUMBER_COLUMNS_AND_ROWS*SCALE/2.0 - SCALE - (beingDrawnRectangle.getHeight() - SCALE));
+
+
+            translateTransition.setOnFinished(actionEvent -> {
+                System.out.println("x: " + beingDrawnRectangle.getTranslateX() + ", y: " + beingDrawnRectangle.getTranslateY());
+            });
+
+            translateTransition.play();
+
+        });
 
         return pane;
     }
@@ -378,7 +431,11 @@ public class App extends Application {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             valueLabel.setText(String.valueOf(truncatedDouble));
 
-            beingDrawnRectangle.setTranslateY( beingDrawnRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue() ) * SCALE );
+            if(newValue.doubleValue() > oldValue.doubleValue()){
+                beingDrawnRectangle.setTranslateY( beingDrawnRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue() ) * SCALE );
+            }else{
+                beingDrawnRectangle.setTranslateY(beingDrawnRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
+            }
 
             beingDrawnRectangle.setHeight(newValue.doubleValue() * SCALE);
         });
