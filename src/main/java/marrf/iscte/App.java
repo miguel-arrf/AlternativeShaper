@@ -1,9 +1,9 @@
 package marrf.iscte;
 
+import javafx.animation.AnimationTimer;
 import javafx.animation.Interpolator;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -12,23 +12,25 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.transform.Rotate;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -54,6 +56,9 @@ public class App extends Application {
     private Scene scene;
     private Stage stage;
 
+    private HBox detailPopupBox = new HBox();
+    private StackPane sceneStackPane;
+
     @Override
     public void start(Stage stage) {
         this.stage = stage;
@@ -74,12 +79,14 @@ public class App extends Application {
         scenePanel.setAlignment(Pos.CENTER);
         scenePanel.setPadding(new Insets(20));
 
-        scene = new Scene(scenePanel, 400, 700);
+        sceneStackPane = new StackPane(scenePanel);
+
+        scene = new Scene(sceneStackPane, 300, 700);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
 
         scene.setFill(Color.BLACK);
 
-        stage.setMinWidth(350);
+        stage.setMinWidth(300);
 
         stage.setScene(scene);
         stage.show();
@@ -121,11 +128,6 @@ public class App extends Application {
         pane.getChildren().add(anchorPane);
         getAnchorPaneClip(anchorPane);
 
-        //beingDrawnRectangle.setFill(Color.web("#6FCF97"));
-        //beingDrawnRectangle.setClip(getRectangleClip(pane));
-        //pane.getChildren().add(beingDrawnRectangle);
-
-        //TODO: Add clipping mask to the beingDrawnRectangle.
 
         pane.setOnMouseEntered(event -> {
             scene.setCursor(Cursor.CLOSED_HAND);
@@ -134,6 +136,13 @@ public class App extends Application {
         pane.setOnMouseExited(event -> {
             scene.setCursor(Cursor.DEFAULT);
         });
+
+
+        detailPopupBox.setPrefSize(100,30);
+        detailPopupBox.setMaxWidth(100);
+        detailPopupBox.setMaxHeight(30);
+        detailPopupBox.setStyle("-fx-background-color: rgba(100,100,100,0.8); -fx-background-radius: 10");
+
 
         pane.setOnMouseMoved(event -> {
 
@@ -146,11 +155,32 @@ public class App extends Application {
                     beingDrawnRectangle.setStrokeLineCap(StrokeLineCap.ROUND);
                     beingDrawnRectangle.setStrokeWidth(4);
                     beingDrawnRectangle.setStrokeLineJoin(StrokeLineJoin.ROUND);
+
+
+                    if(!sceneStackPane.getChildren().contains(detailPopupBox)){
+                        sceneStackPane.getChildren().add(detailPopupBox);
+                        detailPopupBox.setMouseTransparent(true);
+
+                    }
+
+                    if(event.getSceneX() + detailPopupBox.getWidth() >= sceneStackPane.getWidth()){
+                        detailPopupBox.setTranslateX(-sceneStackPane.getWidth()/2.0 + event.getSceneX() - detailPopupBox.getWidth() + 40);
+                    }else{
+                        detailPopupBox.setTranslateX(-sceneStackPane.getWidth()/2.0 + event.getSceneX() + 40);
+                    }
+
+
+                    detailPopupBox.setTranslateY(-sceneStackPane.getHeight()/2.0 + event.getSceneY() - 20);
+
+
                 }else{
                     beingDrawnRectangle.setStrokeWidth(0);
+                    sceneStackPane.getChildren().remove(detailPopupBox);
                 }
             }else{
                 beingDrawnRectangle.setStrokeWidth(0);
+                sceneStackPane.getChildren().remove(detailPopupBox);
+
             }
 
         });
@@ -298,6 +328,10 @@ public class App extends Application {
         });
 
         parent.setOnMousePressed(event -> {
+            if (sceneStackPane.getChildren().contains(detailPopupBox)) {
+                sceneStackPane.getChildren().remove(detailPopupBox);
+            }
+
             horizontalOffset = event.getX();
             verticalOffset = event.getY();
 
@@ -336,6 +370,31 @@ public class App extends Application {
 
         parent.setOnMouseReleased(event ->  {
             horizontalOffset = verticalOffset = 0;
+
+
+            //TODO maybe we should refactor this... This is here only to make the overlay appear if we are hovering the square...
+            var transformationToParentX = beingDrawnRectangle.getTranslateX() - pane.getWidth()/2.0  + (beingDrawnRectangle.getWidth() - SCALE) - event.getX();
+            var transformationToParentY = beingDrawnRectangle.getTranslateY() - pane.getHeight()/2.0 -  SCALE/4.0 +(beingDrawnRectangle.getHeight() - SCALE) - event.getY();
+
+            if(transformationToParentX >= 0 && transformationToParentX <= beingDrawnRectangle.getWidth()){
+                if(transformationToParentY >= 0 && transformationToParentY <= beingDrawnRectangle.getHeight()){
+
+                    if(!sceneStackPane.getChildren().contains(detailPopupBox)){
+                        sceneStackPane.getChildren().add(detailPopupBox);
+                        detailPopupBox.setMouseTransparent(true);
+
+                    }
+
+                    if(event.getSceneX() + detailPopupBox.getWidth() >= sceneStackPane.getWidth()){
+                        detailPopupBox.setTranslateX(-sceneStackPane.getWidth()/2.0 + event.getSceneX() - detailPopupBox.getWidth() + 40);
+                    }else{
+                        detailPopupBox.setTranslateX(-sceneStackPane.getWidth()/2.0 + event.getSceneX() + 40);
+                    }
+                    detailPopupBox.setTranslateY(-sceneStackPane.getHeight()/2.0 + event.getSceneY() - 20);
+
+                }
+            }
+
         });
 
         centerRectangle.setOnMouseEntered(event -> {
@@ -427,29 +486,66 @@ public class App extends Application {
         widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         widthLabel.setTextFill(Color.web("#BDBDBD"));
 
-        Label valueLabel = new Label("0");
-        valueLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        valueLabel.setTextFill(Color.web("#BDBDBD"));
-        valueLabel.setAlignment(Pos.CENTER_RIGHT);
-        valueLabel.setPrefWidth(50);
+
+        TextField textField = new TextField("0.1");
+        textField.setPromptText("0.1");
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setPrefWidth(50);
+        textField.setAlignment(Pos.CENTER_RIGHT);
+
+
 
         Slider slider = new Slider();
         slider.setMax(10);
         slider.setMin(0.1);
         slider.setValue(1);
 
+
+        textField.setOnKeyPressed(keyEvent ->{
+            if(keyEvent.getCode().equals(KeyCode.ENTER)){
+
+                try{
+                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
+                        textField.setText(String.valueOf(slider.getMin()));
+                    }
+
+                    slider.setValue(Double.parseDouble(textField.getText()));
+
+                }catch (NumberFormatException e){
+                    textField.setText(String.valueOf(slider.getMin()));
+                    slider.setValue(slider.getMin());
+                }
+
+            }
+        } );
+
+        //TODO: TextField should allow for 0.##, and slider only for 0.#.
+        //TODO: Height pane
+
+
+        slider.setMajorTickUnit(0.1);
+        slider.setMinorTickCount(0);
+        slider.setSnapToTicks(true);
+
+        slider.valueProperty().addListener(((observableValue, number, t1) -> {
+            DecimalFormat df = new DecimalFormat("#.#");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+            slider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
+        }));
+
         slider.valueProperty().addListener((observable, oldValue, newValue) -> {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            valueLabel.setText(String.valueOf(truncatedDouble));
+            textField.setText(String.valueOf(truncatedDouble));
 
             beingDrawnRectangle.setWidth(newValue.doubleValue() * SCALE);
 
         });
 
-        HBox widthHB = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), valueLabel);
+        HBox widthHB = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
         widthHB.setPadding(new Insets(10,10,10,15));
         widthHB.setAlignment(Pos.CENTER_LEFT);
-        widthHB.setMaxHeight(30);
+        widthHB.setMinHeight(30);
 
         widthHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
 
@@ -462,34 +558,65 @@ public class App extends Application {
         heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         heightLabel.setTextFill(Color.web("#BDBDBD"));
 
-        Label valueLabel = new Label("0");
-        valueLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        valueLabel.setTextFill(Color.web("#BDBDBD"));
-        valueLabel.setAlignment(Pos.CENTER_RIGHT);
-        valueLabel.setPrefWidth(50);
+        TextField textField = new TextField("0.1");
+        textField.setPromptText("0.1");
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setPrefWidth(50);
+        textField.setAlignment(Pos.CENTER_RIGHT);
 
         Slider slider = new Slider();
-        slider.setValue(1);
         slider.setMax(10);
         slider.setMin(0.1);
+        slider.setValue(1);
+
+        slider.setMajorTickUnit(0.1);
+        slider.setMinorTickCount(0);
+        slider.setSnapToTicks(true);
+
+        textField.setOnKeyPressed(keyEvent ->{
+            if(keyEvent.getCode().equals(KeyCode.ENTER)){
+
+                try{
+                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
+                        textField.setText(String.valueOf(slider.getMin()));
+                    }
+
+                    slider.setValue(Double.parseDouble(textField.getText()));
+
+                }catch (NumberFormatException e){
+                    textField.setText(String.valueOf(slider.getMin()));
+                    slider.setValue(slider.getMin());
+                }
+
+            }
+        } );
+
 
         slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            DecimalFormat df = new DecimalFormat("#.#");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            valueLabel.setText(String.valueOf(truncatedDouble));
+            textField.setText(String.valueOf(truncatedDouble));
 
             if(newValue.doubleValue() > oldValue.doubleValue()){
-                beingDrawnRectangle.setTranslateY( beingDrawnRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue() ) * SCALE );
+                System.out.println("old value: " + oldValue.doubleValue() + " <-> " + "new value: " + newValue.doubleValue());
+               beingDrawnRectangle.setTranslateY( beingDrawnRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue() ) * SCALE );
             }else{
-                beingDrawnRectangle.setTranslateY(beingDrawnRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
+               beingDrawnRectangle.setTranslateY(beingDrawnRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
             }
 
             beingDrawnRectangle.setHeight(newValue.doubleValue() * SCALE);
+
+            slider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
+
         });
 
-        HBox heightHB = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), valueLabel);
+        HBox heightHB = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
         heightHB.setPadding(new Insets(10,10,10,15));
         heightHB.setAlignment(Pos.CENTER_LEFT);
-        heightHB.setMaxHeight(30);
+        heightHB.setMinHeight(30);
 
         heightHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
 
@@ -662,21 +789,7 @@ public class App extends Application {
         saveHB.setOnMouseExited(event -> saveHB.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 20"));
 
 
-        Stage stickyNotesStage = new Stage();
-        stickyNotesStage.initOwner(stage);
-        stickyNotesStage.initStyle(StageStyle.UNDECORATED);
-        StackPane stickyNotesPane = new StackPane();
-        stickyNotesPane.setPrefSize(200, 200);
-        stickyNotesPane.setStyle("-fx-background-color: yellow;");
-        stickyNotesStage.setScene(new Scene(stickyNotesPane));
 
-        saveHB.hoverProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                stickyNotesStage.show();
-            } else {
-                stickyNotesStage.hide();
-            }
-        });
 
 
         return saveHB;
