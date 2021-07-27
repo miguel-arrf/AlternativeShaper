@@ -3,23 +3,26 @@ package marrf.iscte;
 import javafx.animation.Interpolator;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
-import javafx.event.EventHandler;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.ZoomEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 
 import java.math.BigDecimal;
@@ -48,8 +51,12 @@ public class App extends Application {
 
     private final StackPane centerRectangle = new StackPane();
 
+    private Scene scene;
+    private Stage stage;
+
     @Override
     public void start(Stage stage) {
+        this.stage = stage;
 
         var mainPanel = new VBox();
         mainPanel.setMaxWidth(400);
@@ -67,7 +74,7 @@ public class App extends Application {
         scenePanel.setAlignment(Pos.CENTER);
         scenePanel.setPadding(new Insets(20));
 
-        var scene = new Scene(scenePanel, 400, 700);
+        scene = new Scene(scenePanel, 400, 700);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
 
         scene.setFill(Color.BLACK);
@@ -76,6 +83,7 @@ public class App extends Application {
 
         stage.setScene(scene);
         stage.show();
+
 
 
         for(int i = 0; i < Screen.getScreens().size(); i++){
@@ -118,6 +126,35 @@ public class App extends Application {
         //pane.getChildren().add(beingDrawnRectangle);
 
         //TODO: Add clipping mask to the beingDrawnRectangle.
+
+        pane.setOnMouseEntered(event -> {
+            scene.setCursor(Cursor.CLOSED_HAND);
+        });
+
+        pane.setOnMouseExited(event -> {
+            scene.setCursor(Cursor.DEFAULT);
+        });
+
+        pane.setOnMouseMoved(event -> {
+
+            var transformationToParentX = beingDrawnRectangle.getTranslateX() - pane.getWidth()/2.0 - SCALE + (beingDrawnRectangle.getWidth() - SCALE) - event.getX();
+            var transformationToParentY = beingDrawnRectangle.getTranslateY() - pane.getHeight()/2.0 -  SCALE/4.0 +(beingDrawnRectangle.getHeight() - SCALE) - event.getY();
+
+            if(transformationToParentX >= 0 && transformationToParentX <= beingDrawnRectangle.getWidth()){
+                if(transformationToParentY >= 0 && transformationToParentY <= beingDrawnRectangle.getHeight()){
+                    beingDrawnRectangle.setStroke(Color.WHITE);
+                    beingDrawnRectangle.setStrokeLineCap(StrokeLineCap.ROUND);
+                    beingDrawnRectangle.setStrokeWidth(4);
+                    beingDrawnRectangle.setStrokeLineJoin(StrokeLineJoin.ROUND);
+                }else{
+                    beingDrawnRectangle.setStrokeWidth(0);
+                }
+            }else{
+                beingDrawnRectangle.setStrokeWidth(0);
+            }
+
+        });
+
 
         return pane;
     }
@@ -243,10 +280,12 @@ public class App extends Application {
         beingDrawnRectangle.setTranslateX(NUMBER_COLUMNS_AND_ROWS*SCALE/2.0);
         beingDrawnRectangle.setTranslateY(NUMBER_COLUMNS_AND_ROWS*SCALE/2.0 - SCALE);
 
-
         pane.getChildren().add(circle);
         pane.getChildren().add(beingDrawnRectangle);
 
+
+
+        //Tooltip.install(beingDrawnRectangle, createToolTip());
 
         parent.widthProperty().addListener((observable, oldValue, newValue) -> {
             double xTranslation = (newValue.doubleValue() - NUMBER_COLUMNS_AND_ROWS*SCALE)/2;
@@ -299,6 +338,14 @@ public class App extends Application {
             horizontalOffset = verticalOffset = 0;
         });
 
+        centerRectangle.setOnMouseEntered(event -> {
+            scene.setCursor(Cursor.HAND);
+        });
+
+        centerRectangle.setOnMouseExited(event -> {
+            scene.setCursor(Cursor.CLOSED_HAND);
+        });
+
         centerRectangle.setOnMouseClicked(mouseEvent -> {
             for (int i = 0; i < pane.getChildren().size(); i++) {
                 TranslateTransition paneTranslateTransition = new TranslateTransition(Duration.millis(500), pane.getChildren().get(i));
@@ -332,13 +379,12 @@ public class App extends Application {
         namePrompt.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         namePrompt.setTextFill(Color.web("#BDBDBD"));
 
-        Label defaultName = new Label("default");
-        defaultName.setTextFill(Color.WHITE);
-        defaultName.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        defaultName.setTextFill(Color.web("#5D5C5E"));
+        TextField textField = new TextField(" default ");
+        textField.setPromptText("default");
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #5D5C5E; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
 
-
-        HBox nameHB = new HBox(namePrompt, defaultName);
+        HBox nameHB = new HBox(namePrompt, textField);
         nameHB.setPadding(new Insets(10,10,10,15));
         nameHB.setAlignment(Pos.CENTER_LEFT);
         nameHB.setMaxHeight(30);
@@ -475,8 +521,44 @@ public class App extends Application {
     }
 
     private Pane getCheckButton(){
-        Pane pane = new Pane();
+        var isPressed = new Object() {
+            Boolean value = false;
+        };
+
+        Image image = new Image(this.getClass().getResource("/icons/checkmark.png").toExternalForm());
+        ImageView imageView = new ImageView(image);
+        imageView.setSmooth(true);
+        imageView.setPreserveRatio(true);
+        imageView.setFitWidth(12);
+
+        StackPane pane = new StackPane();
+        pane.setAlignment(Pos.CENTER);
+
         pane.setStyle("-fx-background-color: #4F4F4F;-fx-background-radius: 7");
+
+        pane.setOnMouseClicked(event -> {
+            if(isPressed.value){
+                pane.getChildren().clear();
+                pane.setStyle("-fx-background-color: #4F4F4F;-fx-background-radius: 7");
+            }else{
+                pane.getChildren().add(imageView);
+                pane.setStyle("-fx-background-color: #6FCF97; -fx-background-radius: 7");
+            }
+
+            isPressed.value = !isPressed.value;
+        });
+
+        pane.setOnMouseEntered(event -> {
+            pane.setStyle("-fx-background-color: #9B9B9B;-fx-background-radius: 7");
+        });
+
+        pane.setOnMouseExited(event -> {
+            if(isPressed.value){
+                pane.setStyle("-fx-background-color: #6FCF97; -fx-background-radius: 7");
+            }else{
+                pane.setStyle("-fx-background-color: #4F4F4F;-fx-background-radius: 7");
+            }
+        });
 
         pane.setPrefSize(20,20);
 
@@ -484,6 +566,37 @@ public class App extends Application {
         pane.setMaxHeight(20);
 
         return pane;
+    }
+
+    private Tooltip createToolTip() {
+        Tooltip thisToolTip = new Tooltip();
+
+        String htmlStr = "<body style=\"background-color:cornsilk; "
+                + "border-style: none;\"> <u><b><font color=\"red\">Click Mouse's right button to see options</font></b></u><br><br>(3) Subha Jawahar of Chennai<br> now @ Chennai<br>Female <-> Married <-> Alive<br>Period : 1800 to 2099<br>D/o Dr. Subbiah [2] - <br> <b>Spouse :</b> Jawahar Rajamanickam [7] <br><br><b>Children :</b><br><br>Rudhra Jawahar [9]<br>Mithran Jawahar [10]<br><br></body>\n";
+        WebView browser = new WebView();
+        WebEngine webEngine = browser.getEngine();
+        webEngine.loadContent(htmlStr);
+
+        thisToolTip.setStyle("\n"
+                + "    -fx-border-color: black;\n"
+                + "    -fx-border-width: 1px;\n"
+                + "    -fx-font: normal bold 12pt \"Times New Roman\" ;\n"
+                + "    -fx-background-color: cornsilk;\n"
+                + "    -fx-text-fill: black;\n"
+                + "    -fx-background-radius: 4;\n"
+                + "    -fx-border-radius: 4;\n"
+                + "    -fx-opacity: 1.0;");
+
+        thisToolTip.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+
+        thisToolTip.setGraphic(browser);
+        thisToolTip.setAutoHide(false);
+        thisToolTip.setMaxWidth(300);
+        thisToolTip.setGraphicTextGap(0.0);
+
+        System.out.println("here!");
+
+        return thisToolTip;
     }
 
     private Pane getColorButton(){
@@ -547,6 +660,24 @@ public class App extends Application {
         saveHB.setOnMouseEntered(event -> saveHB.setStyle("-fx-background-color: #078D55;-fx-background-radius: 20"));
 
         saveHB.setOnMouseExited(event -> saveHB.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 20"));
+
+
+        Stage stickyNotesStage = new Stage();
+        stickyNotesStage.initOwner(stage);
+        stickyNotesStage.initStyle(StageStyle.UNDECORATED);
+        StackPane stickyNotesPane = new StackPane();
+        stickyNotesPane.setPrefSize(200, 200);
+        stickyNotesPane.setStyle("-fx-background-color: yellow;");
+        stickyNotesStage.setScene(new Scene(stickyNotesPane));
+
+        saveHB.hoverProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                stickyNotesStage.show();
+            } else {
+                stickyNotesStage.hide();
+            }
+        });
+
 
         return saveHB;
     }
