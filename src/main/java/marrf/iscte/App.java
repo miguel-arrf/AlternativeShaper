@@ -137,7 +137,7 @@ public class App extends Application {
 
         pane.setOnMouseMoved(event -> {
 
-            var transformationToParentX = beingDrawnRectangle.getTranslateX() - pane.getWidth()/2.0 - SCALE + (beingDrawnRectangle.getWidth() - SCALE) - event.getX();
+            var transformationToParentX = beingDrawnRectangle.getTranslateX() - pane.getWidth()/2.0  + (beingDrawnRectangle.getWidth() - SCALE) - event.getX();
             var transformationToParentY = beingDrawnRectangle.getTranslateY() - pane.getHeight()/2.0 -  SCALE/4.0 +(beingDrawnRectangle.getHeight() - SCALE) - event.getY();
 
             if(transformationToParentX >= 0 && transformationToParentX <= beingDrawnRectangle.getWidth()){
