@@ -1,10 +1,8 @@
 package marrf.iscte;
 
-import javafx.animation.AnimationTimer;
-import javafx.animation.Interpolator;
-import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
@@ -12,25 +10,25 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.transform.Rotate;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -39,49 +37,202 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class App extends Application {
 
     public static final int SCALE = 40;
-    public static final int NUMBER_COLUMNS_AND_ROWS = 20;
+    public static final int NUMBER_COLUMNS_AND_ROWS = 40;
 
-    private final Rectangle beingDrawnRectangle = new Rectangle(SCALE,SCALE);
-    private double initialRectangleHorizontalDrag =  0;
-    private double initialRectangleVerticalDrag = 0;
+    private final CustomRectangle beingDrawnCustomRectangle = new CustomRectangle(SCALE,SCALE);
+    //private double initialCustomRectangleHorizontalDrag =  0;
+    //private double initialCustomRectangleVerticalDrag = 0;
 
-    private double horizontalOffset = 0;
-    private double verticalOffset = 0;
+    //private double horizontalOffset = 0;
+    //private double verticalOffset = 0;
 
-    private final ArrayList<Double> initialHorizontalDrag = new ArrayList<>();
-    private final ArrayList<Double> initialVerticalDrag = new ArrayList<>();
+    //private final ArrayList<Double> initialHorizontalDrag = new ArrayList<>();
+    //private final ArrayList<Double> initialVerticalDrag = new ArrayList<>();
 
-    private final StackPane centerRectangle = new StackPane();
+    private final StackPane centerCustomRectangle = new StackPane();
 
     private Scene scene;
-    private Stage stage;
 
-    private HBox detailPopupBox = new HBox();
-    private StackPane sceneStackPane;
+    private final GridCanvas gridCanvas = new GridCanvas();
 
-    @Override
-    public void start(Stage stage) {
-        this.stage = stage;
+    private Pane sceneStackPane = getGraphSection();
+
+    private ArrayList<CustomRectangle> customRectangles = new ArrayList<>();
+    private CustomRectangle selectedCustomRectangle;
+
+
+    public CustomRectangle getDraggableCustomRectangle(){
+
+        CustomRectangle customRectangle = new CustomRectangle(20,20);
+        customRectangle.setFill(Color.rgb(0,0,255,1));
+
+        customRectangles.add(customRectangle);
+
+        customRectangle.setOnDragDetected(event -> {
+            Dragboard db = customRectangle.startDragAndDrop(TransferMode.ANY);
+
+            ClipboardContent content = new ClipboardContent();
+            content.putString(String.valueOf(customRectangles.indexOf(customRectangle)));
+            db.setContent(content);
+
+            event.consume();
+        });
+
+        System.out.println("AAAAAHHHHH width: " + customRectangle.getWidth());
+        return customRectangle;
+    }
+
+    public CustomRectangle getCopyWithBindWidthAndHeightFrom(int position){
+        CustomRectangle toCopyFrom = customRectangles.get(position);
+        System.out.println("to copy from: width:" + toCopyFrom.getWidth() + ", height: " + toCopyFrom.getHeight());
+
+        CustomRectangle customRectangle = new CustomRectangle();
+        customRectangle.setFill(toCopyFrom.getFill());
+        customRectangle.setWidth(toCopyFrom.getWidth());
+        customRectangle.setHeight(toCopyFrom.getHeight());
+
+        customRectangle.widthProperty().bind(toCopyFrom.widthProperty());
+        customRectangle.heightProperty().bind(toCopyFrom.heightProperty());
+        customRectangle.fillProperty().bind(toCopyFrom.fillProperty());
+
+        return customRectangle;
+    }
+
+    private Pane getSeparator(){
+        Pane rectangle = new Pane();
+        rectangle.setPrefHeight(8);
+        rectangle.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
+        rectangle.setMaxHeight(Double.MAX_VALUE);
+
+        return rectangle;
+    }
+
+    private Pane getBasicShape(){
+        CustomRectangle customRectangle = new CustomRectangle(100,100);
+        customRectangle.getRectangle();
+
+        customRectangle.setFill(Color.rgb(0,255,255,1));
+        customRectangles.add(customRectangle);
+
+        return customRectangle.getThumbnail(() -> String.valueOf(customRectangles.indexOf(customRectangle)));
+
+    }
+
+    private ScrollPane getScrollPane(){
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setStyle("-fx-background: rgb(51,50,52); -fx-border-radius: 10");
+
+        VBox content = new VBox(getBasicShape());
+        content.setAlignment(Pos.TOP_CENTER);
+        content.setSpacing(10);
+        content.setPadding(new Insets(10));
+
+        scrollPane.setContent(content);
+
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+        return scrollPane;
+    }
+
+    public static HBox addBasicAndComplexButtons(){
+
+        Image basicPlus = new Image(App.class.getResource("/icons/plus.png").toExternalForm());
+        ImageView basicPlusImageView = new ImageView(basicPlus);
+        basicPlusImageView.setSmooth(true);
+        basicPlusImageView.setPreserveRatio(true);
+        basicPlusImageView.setFitWidth(12);
+
+        Image complexPlus = new Image(App.class.getResource("/icons/plus.png").toExternalForm());
+        ImageView complexPlusImageView = new ImageView(complexPlus);
+        complexPlusImageView.setSmooth(true);
+        complexPlusImageView.setPreserveRatio(true);
+        complexPlusImageView.setFitWidth(12);
+
+
+        Label basicShape = new Label("Basic Shape");
+        basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        basicShape.setTextFill(Color.web("#56CCF2"));
+
+        HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
+        basicShapeHBox.setAlignment(Pos.CENTER);
+        basicShapeHBox.setSpacing(5);
+
+        VBox basicShapeVBox = new VBox(basicShapeHBox);
+        basicShapeVBox.setAlignment(Pos.CENTER);
+        basicShapeVBox.setStyle("-fx-background-color: #355765;-fx-background-radius: 20");
+        HBox.setHgrow(basicShapeVBox, Priority.ALWAYS);
+
+
+        Label complexShape = new Label("Complex Shape");
+        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        complexShape.setTextFill(Color.web("#F2C94C"));
+
+        HBox complexShapeHBox = new HBox(complexPlusImageView, complexShape);
+        complexShapeHBox.setAlignment(Pos.CENTER);
+        complexShapeHBox.setSpacing(5);
+
+        VBox complexShapeVBox = new VBox(complexShapeHBox);
+        complexShapeVBox.setAlignment(Pos.CENTER);
+        complexShapeVBox.setStyle("-fx-background-color: #644832;-fx-background-radius: 20");
+        HBox.setHgrow(complexShapeVBox, Priority.ALWAYS);
+
+
+        HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
+        saveHB.setSpacing(10);
+        saveHB.setAlignment(Pos.CENTER);
+        saveHB.setMaxHeight(30);
+        saveHB.setPrefHeight(30);
+
+        return saveHB;
+    }
+
+    private void addShape(CustomRectangle customRectangleToAdd){
+        gridCanvas.addShape(customRectangleToAdd);
+        customRectangles.add(customRectangleToAdd);
+    }
+
+
+    public Pane getScenePanel(Scene scene){
+        this.scene = scene;
 
         var mainPanel = new VBox();
         mainPanel.setMaxWidth(400);
-        mainPanel.setMaxHeight(700);
         mainPanel.setPrefSize(400, 700);
-        mainPanel.setStyle("-fx-background-color: #262528; -fx-background-radius: 20");
+        mainPanel.setStyle("-fx-background-color: #262528;");
         mainPanel.setAlignment(Pos.TOP_CENTER);
         mainPanel.setPadding(new Insets(10,20,10,20));
         mainPanel.setSpacing(15);
 
-        mainPanel.getChildren().addAll(getNameSection(), getGraphSection(), getWidthSection(), getHeightSection(),getButtonsSection(), getSaveButtonSection());
+
+        Slider slider = new Slider(30, 120, 90);
+        CustomRectangle draggableCustomRectangle = getDraggableCustomRectangle();
+        slider.valueProperty().addListener((observable, oldValue, newValue) -> draggableCustomRectangle.setWidth(newValue.doubleValue()));
+
+        mainPanel.getChildren().addAll(/*draggableCustomRectangle.getRectangle(), slider, getScrollPane(), addBasicAndComplexButtons(), getSeparator(),*/verticalGrower(), getNameSection() /*, getTranslationXSection(), getTranslationYSection(), getScaleXSection(), getScaleYSection()*/,getWidthSection(),getHeightSection(),getButtonsSection(), getSaveButtonSection());
 
         var scenePanel = new VBox(mainPanel);
         scenePanel.setStyle("-fx-background-color: black");
         scenePanel.setAlignment(Pos.CENTER);
         scenePanel.setPadding(new Insets(20));
 
-        sceneStackPane = new StackPane(scenePanel);
 
-        scene = new Scene(sceneStackPane, 300, 700);
+        BorderPane borderPane = new BorderPane();
+        borderPane.setStyle("-fx-background-color: #262528");
+        borderPane.setPadding(new Insets(10));
+
+        borderPane.setRight(mainPanel);
+        borderPane.setCenter(sceneStackPane);
+
+        addShape(new CustomRectangle(SCALE, SCALE, true, Color.web("#55efc4")));
+
+        return borderPane;
+    }
+
+    @Override
+    public void start(Stage stage) {
+        Pane borderPane = getScenePanel(scene);
+
+        scene = new Scene(borderPane, 1920, 1080);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
 
         scene.setFill(Color.BLACK);
@@ -92,16 +243,15 @@ public class App extends Application {
         stage.show();
 
 
-
         for(int i = 0; i < Screen.getScreens().size(); i++){
             Screen screen = Screen.getScreens().get(i);
             Rectangle2D bounds = screen.getVisualBounds();
 
             System.out.println("screen: " + screen);
 
-            if(i == 1){
-                stage.setX(bounds.getMinX() + 100);
-                stage.setY(bounds.getMinY() + 100);
+            if(i == 0){
+                stage.setX(bounds.getMinX());
+                stage.setY(bounds.getMinY());
 
             }
 
@@ -109,25 +259,22 @@ public class App extends Application {
 
     }
 
-
     private Pane getGraphSection(){
         StackPane pane = new StackPane();
         pane.setAlignment(Pos.CENTER);
         pane.setMinHeight(300);
         pane.setMinWidth(300);
-        pane.setPrefSize(300,300);
 
         VBox.setVgrow(pane, Priority.ALWAYS);
         pane.setStyle("-fx-background-color: #333234; -fx-background-radius: 20");
 
-        Pane grid = getGrid(pane);
-        grid.setClip(getRectangleClip(pane));
+        Pane grid = gridCanvas.getGrid(pane);
+        grid.setClip(getCustomRectangleClip(pane));
         pane.getChildren().add(grid);
 
         AnchorPane anchorPane = new AnchorPane();
         pane.getChildren().add(anchorPane);
         getAnchorPaneClip(anchorPane);
-
 
         pane.setOnMouseEntered(event -> {
             scene.setCursor(Cursor.CLOSED_HAND);
@@ -137,54 +284,81 @@ public class App extends Application {
             scene.setCursor(Cursor.DEFAULT);
         });
 
+        pane.setOnDragEntered(event -> {
+            if (event.getGestureSource() != pane &&
+                    event.getDragboard().hasString()) {
+                System.out.println("estou dragging: " + event.getDragboard().getString());
+            }
+            event.consume();
+        });
 
-        detailPopupBox.setPrefSize(100,30);
-        detailPopupBox.setMaxWidth(100);
-        detailPopupBox.setMaxHeight(30);
-        detailPopupBox.setStyle("-fx-background-color: rgba(100,100,100,0.8); -fx-background-radius: 10");
+        pane.setOnMouseClicked(event -> {
+            customRectangles.forEach(rectangle -> {
+                Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth(), 0));
+
+                if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()) {
+                    if (transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()) {
+                        System.out.println("cliquei numa shape!");
+                        selectedCustomRectangle = rectangle;
+                        selectedCustomRectangle.turnOnStroke();
+                        selectedCustomRectangle.toogleSelected();
+
+                        customRectangles.stream().filter(r -> r != rectangle).forEach(CustomRectangle::turnOfStroke);
+                        //selectedCustomRectangle.setStrokeWidth(2);
+                        //selectedCustomRectangle.setStroke(Color.BLACK);
+
+                        //CustomRectangles.stream().filter(r -> r != CustomRectangle).forEach(r -> r.setStrokeWidth(0));                    }
+                    }
+                }
+            });
+        });
+
+        pane.setOnDragOver(event -> {
+            Dragboard db = event.getDragboard();
+            if (db.hasString()) {
+                event.acceptTransferModes( TransferMode.ANY );
+            }
+            event.consume();
+        });
+
+        pane.setOnDragDropped(event -> {
+            event.acceptTransferModes(TransferMode.ANY);
+            System.out.println("oi");
+
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasString()) {
+                System.out.println("this was dropped: " + db.getString());
+
+                System.out.println("event x: " + event.getX() + ", y: " + event.getY());
+                CustomRectangle customRectangleToAdd = getCopyWithBindWidthAndHeightFrom(Integer.parseInt(db.getString()));
+                addShape(customRectangleToAdd);
+
+
+                success = true;
+            }
+            event.setDropCompleted(success);
+
+            event.consume();
+        });
 
 
         pane.setOnMouseMoved(event -> {
+            customRectangles.forEach(rectangle -> {
+                Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth(), 0));
 
-            var transformationToParentX = beingDrawnRectangle.getTranslateX() - pane.getWidth()/2.0  + (beingDrawnRectangle.getWidth() - SCALE) - event.getX();
-            var transformationToParentY = beingDrawnRectangle.getTranslateY() - pane.getHeight()/2.0 -  SCALE/4.0 +(beingDrawnRectangle.getHeight() - SCALE) - event.getY();
-
-            if(transformationToParentX >= 0 && transformationToParentX <= beingDrawnRectangle.getWidth()){
-                if(transformationToParentY >= 0 && transformationToParentY <= beingDrawnRectangle.getHeight()){
-                    beingDrawnRectangle.setStroke(Color.WHITE);
-                    beingDrawnRectangle.setStrokeLineCap(StrokeLineCap.ROUND);
-                    beingDrawnRectangle.setStrokeWidth(4);
-                    beingDrawnRectangle.setStrokeLineJoin(StrokeLineJoin.ROUND);
-
-
-                    if(!sceneStackPane.getChildren().contains(detailPopupBox)){
-                        sceneStackPane.getChildren().add(detailPopupBox);
-                        detailPopupBox.setMouseTransparent(true);
-
-                    }
-
-                    if(event.getSceneX() + detailPopupBox.getWidth() >= sceneStackPane.getWidth()){
-                        detailPopupBox.setTranslateX(-sceneStackPane.getWidth()/2.0 + event.getSceneX() - detailPopupBox.getWidth() + 40);
+                if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()){
+                    if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()){
+                        rectangle.turnOnStroke();
                     }else{
-                        detailPopupBox.setTranslateX(-sceneStackPane.getWidth()/2.0 + event.getSceneX() + 40);
+                        rectangle.turnOfStroke();
                     }
-
-
-                    detailPopupBox.setTranslateY(-sceneStackPane.getHeight()/2.0 + event.getSceneY() - 20);
-
-
                 }else{
-                    beingDrawnRectangle.setStrokeWidth(0);
-                    sceneStackPane.getChildren().remove(detailPopupBox);
+                    rectangle.turnOfStroke();
                 }
-            }else{
-                beingDrawnRectangle.setStrokeWidth(0);
-                sceneStackPane.getChildren().remove(detailPopupBox);
-
-            }
+            });
 
         });
-
 
         return pane;
     }
@@ -239,24 +413,23 @@ public class App extends Application {
         anchorPane.getChildren().add(topLeft);
 
 
-
         Circle firstCircle = new Circle(10);
         firstCircle.setFill(Color.web("#4F4F4F"));
         Circle secondCircle = new Circle(5);
         secondCircle.setFill(Color.web("#333333"));
 
-        centerRectangle.getChildren().addAll(firstCircle, secondCircle);
-        centerRectangle.setAlignment(Pos.CENTER);
-        centerRectangle.setPrefSize(30,30);
-        centerRectangle.setStyle("-fx-background-color: #737373; -fx-background-radius: 10");
+        centerCustomRectangle.getChildren().addAll(firstCircle, secondCircle);
+        centerCustomRectangle.setAlignment(Pos.CENTER);
+        centerCustomRectangle.setPrefSize(30,30);
+        centerCustomRectangle.setStyle("-fx-background-color: #737373; -fx-background-radius: 10");
 
-        AnchorPane.setBottomAnchor(centerRectangle, 10.0);
-        AnchorPane.setRightAnchor(centerRectangle, 10.0);
-        anchorPane.getChildren().add(centerRectangle);
+        AnchorPane.setBottomAnchor(centerCustomRectangle, 10.0);
+        AnchorPane.setRightAnchor(centerCustomRectangle, 10.0);
+        anchorPane.getChildren().add(centerCustomRectangle);
 
     }
 
-    public Shape getRectangleClip(Pane parent){
+    public Shape getCustomRectangleClip(Pane parent){
         Rectangle clip = new Rectangle(300,300);
         //clip.setStyle("-fx-background-color: #333234; -fx-background-radius: 20");
 
@@ -279,159 +452,6 @@ public class App extends Application {
 
         return clip;
     }
-
-
-    public Pane getGrid(Pane parent){
-
-        int width = SCALE;
-
-        Pane pane = new Pane();
-
-        for (int i = 0; i < NUMBER_COLUMNS_AND_ROWS; i++) {
-            for (int j = 0; j < NUMBER_COLUMNS_AND_ROWS; j++) {
-                Rectangle rectangle = new Rectangle();
-                rectangle.setX(width*j);
-                rectangle.setY(width*i);
-                rectangle.setWidth(width);
-                rectangle.setHeight(width);
-                rectangle.setFill(null);
-                rectangle.setStroke(Color.web("#4F4F4F"));
-                rectangle.setStrokeWidth(2);
-                pane.getChildren().add(rectangle);
-            }
-        }
-
-        Circle circle = new Circle(5);
-        circle.setFill(Color.web("#6C696F"));
-        circle.setCenterX(width*NUMBER_COLUMNS_AND_ROWS / 2.0);
-        circle.setCenterY(width*NUMBER_COLUMNS_AND_ROWS / 2.0);
-
-        beingDrawnRectangle.setFill(Color.web("#6FCF97"));
-        beingDrawnRectangle.setTranslateX(NUMBER_COLUMNS_AND_ROWS*SCALE/2.0);
-        beingDrawnRectangle.setTranslateY(NUMBER_COLUMNS_AND_ROWS*SCALE/2.0 - SCALE);
-
-        pane.getChildren().add(circle);
-        pane.getChildren().add(beingDrawnRectangle);
-
-
-
-        //Tooltip.install(beingDrawnRectangle, createToolTip());
-
-        parent.widthProperty().addListener((observable, oldValue, newValue) -> {
-            double xTranslation = (newValue.doubleValue() - NUMBER_COLUMNS_AND_ROWS*SCALE)/2;
-            pane.setTranslateX(xTranslation);
-        });
-
-        parent.heightProperty().addListener((observable, oldValue, newValue) -> {
-          double yTranslation = (newValue.doubleValue() - NUMBER_COLUMNS_AND_ROWS*SCALE)/2;
-          pane.setTranslateY(yTranslation);
-        });
-
-        parent.setOnMousePressed(event -> {
-            if (sceneStackPane.getChildren().contains(detailPopupBox)) {
-                sceneStackPane.getChildren().remove(detailPopupBox);
-            }
-
-            horizontalOffset = event.getX();
-            verticalOffset = event.getY();
-
-            for (int i = 0; i < pane.getChildren().size(); i++) {
-                initialHorizontalDrag.add(i, pane.getChildren().get(i).getTranslateX());
-                initialVerticalDrag.add(i, pane.getChildren().get(i).getTranslateY());
-            }
-
-            initialRectangleHorizontalDrag = beingDrawnRectangle.getTranslateX();
-            initialRectangleVerticalDrag = beingDrawnRectangle.getTranslateY();
-
-        });
-
-        parent.setOnMouseDragged(event -> {
-            boolean notExceedingHorizontally = Math.abs(initialHorizontalDrag.get(1) + event.getX() - horizontalOffset) <= (NUMBER_COLUMNS_AND_ROWS * SCALE - parent.getWidth())/2;
-            boolean notExceedingVertically = Math.abs(initialVerticalDrag.get(1) + event.getY() - verticalOffset) <= (NUMBER_COLUMNS_AND_ROWS * SCALE - parent.getHeight())/2;
-
-            if(notExceedingHorizontally){
-                for (int i = 0; i < pane.getChildren().size(); i++) {
-                    pane.getChildren().get(i).setTranslateX(initialHorizontalDrag.get(i) + event.getX() - horizontalOffset);
-                }
-
-                beingDrawnRectangle.setTranslateX(initialRectangleHorizontalDrag + event.getX() - horizontalOffset);
-
-            }
-
-            if(notExceedingVertically){
-                for (int i = 0; i < pane.getChildren().size(); i++) {
-                    pane.getChildren().get(i).setTranslateY(initialVerticalDrag.get(i) + event.getY() - verticalOffset);
-                }
-                beingDrawnRectangle.setTranslateY(initialRectangleVerticalDrag + event.getY() - verticalOffset);
-            }
-
-
-        });
-
-        parent.setOnMouseReleased(event ->  {
-            horizontalOffset = verticalOffset = 0;
-
-
-            //TODO maybe we should refactor this... This is here only to make the overlay appear if we are hovering the square...
-            var transformationToParentX = beingDrawnRectangle.getTranslateX() - pane.getWidth()/2.0  + (beingDrawnRectangle.getWidth() - SCALE) - event.getX();
-            var transformationToParentY = beingDrawnRectangle.getTranslateY() - pane.getHeight()/2.0 -  SCALE/4.0 +(beingDrawnRectangle.getHeight() - SCALE) - event.getY();
-
-            if(transformationToParentX >= 0 && transformationToParentX <= beingDrawnRectangle.getWidth()){
-                if(transformationToParentY >= 0 && transformationToParentY <= beingDrawnRectangle.getHeight()){
-
-                    if(!sceneStackPane.getChildren().contains(detailPopupBox)){
-                        sceneStackPane.getChildren().add(detailPopupBox);
-                        detailPopupBox.setMouseTransparent(true);
-
-                    }
-
-                    if(event.getSceneX() + detailPopupBox.getWidth() >= sceneStackPane.getWidth()){
-                        detailPopupBox.setTranslateX(-sceneStackPane.getWidth()/2.0 + event.getSceneX() - detailPopupBox.getWidth() + 40);
-                    }else{
-                        detailPopupBox.setTranslateX(-sceneStackPane.getWidth()/2.0 + event.getSceneX() + 40);
-                    }
-                    detailPopupBox.setTranslateY(-sceneStackPane.getHeight()/2.0 + event.getSceneY() - 20);
-
-                }
-            }
-
-        });
-
-        centerRectangle.setOnMouseEntered(event -> {
-            scene.setCursor(Cursor.HAND);
-        });
-
-        centerRectangle.setOnMouseExited(event -> {
-            scene.setCursor(Cursor.CLOSED_HAND);
-        });
-
-        centerRectangle.setOnMouseClicked(mouseEvent -> {
-            for (int i = 0; i < pane.getChildren().size(); i++) {
-                TranslateTransition paneTranslateTransition = new TranslateTransition(Duration.millis(500), pane.getChildren().get(i));
-                paneTranslateTransition.setToX(0);
-                paneTranslateTransition.setToY(0);
-                paneTranslateTransition.play();
-                paneTranslateTransition.setInterpolator(Interpolator.EASE_IN);
-            }
-
-
-            TranslateTransition translateTransition = new TranslateTransition(Duration.millis(500), beingDrawnRectangle);
-            translateTransition.setToX(NUMBER_COLUMNS_AND_ROWS*SCALE/2.0);
-            translateTransition.setToY(NUMBER_COLUMNS_AND_ROWS*SCALE/2.0 - SCALE - (beingDrawnRectangle.getHeight() - SCALE));
-
-
-            translateTransition.setOnFinished(actionEvent -> {
-                System.out.println("x: " + beingDrawnRectangle.getTranslateX() + ", y: " + beingDrawnRectangle.getTranslateY());
-            });
-
-            translateTransition.play();
-
-        });
-
-        return pane;
-    }
-
-
 
     private Pane getNameSection(){
         Label namePrompt = new Label("Name:");
@@ -479,6 +499,284 @@ public class App extends Application {
         horizontalGrower.setMaxHeight(maxSize);
 
         return horizontalGrower;
+    }
+
+    private Pane getScaleXSection(){
+        Label widthLabel = new Label("Scale X:");
+        widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        widthLabel.setTextFill(Color.web("#BDBDBD"));
+
+
+        TextField textField = new TextField("0.1");
+        textField.setPromptText("0.1");
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setPrefWidth(50);
+        textField.setAlignment(Pos.CENTER_RIGHT);
+
+        Slider slider = new Slider();
+        slider.setMax(10);
+        slider.setMin(0.1);
+        slider.setValue(1);
+
+
+        textField.setOnKeyPressed(keyEvent ->{
+            if(keyEvent.getCode().equals(KeyCode.ENTER)){
+
+                try{
+                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
+                        textField.setText(String.valueOf(slider.getMin()));
+                    }
+
+                    slider.setValue(Double.parseDouble(textField.getText()));
+
+                }catch (NumberFormatException e){
+                    textField.setText(String.valueOf(slider.getMin()));
+                    slider.setValue(slider.getMin());
+                }
+
+            }
+        } );
+
+        //TODO: TextField should allow for 0.##, and slider only for 0.#.
+        //TODO: Height pane
+
+
+        slider.setMajorTickUnit(0.1);
+        slider.setMinorTickCount(0);
+        slider.setSnapToTicks(true);
+
+        slider.valueProperty().addListener(((observableValue, number, t1) -> {
+            DecimalFormat df = new DecimalFormat("#.#");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+            slider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
+        }));
+
+        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+
+            selectedCustomRectangle.setScaleX( newValue.doubleValue());
+        });
+
+        HBox widthHB = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        widthHB.setPadding(new Insets(10,10,10,15));
+        widthHB.setAlignment(Pos.CENTER_LEFT);
+        widthHB.setMinHeight(30);
+
+        widthHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+
+
+        return widthHB;
+    }
+
+    private Pane getScaleYSection(){
+        Label heightLabel = new Label("Scale Y:");
+        heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        heightLabel.setTextFill(Color.web("#BDBDBD"));
+
+        TextField textField = new TextField("0.1");
+        textField.setPromptText("0.1");
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setPrefWidth(50);
+        textField.setAlignment(Pos.CENTER_RIGHT);
+
+        Slider slider = new Slider();
+        slider.setMax(10);
+        slider.setMin(0.1);
+        slider.setValue(1);
+
+        slider.setMajorTickUnit(0.1);
+        slider.setMinorTickCount(0);
+        slider.setSnapToTicks(true);
+
+        textField.setOnKeyPressed(keyEvent ->{
+            if(keyEvent.getCode().equals(KeyCode.ENTER)){
+
+                try{
+                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
+                        textField.setText(String.valueOf(slider.getMin()));
+                    }
+
+                    slider.setValue(Double.parseDouble(textField.getText()));
+
+                }catch (NumberFormatException e){
+                    textField.setText(String.valueOf(slider.getMin()));
+                    slider.setValue(slider.getMin());
+                }
+
+            }
+        } );
+
+
+        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            DecimalFormat df = new DecimalFormat("#.#");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+
+            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+
+            var oldHeight = selectedCustomRectangle.getHeight();
+            selectedCustomRectangle.setScaleY(newValue.doubleValue());
+
+            if(newValue.doubleValue() > oldValue.doubleValue()){
+                //selectedCustomRectangle.setTranslateY( selectedCustomRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue() ) * SCALE);
+               selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() - Math.abs(selectedCustomRectangle.getHeight() - oldHeight));
+                System.out.println("-> " + Math.abs(selectedCustomRectangle.getHeight()*oldValue.doubleValue() - selectedCustomRectangle.getHeight()*newValue.doubleValue()));
+                System.out.println("altura: " + selectedCustomRectangle.getHeight());
+            }/*else{
+                selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
+            }*/
+
+            //beingDrawnCustomRectangle.setHeight(newValue.doubleValue() * SCALE);
+
+           // slider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
+
+        });
+
+        HBox heightHB = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        heightHB.setPadding(new Insets(10,10,10,15));
+        heightHB.setAlignment(Pos.CENTER_LEFT);
+        heightHB.setMinHeight(30);
+
+        heightHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+
+        return heightHB;
+    }
+
+    private Pane getTranslationXSection(){
+        Label widthLabel = new Label("Translation X:");
+        widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        widthLabel.setTextFill(Color.web("#BDBDBD"));
+
+
+        TextField textField = new TextField("0.1");
+        textField.setPromptText("0.1");
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setPrefWidth(50);
+        textField.setAlignment(Pos.CENTER_RIGHT);
+
+        Slider slider = new Slider();
+        slider.setMax(SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
+        slider.setMin(-SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
+        slider.setValue(1);
+
+
+        textField.setOnKeyPressed(keyEvent ->{
+            if(keyEvent.getCode().equals(KeyCode.ENTER)){
+
+                try{
+                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
+                        textField.setText(String.valueOf(slider.getMin()));
+                    }
+
+                    slider.setValue(Double.parseDouble(textField.getText()));
+
+                }catch (NumberFormatException e){
+                    textField.setText(String.valueOf(slider.getMin()));
+                    slider.setValue(slider.getMin());
+                }
+
+            }
+        } );
+
+        //TODO: TextField should allow for 0.##, and slider only for 0.#.
+        //TODO: Height pane
+
+
+        slider.setMajorTickUnit(0.1);
+        slider.setMinorTickCount(0);
+        slider.setSnapToTicks(true);
+
+        slider.valueProperty().addListener(((observableValue, number, t1) -> {
+            DecimalFormat df = new DecimalFormat("#.#");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+            slider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
+        }));
+
+        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+
+            selectedCustomRectangle.addTranslationX(newValue.doubleValue() - oldValue.doubleValue());
+
+
+        });
+
+        HBox widthHB = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        widthHB.setPadding(new Insets(10,10,10,15));
+        widthHB.setAlignment(Pos.CENTER_LEFT);
+        widthHB.setMinHeight(30);
+
+        widthHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+
+
+        return widthHB;
+    }
+
+    private Pane getTranslationYSection(){
+        Label heightLabel = new Label("Translation Y:");
+        heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        heightLabel.setTextFill(Color.web("#BDBDBD"));
+
+        TextField textField = new TextField("0.1");
+        textField.setPromptText("0.1");
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setPrefWidth(50);
+        textField.setAlignment(Pos.CENTER_RIGHT);
+
+        Slider slider = new Slider();
+        slider.setMax(SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
+        slider.setMin(-SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
+        slider.setValue(1);
+
+        slider.setMajorTickUnit(0.1);
+        slider.setMinorTickCount(0);
+        slider.setSnapToTicks(true);
+
+        textField.setOnKeyPressed(keyEvent ->{
+            if(keyEvent.getCode().equals(KeyCode.ENTER)){
+
+                try{
+                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
+                        textField.setText(String.valueOf(slider.getMin()));
+                    }
+
+                    slider.setValue(Double.parseDouble(textField.getText()));
+
+                }catch (NumberFormatException e){
+                    textField.setText(String.valueOf(slider.getMin()));
+                    slider.setValue(slider.getMin());
+                }
+
+            }
+        } );
+
+
+        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            DecimalFormat df = new DecimalFormat("#.#");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+
+            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+
+            var oldHeight = selectedCustomRectangle.getHeight();
+
+            selectedCustomRectangle.addTranslationY(newValue.doubleValue() - oldValue.doubleValue());
+
+        });
+
+        HBox heightHB = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        heightHB.setPadding(new Insets(10,10,10,15));
+        heightHB.setAlignment(Pos.CENTER_LEFT);
+        heightHB.setMinHeight(30);
+
+        heightHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+
+        return heightHB;
     }
 
     private Pane getWidthSection(){
@@ -538,7 +836,7 @@ public class App extends Application {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            beingDrawnRectangle.setWidth(newValue.doubleValue() * SCALE);
+            selectedCustomRectangle.setWidth(newValue.doubleValue() * SCALE);
 
         });
 
@@ -602,12 +900,12 @@ public class App extends Application {
 
             if(newValue.doubleValue() > oldValue.doubleValue()){
                 System.out.println("old value: " + oldValue.doubleValue() + " <-> " + "new value: " + newValue.doubleValue());
-               beingDrawnRectangle.setTranslateY( beingDrawnRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue() ) * SCALE );
+                selectedCustomRectangle.setTranslateY( selectedCustomRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue() ) * SCALE );
             }else{
-               beingDrawnRectangle.setTranslateY(beingDrawnRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
+                selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
             }
 
-            beingDrawnRectangle.setHeight(newValue.doubleValue() * SCALE);
+            selectedCustomRectangle.setHeight(newValue.doubleValue() * SCALE);
 
             slider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
 
@@ -772,7 +1070,7 @@ public class App extends Application {
     }
 
     private Pane getSaveButtonSection(){
-        Label saveLabel = new Label("Save:");
+        Label saveLabel = new Label("Save");
         saveLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 20));
         saveLabel.setTextFill(Color.web("#6FCF97"));
 
@@ -798,5 +1096,4 @@ public class App extends Application {
     public static void main(String[] args) {
         launch();
     }
-
 }

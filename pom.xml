@@ -26,6 +26,13 @@
             <artifactId>javafx-web</artifactId>
             <version>15.0.1</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.openjfx/javafx-swing -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>16</version>
+        </dependency>
+
 
     </dependencies>
     <build>
@@ -43,7 +50,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.4</version>
                 <configuration>
-                    <mainClass>marrf.iscte.App</mainClass>
+                    <mainClass>marrf.iscte.StartMenu</mainClass>
                 </configuration>
             </plugin>
         </plugins>
