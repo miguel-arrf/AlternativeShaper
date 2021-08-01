@@ -25,6 +25,21 @@ public class GridCanvas {
 
     public boolean withBasicShape = false;
 
+    public ArrayList<CustomRectangle> getCurrentRectangles(){
+        return customRectangles;
+    }
+
+    public CustomRectangle getSimpleRectangle(){
+        if(customRectangles.size()>1){
+            try {
+                throw new Exception("SOMETHING IS NOT RIGHT :c");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return customRectangles.get(0);
+    }
+
     public void addShape(CustomRectangle customRectangle){
         System.out.println("vou adicionar, getX: " + customRectangle.getX() + ", translateX: " + customRectangle.getTranslateX());
 
@@ -38,11 +53,20 @@ public class GridCanvas {
     public GridCanvas(){
     }
 
+    public void clearEverything(boolean stillBasicShape){
+        redraw();
+        customRectangles.clear();
+
+        withBasicShape = stillBasicShape;
+    }
+
     public GridCanvas(boolean withBasicShape){
         this.withBasicShape = withBasicShape;
     }
 
-    public Pane getGrid(Pane parent){
+    private void redraw(){
+        pane.getChildren().clear();
+
         int width = SCALE;
 
         for (int i = 0; i < NUMBER_COLUMNS_AND_ROWS; i++) {
@@ -65,6 +89,10 @@ public class GridCanvas {
         circle.setCenterY(width*NUMBER_COLUMNS_AND_ROWS / 2.0);
 
         pane.getChildren().add(circle);
+    }
+
+    public Pane getGrid(Pane parent){
+        redraw();
 
 
         parent.widthProperty().addListener((observable, oldValue, newValue) -> {

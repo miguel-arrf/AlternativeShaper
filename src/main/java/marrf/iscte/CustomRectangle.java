@@ -17,6 +17,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
+import org.apache.commons.lang3.SystemUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.RenderedImage;
@@ -26,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 
@@ -37,12 +39,21 @@ public class CustomRectangle {
 
     private final Point2D translationOffset = new Point2D(0   ,-40 );
 
+    private final UUID uuid = UUID.randomUUID();
     private boolean isSimple = false;
     private boolean isSelected = false;
+
+    private VBox thumbnail = new VBox();
 
     public Point2D getTranslationOffset() {
         return translationOffset;
     }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+
 
     private void setUpStackPane(){
         if(!stackPane.getChildren().contains(rectangle)){
@@ -67,7 +78,11 @@ public class CustomRectangle {
 
 
     public Pane getThumbnail(Supplier<String> toPutIntoDragbord) {
-        VBox vBox = new VBox();
+
+
+        if(isSelected){
+            temporarlyTurnOffStroke();
+        }
 
         try{
             WritableImage writableImage = new WritableImage((int)getWidth(),
@@ -79,7 +94,12 @@ public class CustomRectangle {
             Set<PosixFilePermission> fp = PosixFilePermissions.fromString("rwxrwxrwx");
 
             //Write the snapshot to the chosen file
-            File file = Files.createTempFile("teste", ".png",PosixFilePermissions.asFileAttribute(fp)).toFile();
+            File file;
+            if(SystemUtils.IS_OS_WINDOWS){
+                file = Files.createTempFile("teste", ".png").toFile();
+            }else{
+                file = Files.createTempFile("teste", ".png",PosixFilePermissions.asFileAttribute(fp)).toFile();
+            }
 
             ImageIO.write(renderedImage, "png", file);
 
@@ -88,20 +108,21 @@ public class CustomRectangle {
             imageView.setSmooth(true);
             imageView.setPreserveRatio(true);
 
-            vBox.getChildren().add(imageView);
+            thumbnail.getChildren().clear();
+            thumbnail.getChildren().add(imageView);
         }catch (IOException e){
 
         }
 
-        vBox.setMinWidth(0.0);
+        thumbnail.setMinWidth(0.0);
 
-        vBox.setPadding(new Insets(10));
-        vBox.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
+        thumbnail.setPadding(new Insets(10));
+        thumbnail.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
 
-        HBox.setHgrow(vBox, Priority.NEVER);
+        HBox.setHgrow(thumbnail, Priority.NEVER);
 
-        vBox.setOnDragDetected(event -> {
-            Dragboard db = vBox.startDragAndDrop(TransferMode.ANY);
+        thumbnail.setOnDragDetected(event -> {
+            Dragboard db = thumbnail.startDragAndDrop(TransferMode.ANY);
 
             ClipboardContent content = new ClipboardContent();
             content.putString(toPutIntoDragbord.get());
@@ -110,7 +131,10 @@ public class CustomRectangle {
             event.consume();
         });
 
-        return vBox;
+        if(isSelected)
+            turnOnStroke();
+
+        return thumbnail;
     }
 
     public void toogleSelected(){
@@ -124,7 +148,15 @@ public class CustomRectangle {
                 + "-fx-border-radius: 5;" + "-fx-border-color: rgba(255,255,255, 1); -fx-background-color: transparent");
     }
 
-    public void turnOfStroke(){
+    private void temporarlyTurnOffStroke(){
+        strokePane.setStyle("-fx-background-color: transparent");
+    }
+
+    public void turnOffStroke(){
+        strokePane.setStyle("-fx-background-color: transparent");
+    }
+
+    public void turnOffStrokeIfNotSelected(){
         if(!isSelected){
             strokePane.setStyle("-fx-background-color: transparent");
         }

@@ -1,6 +1,11 @@
 package marrf.iscte;
 
 import javafx.application.Application;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -23,13 +28,15 @@ import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import org.json.simple.JSONObject;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Objects;
-
 
 /**
  * JavaFX App
@@ -40,14 +47,6 @@ public class App extends Application {
     public static final int NUMBER_COLUMNS_AND_ROWS = 40;
 
     private final CustomRectangle beingDrawnCustomRectangle = new CustomRectangle(SCALE,SCALE);
-    //private double initialCustomRectangleHorizontalDrag =  0;
-    //private double initialCustomRectangleVerticalDrag = 0;
-
-    //private double horizontalOffset = 0;
-    //private double verticalOffset = 0;
-
-    //private final ArrayList<Double> initialHorizontalDrag = new ArrayList<>();
-    //private final ArrayList<Double> initialVerticalDrag = new ArrayList<>();
 
     private final StackPane centerCustomRectangle = new StackPane();
 
@@ -60,6 +59,23 @@ public class App extends Application {
     private ArrayList<CustomRectangle> customRectangles = new ArrayList<>();
     private CustomRectangle selectedCustomRectangle;
 
+    private boolean isCurrentSimple = true;
+    private TextField currentName;
+
+    private final BooleanProperty firstBasicShapeWasSaved = new SimpleBooleanProperty(false);
+
+    private VBox mainPanel;
+
+
+    private HBox widthSection;
+    private HBox heightSection;
+    private HBox translationYSection;
+    private HBox translationXSection;
+    private HBox scaleXSection;
+    private HBox scaleYSection;
+
+
+    private ObservableList<CustomRectangle> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
 
     public CustomRectangle getDraggableCustomRectangle(){
 
@@ -122,7 +138,22 @@ public class App extends Application {
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setStyle("-fx-background: rgb(51,50,52); -fx-border-radius: 10");
 
-        VBox content = new VBox(getBasicShape());
+        VBox content = new VBox(/*getBasicShape()*/);
+
+        sideBarThumbnails.addListener((ListChangeListener<? super CustomRectangle>) change -> {
+            while (change.next()){
+                if(change.wasAdded()){
+                    for (CustomRectangle customRectangleAdded : change.getAddedSubList()) {
+                        Pane checkIfExists = customRectangleAdded.getThumbnail(() -> String.valueOf(customRectangles.indexOf(customRectangleAdded)));
+                        content.getChildren().remove(checkIfExists);//This only removes if it exists
+                        content.getChildren().add(checkIfExists);
+
+                    }
+                }
+            }
+
+        });
+
         content.setAlignment(Pos.TOP_CENTER);
         content.setSpacing(10);
         content.setPadding(new Insets(10));
@@ -134,7 +165,7 @@ public class App extends Application {
         return scrollPane;
     }
 
-    public static HBox addBasicAndComplexButtons(){
+    public HBox addBasicAndComplexButtons(){
 
         Image basicPlus = new Image(App.class.getResource("/icons/plus.png").toExternalForm());
         ImageView basicPlusImageView = new ImageView(basicPlus);
@@ -162,6 +193,20 @@ public class App extends Application {
         basicShapeVBox.setStyle("-fx-background-color: #355765;-fx-background-radius: 20");
         HBox.setHgrow(basicShapeVBox, Priority.ALWAYS);
 
+        basicShapeVBox.setOnMouseClicked(mouseEvent -> {
+            System.out.println("I want to add a new basic shape!");
+            gridCanvas.clearEverything(true);
+            isCurrentSimple = true;
+            currentName.setText("simpleDefault");
+
+            mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+            mainPanel.getChildren().removeAll(widthSection, heightSection);
+            mainPanel.getChildren().addAll(widthSection, heightSection);
+
+            addShape(new CustomRectangle(SCALE, SCALE, true, Color.web("#55efc4")));
+
+        });
+
 
         Label complexShape = new Label("Complex Shape");
         complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
@@ -176,12 +221,33 @@ public class App extends Application {
         complexShapeVBox.setStyle("-fx-background-color: #644832;-fx-background-radius: 20");
         HBox.setHgrow(complexShapeVBox, Priority.ALWAYS);
 
+        complexShapeVBox.setOnMouseClicked(mouseEvent -> {
+            System.out.println("I want to add a new complex shape!");
+            gridCanvas.clearEverything(false);
+            isCurrentSimple = false;
+            currentName.setText("complexDefault");
+
+            mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+            mainPanel.getChildren().removeAll(widthSection,heightSection);
+            mainPanel.getChildren().addAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+        });
 
         HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
         saveHB.setSpacing(10);
         saveHB.setAlignment(Pos.CENTER);
-        saveHB.setMaxHeight(30);
-        saveHB.setPrefHeight(30);
+        saveHB.setMaxHeight(50);
+        saveHB.setPrefHeight(50);
+
+        Pane toAdd = getSeparator();
+
+        firstBasicShapeWasSaved.addListener((observableValue, aBoolean, t1) -> {
+            if(t1){
+                mainPanel.getChildren().addAll(toAdd, saveHB);
+            }else{
+                mainPanel.getChildren().remove(toAdd);
+                mainPanel.getChildren().remove(saveHB);
+            }
+        });
 
         return saveHB;
     }
@@ -193,9 +259,11 @@ public class App extends Application {
 
 
     public Pane getScenePanel(Scene scene){
+        finishSetup();
+
         this.scene = scene;
 
-        var mainPanel = new VBox();
+        mainPanel = new VBox();
         mainPanel.setMaxWidth(400);
         mainPanel.setPrefSize(400, 700);
         mainPanel.setStyle("-fx-background-color: #262528;");
@@ -204,11 +272,12 @@ public class App extends Application {
         mainPanel.setSpacing(15);
 
 
-        Slider slider = new Slider(30, 120, 90);
-        CustomRectangle draggableCustomRectangle = getDraggableCustomRectangle();
-        slider.valueProperty().addListener((observable, oldValue, newValue) -> draggableCustomRectangle.setWidth(newValue.doubleValue()));
+        //Slider slider = new Slider(30, 120, 90);
+        //CustomRectangle draggableCustomRectangle = getDraggableCustomRectangle();
+        //slider.valueProperty().addListener((observable, oldValue, newValue) -> draggableCustomRectangle.setWidth(newValue.doubleValue()));
 
-        mainPanel.getChildren().addAll(/*draggableCustomRectangle.getRectangle(), slider, getScrollPane(), addBasicAndComplexButtons(), getSeparator(),*/verticalGrower(), getNameSection() /*, getTranslationXSection(), getTranslationYSection(), getScaleXSection(), getScaleYSection()*/,getWidthSection(),getHeightSection(),getButtonsSection(), getSaveButtonSection());
+
+        mainPanel.getChildren().addAll(/*draggableCustomRectangle.getRectangle(), slider, getScrollPane(), addBasicAndComplexButtons(), getSeparator(),*/getScrollPane(), getNameSection() /*, getTranslationXSection(), getTranslationYSection(), getScaleXSection(), getScaleYSection()*/,widthSection,heightSection,/*getButtonsSection(),*/ getSaveButtonSection());
 
         var scenePanel = new VBox(mainPanel);
         scenePanel.setStyle("-fx-background-color: black");
@@ -225,7 +294,20 @@ public class App extends Application {
 
         addShape(new CustomRectangle(SCALE, SCALE, true, Color.web("#55efc4")));
 
+
         return borderPane;
+    }
+
+    private void finishSetup(){
+        addBasicAndComplexButtons();
+        setUpGetScaleXSection();
+        setUpGetScaleYSection();
+        setUpGetTranslationXSection();
+        setUpGetTranslationYSection();
+
+        setUpGetWidthSection();
+        setUpGetHeightSection();
+
     }
 
     @Override
@@ -303,7 +385,7 @@ public class App extends Application {
                         selectedCustomRectangle.turnOnStroke();
                         selectedCustomRectangle.toogleSelected();
 
-                        customRectangles.stream().filter(r -> r != rectangle).forEach(CustomRectangle::turnOfStroke);
+                        customRectangles.stream().filter(r -> r != rectangle).forEach(CustomRectangle::turnOffStroke);
                         //selectedCustomRectangle.setStrokeWidth(2);
                         //selectedCustomRectangle.setStroke(Color.BLACK);
 
@@ -331,8 +413,14 @@ public class App extends Application {
                 System.out.println("this was dropped: " + db.getString());
 
                 System.out.println("event x: " + event.getX() + ", y: " + event.getY());
-                CustomRectangle customRectangleToAdd = getCopyWithBindWidthAndHeightFrom(Integer.parseInt(db.getString()));
-                addShape(customRectangleToAdd);
+
+                if(!isCurrentSimple){
+                    CustomRectangle customRectangleToAdd = getCopyWithBindWidthAndHeightFrom(Integer.parseInt(db.getString()));
+                    addShape(customRectangleToAdd);
+                }else {
+                    System.err.println("Não adicionei nada porque agora estamos numa current Simple!");
+                }
+
 
 
                 success = true;
@@ -351,10 +439,10 @@ public class App extends Application {
                     if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()){
                         rectangle.turnOnStroke();
                     }else{
-                        rectangle.turnOfStroke();
+                        rectangle.turnOffStrokeIfNotSelected();
                     }
                 }else{
-                    rectangle.turnOfStroke();
+                    rectangle.turnOffStrokeIfNotSelected();
                 }
             });
 
@@ -458,12 +546,13 @@ public class App extends Application {
         namePrompt.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         namePrompt.setTextFill(Color.web("#BDBDBD"));
 
-        TextField textField = new TextField(" default ");
-        textField.setPromptText("default");
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #5D5C5E; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        currentName = new TextField(" default ");
+        currentName.setPromptText("default");
+        currentName.setStyle("-fx-background-color: #333234; -fx-text-fill: #5D5C5E; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        currentName.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
 
-        HBox nameHB = new HBox(namePrompt, textField);
+
+        HBox nameHB = new HBox(namePrompt, currentName);
         nameHB.setPadding(new Insets(10,10,10,15));
         nameHB.setAlignment(Pos.CENTER_LEFT);
         nameHB.setMaxHeight(30);
@@ -501,7 +590,7 @@ public class App extends Application {
         return horizontalGrower;
     }
 
-    private Pane getScaleXSection(){
+    private void setUpGetScaleXSection(){
         Label widthLabel = new Label("Scale X:");
         widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         widthLabel.setTextFill(Color.web("#BDBDBD"));
@@ -559,18 +648,14 @@ public class App extends Application {
             selectedCustomRectangle.setScaleX( newValue.doubleValue());
         });
 
-        HBox widthHB = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
-        widthHB.setPadding(new Insets(10,10,10,15));
-        widthHB.setAlignment(Pos.CENTER_LEFT);
-        widthHB.setMinHeight(30);
-
-        widthHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-
-
-        return widthHB;
+        scaleXSection = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        scaleXSection.setPadding(new Insets(10,10,10,15));
+        scaleXSection.setAlignment(Pos.CENTER_LEFT);
+        scaleXSection.setMinHeight(30);
+        scaleXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
 
-    private Pane getScaleYSection(){
+    private void setUpGetScaleYSection(){
         Label heightLabel = new Label("Scale Y:");
         heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         heightLabel.setTextFill(Color.web("#BDBDBD"));
@@ -635,17 +720,16 @@ public class App extends Application {
 
         });
 
-        HBox heightHB = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
-        heightHB.setPadding(new Insets(10,10,10,15));
-        heightHB.setAlignment(Pos.CENTER_LEFT);
-        heightHB.setMinHeight(30);
-
-        heightHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-
-        return heightHB;
+        scaleYSection = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        scaleYSection.setPadding(new Insets(10,10,10,15));
+        scaleYSection.setAlignment(Pos.CENTER_LEFT);
+        scaleYSection.setMinHeight(30);
+        scaleYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
 
-    private Pane getTranslationXSection(){
+
+
+    private void setUpGetTranslationXSection(){
         Label widthLabel = new Label("Translation X:");
         widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         widthLabel.setTextFill(Color.web("#BDBDBD"));
@@ -705,18 +789,14 @@ public class App extends Application {
 
         });
 
-        HBox widthHB = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
-        widthHB.setPadding(new Insets(10,10,10,15));
-        widthHB.setAlignment(Pos.CENTER_LEFT);
-        widthHB.setMinHeight(30);
-
-        widthHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-
-
-        return widthHB;
+        translationXSection = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        translationXSection.setPadding(new Insets(10,10,10,15));
+        translationXSection.setAlignment(Pos.CENTER_LEFT);
+        translationXSection.setMinHeight(30);
+        translationXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
 
-    private Pane getTranslationYSection(){
+    private void setUpGetTranslationYSection(){
         Label heightLabel = new Label("Translation Y:");
         heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         heightLabel.setTextFill(Color.web("#BDBDBD"));
@@ -769,17 +849,16 @@ public class App extends Application {
 
         });
 
-        HBox heightHB = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
-        heightHB.setPadding(new Insets(10,10,10,15));
-        heightHB.setAlignment(Pos.CENTER_LEFT);
-        heightHB.setMinHeight(30);
-
-        heightHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-
-        return heightHB;
+        translationYSection = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        translationYSection.setPadding(new Insets(10,10,10,15));
+        translationYSection.setAlignment(Pos.CENTER_LEFT);
+        translationYSection.setMinHeight(30);
+        translationYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
 
-    private Pane getWidthSection(){
+
+
+    private void setUpGetWidthSection(){
         Label widthLabel = new Label("Width:");
         widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         widthLabel.setTextFill(Color.web("#BDBDBD"));
@@ -840,18 +919,15 @@ public class App extends Application {
 
         });
 
-        HBox widthHB = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
-        widthHB.setPadding(new Insets(10,10,10,15));
-        widthHB.setAlignment(Pos.CENTER_LEFT);
-        widthHB.setMinHeight(30);
+        widthSection = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        widthSection.setPadding(new Insets(10,10,10,15));
+        widthSection.setAlignment(Pos.CENTER_LEFT);
+        widthSection.setMinHeight(30);
 
-        widthHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-
-
-        return widthHB;
+        widthSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
 
-    private Pane getHeightSection(){
+    private void  setUpGetHeightSection(){
         Label heightLabel = new Label("Height:");
         heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         heightLabel.setTextFill(Color.web("#BDBDBD"));
@@ -899,7 +975,6 @@ public class App extends Application {
             textField.setText(String.valueOf(truncatedDouble));
 
             if(newValue.doubleValue() > oldValue.doubleValue()){
-                System.out.println("old value: " + oldValue.doubleValue() + " <-> " + "new value: " + newValue.doubleValue());
                 selectedCustomRectangle.setTranslateY( selectedCustomRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue() ) * SCALE );
             }else{
                 selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
@@ -911,15 +986,16 @@ public class App extends Application {
 
         });
 
-        HBox heightHB = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
-        heightHB.setPadding(new Insets(10,10,10,15));
-        heightHB.setAlignment(Pos.CENTER_LEFT);
-        heightHB.setMinHeight(30);
+        heightSection = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        heightSection.setPadding(new Insets(10,10,10,15));
+        heightSection.setAlignment(Pos.CENTER_LEFT);
+        heightSection.setMinHeight(30);
 
-        heightHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        heightSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
 
-        return heightHB;
     }
+
+
 
     private Pane getButtonsSection(){
         HBox hBox = new HBox(getToFrontPane(), getColorButton(), getImageButton());
@@ -1086,11 +1162,44 @@ public class App extends Application {
 
         saveHB.setOnMouseExited(event -> saveHB.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 20"));
 
-
-
-
+        saveHB.setOnMouseClicked(mouseEvent -> {
+            saveCurrentShape();
+        });
 
         return saveHB;
+    }
+
+    private void saveCurrentShape(){
+        if(isCurrentSimple){
+            CustomRectangle currentRectangle = gridCanvas.getSimpleRectangle();
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("id", currentRectangle.getUuid().toString());
+            jsonObject.put("basic", "true");
+            jsonObject.put("color", currentRectangle.rectangle.getFill().toString());
+            jsonObject.put("width", currentRectangle.getWidth());
+            jsonObject.put("height", currentRectangle.getHeight());
+            jsonObject.put("name", currentName.getText());
+
+            try{
+                FileWriter fileWriter = new FileWriter("C:\\Users\\Miguel\\Downloads\\objetos\\test.json");
+                System.out.println("vou escrever: " + jsonObject.toJSONString());
+                fileWriter.append("\n");
+                fileWriter.append(jsonObject.toJSONString());
+                fileWriter.flush();
+                fileWriter.close();
+
+                firstBasicShapeWasSaved.setValue(true);
+                sideBarThumbnails.add(currentRectangle);
+                //sideBarThumbnails.add(customRectangles.get(0).getThumbnail(() -> String.valueOf(customRectangles.indexOf(customRectangles.get(0)))));
+            }catch (IOException e){
+                firstBasicShapeWasSaved.setValue(false);
+                e.printStackTrace();
+            }
+
+        }else{
+            System.err.println("Current is not simple!");
+        }
     }
 
     public static void main(String[] args) {

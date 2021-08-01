@@ -3,6 +3,7 @@ package marrf.iscte;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -13,6 +14,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.util.Objects;
@@ -69,6 +71,21 @@ public class StartMenu extends Application {
         primaryStage.setTitle("Alternative Shaper");
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        for(int i = 0; i < Screen.getScreens().size(); i++){
+            Screen screen = Screen.getScreens().get(i);
+            Rectangle2D bounds = screen.getVisualBounds();
+
+            System.out.println("screen: " + screen);
+
+            if(i == 1){
+                primaryStage.setX(bounds.getMinX());
+                primaryStage.setY(bounds.getMinY());
+
+            }
+
+        }
+
     }
 
     public static void main(String[] args) {
