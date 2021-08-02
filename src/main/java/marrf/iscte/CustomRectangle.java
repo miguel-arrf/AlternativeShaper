@@ -137,6 +137,10 @@ public class CustomRectangle {
         return thumbnail;
     }
 
+    public void toogleOffSelection(){
+        isSelected = false;
+    }
+
     public void toogleSelected(){
         isSelected = !isSelected;
     }

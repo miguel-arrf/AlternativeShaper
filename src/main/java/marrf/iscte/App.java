@@ -203,7 +203,7 @@ public class App extends Application {
             mainPanel.getChildren().removeAll(widthSection, heightSection);
             mainPanel.getChildren().addAll(widthSection, heightSection);
 
-            addShape(new CustomRectangle(SCALE, SCALE, true, Color.web("#55efc4")));
+            addShape(new CustomRectangle(SCALE, SCALE, true, Color.web("#55efc4")), true);
 
         });
 
@@ -253,9 +253,23 @@ public class App extends Application {
     }
 
     private void addShape(CustomRectangle customRectangleToAdd){
+        addShape(customRectangleToAdd, false);
+    }
+
+    private void addShape(CustomRectangle customRectangleToAdd, boolean selected){
         gridCanvas.addShape(customRectangleToAdd);
         customRectangles.add(customRectangleToAdd);
+        if(selected){
+            selectedCustomRectangle = customRectangleToAdd;
+            selectedCustomRectangle.turnOnStroke();
+            selectedCustomRectangle.toogleSelected();
+
+            customRectangles.stream().filter(r -> r != customRectangleToAdd).forEach(CustomRectangle::turnOffStroke);
+
+        }
     }
+
+
 
 
     public Pane getScenePanel(Scene scene){
@@ -329,7 +343,6 @@ public class App extends Application {
             Screen screen = Screen.getScreens().get(i);
             Rectangle2D bounds = screen.getVisualBounds();
 
-            System.out.println("screen: " + screen);
 
             if(i == 0){
                 stage.setX(bounds.getMinX());
@@ -386,6 +399,8 @@ public class App extends Application {
                         selectedCustomRectangle.toogleSelected();
 
                         customRectangles.stream().filter(r -> r != rectangle).forEach(CustomRectangle::turnOffStroke);
+                        customRectangles.stream().filter(r -> r != rectangle).forEach(CustomRectangle::toogleOffSelection);
+
                         //selectedCustomRectangle.setStrokeWidth(2);
                         //selectedCustomRectangle.setStroke(Color.BLACK);
 
@@ -417,6 +432,8 @@ public class App extends Application {
                 if(!isCurrentSimple){
                     CustomRectangle customRectangleToAdd = getCopyWithBindWidthAndHeightFrom(Integer.parseInt(db.getString()));
                     addShape(customRectangleToAdd);
+                    customRectangleToAdd.toogleOffSelection();
+                    //TODO Here we need to reset the sliders... that's why a offset is being created when we drop in a new shape...
                 }else {
                     System.err.println("Não adicionei nada porque agora estamos numa current Simple!");
                 }
