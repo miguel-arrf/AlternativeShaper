@@ -66,17 +66,18 @@ public class App extends Application {
 
     private VBox mainPanel;
 
+    private VBox transformersBox = new VBox();
 
-    private HBox widthSection;
-    private HBox heightSection;
+    //private HBox widthSection;
+    //private HBox heightSection;
     private HBox translationYSection;
     private HBox translationXSection;
     private HBox scaleXSection;
     private HBox scaleYSection;
 
 
-    private Slider heightSectionSlider;
-    private Slider widthSectionSlider;
+    //private Slider heightSectionSlider;
+    //private Slider widthSectionSlider;
     private Slider translationXSlider;
     private Slider translationYSlider;
     private Slider scaleXSlider;
@@ -165,12 +166,10 @@ public class App extends Application {
                             isCurrentSimple = true;
 
                             mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
-                            mainPanel.getChildren().removeAll(widthSection, heightSection);
-                            mainPanel.getChildren().addAll(widthSection, heightSection);
 
                             resetSliders();
 
-                            addShape(customRectangleAdded);
+                            addShape(customRectangleAdded, true);
 
                         });
 
@@ -226,10 +225,13 @@ public class App extends Application {
             currentName.setText("simpleDefault");
 
             mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
-            mainPanel.getChildren().removeAll(widthSection, heightSection);
-            mainPanel.getChildren().addAll(widthSection, heightSection);
+            transformersBox.getChildren().clear();
+
+            //mainPanel.getChildren().removeAll(widthSection, heightSection);
+            //mainPanel.getChildren().addAll(widthSection, heightSection);
 
             resetSliders();
+
 
             addShape(new CustomRectangle(SCALE, SCALE, true, Color.web("#55efc4")), true);
 
@@ -256,8 +258,8 @@ public class App extends Application {
             currentName.setText("complexDefault");
 
             mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
-            mainPanel.getChildren().removeAll(widthSection,heightSection);
-            mainPanel.getChildren().addAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+            transformersBox.getChildren().clear();
+            transformersBox.getChildren().addAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
         });
 
         HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
@@ -297,6 +299,10 @@ public class App extends Application {
             customRectangles.stream().filter(r -> r != customRectangleToAdd).forEach(CustomRectangle::turnOffStroke);
 
         }
+
+        transformersBox.getChildren().clear();
+        transformersBox.getChildren().addAll(customRectangleToAdd.getWidthSection(), customRectangleToAdd.getHeightSection());
+
     }
 
 
@@ -315,13 +321,9 @@ public class App extends Application {
         mainPanel.setPadding(new Insets(10,20,10,20));
         mainPanel.setSpacing(15);
 
+        mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),transformersBox, getSaveButtonSection());
 
-        //Slider slider = new Slider(30, 120, 90);
-        //CustomRectangle draggableCustomRectangle = getDraggableCustomRectangle();
-        //slider.valueProperty().addListener((observable, oldValue, newValue) -> draggableCustomRectangle.setWidth(newValue.doubleValue()));
-
-
-        mainPanel.getChildren().addAll(/*draggableCustomRectangle.getRectangle(), slider, getScrollPane(), addBasicAndComplexButtons(), getSeparator(),*/getScrollPane(), getNameSection() /*, getTranslationXSection(), getTranslationYSection(), getScaleXSection(), getScaleYSection()*/,widthSection,heightSection,/*getButtonsSection(),*/ getSaveButtonSection());
+        transformersBox.setSpacing(10);
 
         var scenePanel = new VBox(mainPanel);
         scenePanel.setStyle("-fx-background-color: black");
@@ -349,8 +351,8 @@ public class App extends Application {
         setUpGetTranslationXSection();
         setUpGetTranslationYSection();
 
-        setUpGetWidthSection();
-        setUpGetHeightSection();
+        //setUpGetWidthSection();
+        //setUpGetHeightSection();
 
     }
 
@@ -375,8 +377,8 @@ public class App extends Application {
 
 
             if(i == 0){
-                stage.setX(bounds.getMinX());
-                stage.setY(bounds.getMinY());
+                stage.setX(bounds.getMinX() + 100);
+                stage.setY(bounds.getMinY() + 100);
 
             }
 
@@ -619,7 +621,7 @@ public class App extends Application {
         return verticalGrower;
     }
 
-    private HBox horizontalGrower(){
+    public static HBox horizontalGrower(){
         var horizontalGrower = new HBox();
 
         HBox.setHgrow(horizontalGrower, Priority.ALWAYS);
@@ -906,7 +908,7 @@ public class App extends Application {
     }
 
 
-
+/*
     private void setUpGetWidthSection(){
         Label widthLabel = new Label("Width:");
         widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
@@ -1046,19 +1048,20 @@ public class App extends Application {
         heightSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
 
     }
-
+*/
 
     private void resetSliders(){
         resetingSliders = true;
-        heightSectionSlider.adjustValue(1);
-        heightSectionSlider.setValue(1);
-        widthSectionSlider.setValue(1);
+
+        //heightSectionSlider.setValue(1);
+        //widthSectionSlider.setValue(1);
 
         translationXSlider.setValue(1);
         translationYSlider.setValue(1);
 
         scaleXSlider.setValue(1);
         scaleYSlider.setValue(1);
+
         resetingSliders = false;
     }
 

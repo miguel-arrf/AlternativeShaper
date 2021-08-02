@@ -7,32 +7,40 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.TransferMode;
+import javafx.scene.input.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import org.apache.commons.lang3.SystemUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.text.DecimalFormat;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import static marrf.iscte.App.horizontalGrower;
 
 public class CustomRectangle {
 
+    private static final int SCALE = 40;
     StackPane stackPane = new StackPane();
     Rectangle rectangle = new Rectangle();
     Pane strokePane = new Pane();
@@ -42,6 +50,9 @@ public class CustomRectangle {
     private final UUID uuid = UUID.randomUUID();
     private boolean isSimple = false;
     private boolean isSelected = false;
+
+    private HBox widthSection;
+    private HBox heightSection = new HBox();
 
     private VBox thumbnail = new VBox();
 
@@ -76,11 +87,165 @@ public class CustomRectangle {
         }
     }
 
+    private boolean isStrokeOn(){
+     return strokePane.getStyle().contains("-fx-border-radius");
+    }
+
+    public HBox getWidthSection() {
+        return widthSection;
+    }
+
+    public HBox getHeightSection() {
+        return heightSection;
+    }
+
+    public void setUpWidthBox(){
+        Label widthLabel = new Label("Width:");
+        widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        widthLabel.setTextFill(Color.web("#BDBDBD"));
+
+
+        TextField textField = new TextField("0.1");
+        textField.setPromptText("0.1");
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setPrefWidth(50);
+        textField.setAlignment(Pos.CENTER_RIGHT);
+
+        Slider widthSectionSlider = new Slider();
+        widthSectionSlider.setMax(10);
+        widthSectionSlider.setMin(0.1);
+        widthSectionSlider.setValue(1);
+
+
+        textField.setOnKeyPressed(keyEvent ->{
+            if(keyEvent.getCode().equals(KeyCode.ENTER)){
+
+                try{
+                    if(Double.parseDouble(textField.getText()) < widthSectionSlider.getMin()){
+                        textField.setText(String.valueOf(widthSectionSlider.getMin()));
+                    }
+
+                    widthSectionSlider.setValue(Double.parseDouble(textField.getText()));
+
+                }catch (NumberFormatException e){
+                    textField.setText(String.valueOf(widthSectionSlider.getMin()));
+                    widthSectionSlider.setValue(widthSectionSlider.getMin());
+                }
+
+            }
+        } );
+
+        //TODO: TextField should allow for 0.##, and slider only for 0.#.
+        //TODO: Height pane
+
+
+        widthSectionSlider.setMajorTickUnit(0.1);
+        widthSectionSlider.setMinorTickCount(0);
+        widthSectionSlider.setSnapToTicks(true);
+
+        widthSectionSlider.valueProperty().addListener(((observableValue, number, t1) -> {
+            DecimalFormat df = new DecimalFormat("#.#");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+            widthSectionSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
+        }));
+
+        widthSectionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+
+            this.setWidth(newValue.doubleValue() * SCALE);
+
+        });
+
+        widthSection = new HBox(widthLabel, horizontalGrower(), widthSectionSlider, horizontalGrower(), textField);
+        widthSection.setPadding(new Insets(10,10,10,15));
+        widthSection.setAlignment(Pos.CENTER_LEFT);
+        widthSection.setMinHeight(30);
+
+        widthSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+
+    }
+
+    public void setUpHeightBox(){
+        Label heightLabel = new Label("Height:");
+        heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        heightLabel.setTextFill(Color.web("#BDBDBD"));
+
+        TextField textField = new TextField("0.1");
+        textField.setPromptText("0.1");
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setPrefWidth(50);
+        textField.setAlignment(Pos.CENTER_RIGHT);
+
+        Slider heightSectionSlider = new Slider();
+        heightSectionSlider.setMax(10);
+        heightSectionSlider.setMin(0.1);
+        heightSectionSlider.setValue(1);
+
+        heightSectionSlider.setMajorTickUnit(0.1);
+        heightSectionSlider.setMinorTickCount(0);
+        heightSectionSlider.setSnapToTicks(true);
+
+        textField.setOnKeyPressed(keyEvent ->{
+            if(keyEvent.getCode().equals(KeyCode.ENTER)){
+
+                try{
+                    if(Double.parseDouble(textField.getText()) < heightSectionSlider.getMin()){
+                        textField.setText(String.valueOf(heightSectionSlider.getMin()));
+                    }
+
+                    heightSectionSlider.setValue(Double.parseDouble(textField.getText()));
+
+                }catch (NumberFormatException e){
+                    textField.setText(String.valueOf(heightSectionSlider.getMin()));
+                    heightSectionSlider.setValue(heightSectionSlider.getMin());
+                }
+
+            }
+        } );
+
+
+        heightSectionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            DecimalFormat df = new DecimalFormat("#.#");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+
+            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+
+                if (newValue.doubleValue() > oldValue.doubleValue()) {
+                    this.setTranslateY(this.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
+                } else {
+                    this.setTranslateY(this.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
+                }
+
+            this.setHeight(newValue.doubleValue() * SCALE);
+
+                heightSectionSlider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
+
+        });
+
+        heightSection = new HBox(heightLabel, horizontalGrower(), heightSectionSlider, horizontalGrower(), textField);
+        heightSection.setPadding(new Insets(10,10,10,15));
+        heightSection.setAlignment(Pos.CENTER_LEFT);
+        heightSection.setMinHeight(30);
+
+        heightSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+    }
 
     public void redrawThumbnail(){
+
+        boolean wasSelected = isStrokeOn();
+
+        if(wasSelected){
+            temporarlyTurnOffStroke();
+        }
+
         if(isSelected){
             temporarlyTurnOffStroke();
         }
+
 
 
         try{
@@ -115,10 +280,19 @@ public class CustomRectangle {
 
         if(isSelected)
             turnOnStroke();
+
+        if(wasSelected)
+            turnOnStroke();
     }
 
 
     public Pane getThumbnail(Supplier<String> toPutIntoDragbord) {
+
+        boolean wasSelected = isStrokeOn();
+
+        if(wasSelected){
+            temporarlyTurnOffStroke();
+        }
 
 
         if(isSelected){
@@ -176,6 +350,10 @@ public class CustomRectangle {
         if(isSelected)
             turnOnStroke();
 
+        if(wasSelected){
+            turnOnStroke();
+        }
+
         return thumbnail;
     }
 
@@ -215,19 +393,27 @@ public class CustomRectangle {
         return stackPane;
     }
 
+    private void setUpComponents(){
+        setUpHeightBox();
+        setUpWidthBox();
+    }
+
     public CustomRectangle(int width, int height){
         rectangle = new Rectangle(width, height);
+        setUpComponents();
     }
 
     public CustomRectangle(int width, int height, boolean isSimple){
         rectangle = new Rectangle(width, height);
         this.isSimple = isSimple;
+        setUpComponents();
     }
 
     public CustomRectangle(int width, int height, boolean isSimple, Paint color){
         rectangle = new Rectangle(width, height);
         rectangle.setFill(color);
         this.isSimple = isSimple;
+        setUpComponents();
     }
 
     public DoubleProperty scaleXProperty(){
@@ -353,11 +539,8 @@ public class CustomRectangle {
     }
 
     public CustomRectangle(){
-
+        setUpComponents();
     }
 
-    public CustomRectangle(boolean isSimple){
-        this.isSimple = isSimple;
-    }
 
 }
