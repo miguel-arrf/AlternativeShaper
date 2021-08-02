@@ -160,6 +160,18 @@ public class App extends Application {
 
                         checkIfExists.setOnMouseClicked(mouseEvent -> {
                             System.out.println("I've clicked on a thumbnail!");
+                            gridCanvas.clearEverything(true);
+                            //TODO aqui está a true, mas em algum momento não será...
+                            isCurrentSimple = true;
+
+                            mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+                            mainPanel.getChildren().removeAll(widthSection, heightSection);
+                            mainPanel.getChildren().addAll(widthSection, heightSection);
+
+                            resetSliders();
+
+                            addShape(customRectangleAdded);
+
                         });
 
                     }
@@ -274,7 +286,9 @@ public class App extends Application {
 
     private void addShape(CustomRectangle customRectangleToAdd, boolean selected){
         gridCanvas.addShape(customRectangleToAdd);
-        customRectangles.add(customRectangleToAdd);
+        if(!customRectangles.contains(customRectangleToAdd)){
+            customRectangles.add(customRectangleToAdd);
+        }
         if(selected){
             selectedCustomRectangle = customRectangleToAdd;
             selectedCustomRectangle.turnOnStroke();
