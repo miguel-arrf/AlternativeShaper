@@ -75,6 +75,16 @@ public class App extends Application {
     private HBox scaleYSection;
 
 
+    private Slider heightSectionSlider;
+    private Slider widthSectionSlider;
+    private Slider translationXSlider;
+    private Slider translationYSlider;
+    private Slider scaleXSlider;
+    private Slider scaleYSlider;
+
+    private boolean resetingSliders = false;
+
+
     private ObservableList<CustomRectangle> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
 
     public CustomRectangle getDraggableCustomRectangle(){
@@ -148,6 +158,10 @@ public class App extends Application {
                         content.getChildren().remove(checkIfExists);//This only removes if it exists
                         content.getChildren().add(checkIfExists);
 
+                        checkIfExists.setOnMouseClicked(mouseEvent -> {
+                            System.out.println("I've clicked on a thumbnail!");
+                        });
+
                     }
                 }
             }
@@ -202,6 +216,8 @@ public class App extends Application {
             mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
             mainPanel.getChildren().removeAll(widthSection, heightSection);
             mainPanel.getChildren().addAll(widthSection, heightSection);
+
+            resetSliders();
 
             addShape(new CustomRectangle(SCALE, SCALE, true, Color.web("#55efc4")), true);
 
@@ -620,25 +636,25 @@ public class App extends Application {
         textField.setPrefWidth(50);
         textField.setAlignment(Pos.CENTER_RIGHT);
 
-        Slider slider = new Slider();
-        slider.setMax(10);
-        slider.setMin(0.1);
-        slider.setValue(1);
+        scaleXSlider = new Slider();
+        scaleXSlider.setMax(10);
+        scaleXSlider.setMin(0.1);
+        scaleXSlider.setValue(1);
 
 
         textField.setOnKeyPressed(keyEvent ->{
             if(keyEvent.getCode().equals(KeyCode.ENTER)){
 
                 try{
-                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
-                        textField.setText(String.valueOf(slider.getMin()));
+                    if(Double.parseDouble(textField.getText()) < scaleXSlider.getMin()){
+                        textField.setText(String.valueOf(scaleXSlider.getMin()));
                     }
 
-                    slider.setValue(Double.parseDouble(textField.getText()));
+                    scaleXSlider.setValue(Double.parseDouble(textField.getText()));
 
                 }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(slider.getMin()));
-                    slider.setValue(slider.getMin());
+                    textField.setText(String.valueOf(scaleXSlider.getMin()));
+                    scaleXSlider.setValue(scaleXSlider.getMin());
                 }
 
             }
@@ -648,24 +664,26 @@ public class App extends Application {
         //TODO: Height pane
 
 
-        slider.setMajorTickUnit(0.1);
-        slider.setMinorTickCount(0);
-        slider.setSnapToTicks(true);
+        scaleXSlider.setMajorTickUnit(0.1);
+        scaleXSlider.setMinorTickCount(0);
+        scaleXSlider.setSnapToTicks(true);
 
-        slider.valueProperty().addListener(((observableValue, number, t1) -> {
+        scaleXSlider.valueProperty().addListener(((observableValue, number, t1) -> {
             DecimalFormat df = new DecimalFormat("#.#");
             df.setRoundingMode(RoundingMode.HALF_UP);
-            slider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
+            scaleXSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
         }));
 
-        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+        scaleXSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            selectedCustomRectangle.setScaleX( newValue.doubleValue());
+            if(!resetingSliders) {
+                selectedCustomRectangle.setScaleX(newValue.doubleValue());
+            }
         });
 
-        scaleXSection = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        scaleXSection = new HBox(widthLabel, horizontalGrower(), scaleXSlider, horizontalGrower(), textField);
         scaleXSection.setPadding(new Insets(10,10,10,15));
         scaleXSection.setAlignment(Pos.CENTER_LEFT);
         scaleXSection.setMinHeight(30);
@@ -684,60 +702,57 @@ public class App extends Application {
         textField.setPrefWidth(50);
         textField.setAlignment(Pos.CENTER_RIGHT);
 
-        Slider slider = new Slider();
-        slider.setMax(10);
-        slider.setMin(0.1);
-        slider.setValue(1);
+        scaleYSlider = new Slider();
+        scaleYSlider.setMax(10);
+        scaleYSlider.setMin(0.1);
+        scaleYSlider.setValue(1);
 
-        slider.setMajorTickUnit(0.1);
-        slider.setMinorTickCount(0);
-        slider.setSnapToTicks(true);
+        scaleYSlider.setMajorTickUnit(0.1);
+        scaleYSlider.setMinorTickCount(0);
+        scaleYSlider.setSnapToTicks(true);
 
         textField.setOnKeyPressed(keyEvent ->{
             if(keyEvent.getCode().equals(KeyCode.ENTER)){
 
                 try{
-                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
-                        textField.setText(String.valueOf(slider.getMin()));
+                    if(Double.parseDouble(textField.getText()) < scaleYSlider.getMin()){
+                        textField.setText(String.valueOf(scaleYSlider.getMin()));
                     }
 
-                    slider.setValue(Double.parseDouble(textField.getText()));
+                    scaleYSlider.setValue(Double.parseDouble(textField.getText()));
 
                 }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(slider.getMin()));
-                    slider.setValue(slider.getMin());
+                    textField.setText(String.valueOf(scaleYSlider.getMin()));
+                    scaleYSlider.setValue(scaleYSlider.getMin());
                 }
 
             }
         } );
 
 
-        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+        scaleYSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             DecimalFormat df = new DecimalFormat("#.#");
             df.setRoundingMode(RoundingMode.HALF_UP);
 
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            var oldHeight = selectedCustomRectangle.getHeight();
-            selectedCustomRectangle.setScaleY(newValue.doubleValue());
+            if(!resetingSliders) {
 
-            if(newValue.doubleValue() > oldValue.doubleValue()){
-                //selectedCustomRectangle.setTranslateY( selectedCustomRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue() ) * SCALE);
-               selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() - Math.abs(selectedCustomRectangle.getHeight() - oldHeight));
-                System.out.println("-> " + Math.abs(selectedCustomRectangle.getHeight()*oldValue.doubleValue() - selectedCustomRectangle.getHeight()*newValue.doubleValue()));
-                System.out.println("altura: " + selectedCustomRectangle.getHeight());
-            }/*else{
-                selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
-            }*/
+                var oldHeight = selectedCustomRectangle.getHeight();
+                selectedCustomRectangle.setScaleY(newValue.doubleValue());
 
-            //beingDrawnCustomRectangle.setHeight(newValue.doubleValue() * SCALE);
+                if (newValue.doubleValue() > oldValue.doubleValue()) {
+                    selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() - Math.abs(selectedCustomRectangle.getHeight() - oldHeight));
+                    System.out.println("-> " + Math.abs(selectedCustomRectangle.getHeight() * oldValue.doubleValue() - selectedCustomRectangle.getHeight() * newValue.doubleValue()));
+                    System.out.println("altura: " + selectedCustomRectangle.getHeight());
+                }
+            }
 
-           // slider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
 
         });
 
-        scaleYSection = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        scaleYSection = new HBox(heightLabel, horizontalGrower(), scaleYSlider, horizontalGrower(), textField);
         scaleYSection.setPadding(new Insets(10,10,10,15));
         scaleYSection.setAlignment(Pos.CENTER_LEFT);
         scaleYSection.setMinHeight(30);
@@ -759,25 +774,25 @@ public class App extends Application {
         textField.setPrefWidth(50);
         textField.setAlignment(Pos.CENTER_RIGHT);
 
-        Slider slider = new Slider();
-        slider.setMax(SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
-        slider.setMin(-SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
-        slider.setValue(1);
+        translationXSlider = new Slider();
+        translationXSlider.setMax(SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
+        translationXSlider.setMin(-SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
+        translationXSlider.setValue(1);
 
 
         textField.setOnKeyPressed(keyEvent ->{
             if(keyEvent.getCode().equals(KeyCode.ENTER)){
 
                 try{
-                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
-                        textField.setText(String.valueOf(slider.getMin()));
+                    if(Double.parseDouble(textField.getText()) < translationXSlider.getMin()){
+                        textField.setText(String.valueOf(translationXSlider.getMin()));
                     }
 
-                    slider.setValue(Double.parseDouble(textField.getText()));
+                    translationXSlider.setValue(Double.parseDouble(textField.getText()));
 
                 }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(slider.getMin()));
-                    slider.setValue(slider.getMin());
+                    textField.setText(String.valueOf(translationXSlider.getMin()));
+                    translationXSlider.setValue(translationXSlider.getMin());
                 }
 
             }
@@ -787,26 +802,27 @@ public class App extends Application {
         //TODO: Height pane
 
 
-        slider.setMajorTickUnit(0.1);
-        slider.setMinorTickCount(0);
-        slider.setSnapToTicks(true);
+        translationXSlider.setMajorTickUnit(0.1);
+        translationXSlider.setMinorTickCount(0);
+        translationXSlider.setSnapToTicks(true);
 
-        slider.valueProperty().addListener(((observableValue, number, t1) -> {
+        translationXSlider.valueProperty().addListener(((observableValue, number, t1) -> {
             DecimalFormat df = new DecimalFormat("#.#");
             df.setRoundingMode(RoundingMode.HALF_UP);
-            slider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
+            translationXSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
         }));
 
-        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+        translationXSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            selectedCustomRectangle.addTranslationX(newValue.doubleValue() - oldValue.doubleValue());
-
+            if(!resetingSliders) {
+                selectedCustomRectangle.addTranslationX(newValue.doubleValue() - oldValue.doubleValue());
+            }
 
         });
 
-        translationXSection = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        translationXSection = new HBox(widthLabel, horizontalGrower(), translationXSlider, horizontalGrower(), textField);
         translationXSection.setPadding(new Insets(10,10,10,15));
         translationXSection.setAlignment(Pos.CENTER_LEFT);
         translationXSection.setMinHeight(30);
@@ -825,35 +841,35 @@ public class App extends Application {
         textField.setPrefWidth(50);
         textField.setAlignment(Pos.CENTER_RIGHT);
 
-        Slider slider = new Slider();
-        slider.setMax(SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
-        slider.setMin(-SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
-        slider.setValue(1);
+        translationYSlider = new Slider();
+        translationYSlider.setMax(SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
+        translationYSlider.setMin(-SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
+        translationYSlider.setValue(1);
 
-        slider.setMajorTickUnit(0.1);
-        slider.setMinorTickCount(0);
-        slider.setSnapToTicks(true);
+        translationYSlider.setMajorTickUnit(0.1);
+        translationYSlider.setMinorTickCount(0);
+        translationYSlider.setSnapToTicks(true);
 
         textField.setOnKeyPressed(keyEvent ->{
             if(keyEvent.getCode().equals(KeyCode.ENTER)){
 
                 try{
-                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
-                        textField.setText(String.valueOf(slider.getMin()));
+                    if(Double.parseDouble(textField.getText()) < translationYSlider.getMin()){
+                        textField.setText(String.valueOf(translationYSlider.getMin()));
                     }
 
-                    slider.setValue(Double.parseDouble(textField.getText()));
+                    translationYSlider.setValue(Double.parseDouble(textField.getText()));
 
                 }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(slider.getMin()));
-                    slider.setValue(slider.getMin());
+                    textField.setText(String.valueOf(translationYSlider.getMin()));
+                    translationYSlider.setValue(translationYSlider.getMin());
                 }
 
             }
         } );
 
 
-        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+        translationYSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             DecimalFormat df = new DecimalFormat("#.#");
             df.setRoundingMode(RoundingMode.HALF_UP);
 
@@ -862,11 +878,13 @@ public class App extends Application {
 
             var oldHeight = selectedCustomRectangle.getHeight();
 
-            selectedCustomRectangle.addTranslationY(newValue.doubleValue() - oldValue.doubleValue());
+            if(!resetingSliders) {
 
+                selectedCustomRectangle.addTranslationY(newValue.doubleValue() - oldValue.doubleValue());
+            }
         });
 
-        translationYSection = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        translationYSection = new HBox(heightLabel, horizontalGrower(), translationYSlider, horizontalGrower(), textField);
         translationYSection.setPadding(new Insets(10,10,10,15));
         translationYSection.setAlignment(Pos.CENTER_LEFT);
         translationYSection.setMinHeight(30);
@@ -890,25 +908,25 @@ public class App extends Application {
 
 
 
-        Slider slider = new Slider();
-        slider.setMax(10);
-        slider.setMin(0.1);
-        slider.setValue(1);
+        widthSectionSlider = new Slider();
+        widthSectionSlider.setMax(10);
+        widthSectionSlider.setMin(0.1);
+        widthSectionSlider.setValue(1);
 
 
         textField.setOnKeyPressed(keyEvent ->{
             if(keyEvent.getCode().equals(KeyCode.ENTER)){
 
                 try{
-                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
-                        textField.setText(String.valueOf(slider.getMin()));
+                    if(Double.parseDouble(textField.getText()) < widthSectionSlider.getMin()){
+                        textField.setText(String.valueOf(widthSectionSlider.getMin()));
                     }
 
-                    slider.setValue(Double.parseDouble(textField.getText()));
+                    widthSectionSlider.setValue(Double.parseDouble(textField.getText()));
 
                 }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(slider.getMin()));
-                    slider.setValue(slider.getMin());
+                    textField.setText(String.valueOf(widthSectionSlider.getMin()));
+                    widthSectionSlider.setValue(widthSectionSlider.getMin());
                 }
 
             }
@@ -918,25 +936,27 @@ public class App extends Application {
         //TODO: Height pane
 
 
-        slider.setMajorTickUnit(0.1);
-        slider.setMinorTickCount(0);
-        slider.setSnapToTicks(true);
+        widthSectionSlider.setMajorTickUnit(0.1);
+        widthSectionSlider.setMinorTickCount(0);
+        widthSectionSlider.setSnapToTicks(true);
 
-        slider.valueProperty().addListener(((observableValue, number, t1) -> {
+        widthSectionSlider.valueProperty().addListener(((observableValue, number, t1) -> {
             DecimalFormat df = new DecimalFormat("#.#");
             df.setRoundingMode(RoundingMode.HALF_UP);
-            slider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
+            widthSectionSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
         }));
 
-        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+        widthSectionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            selectedCustomRectangle.setWidth(newValue.doubleValue() * SCALE);
+            if(!resetingSliders) {
 
+                selectedCustomRectangle.setWidth(newValue.doubleValue() * SCALE);
+            }
         });
 
-        widthSection = new HBox(widthLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        widthSection = new HBox(widthLabel, horizontalGrower(), widthSectionSlider, horizontalGrower(), textField);
         widthSection.setPadding(new Insets(10,10,10,15));
         widthSection.setAlignment(Pos.CENTER_LEFT);
         widthSection.setMinHeight(30);
@@ -956,54 +976,55 @@ public class App extends Application {
         textField.setPrefWidth(50);
         textField.setAlignment(Pos.CENTER_RIGHT);
 
-        Slider slider = new Slider();
-        slider.setMax(10);
-        slider.setMin(0.1);
-        slider.setValue(1);
+        heightSectionSlider = new Slider();
+        heightSectionSlider.setMax(10);
+        heightSectionSlider.setMin(0.1);
+        heightSectionSlider.setValue(1);
 
-        slider.setMajorTickUnit(0.1);
-        slider.setMinorTickCount(0);
-        slider.setSnapToTicks(true);
+        heightSectionSlider.setMajorTickUnit(0.1);
+        heightSectionSlider.setMinorTickCount(0);
+        heightSectionSlider.setSnapToTicks(true);
 
         textField.setOnKeyPressed(keyEvent ->{
             if(keyEvent.getCode().equals(KeyCode.ENTER)){
 
                 try{
-                    if(Double.parseDouble(textField.getText()) < slider.getMin()){
-                        textField.setText(String.valueOf(slider.getMin()));
+                    if(Double.parseDouble(textField.getText()) < heightSectionSlider.getMin()){
+                        textField.setText(String.valueOf(heightSectionSlider.getMin()));
                     }
 
-                    slider.setValue(Double.parseDouble(textField.getText()));
+                    heightSectionSlider.setValue(Double.parseDouble(textField.getText()));
 
                 }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(slider.getMin()));
-                    slider.setValue(slider.getMin());
+                    textField.setText(String.valueOf(heightSectionSlider.getMin()));
+                    heightSectionSlider.setValue(heightSectionSlider.getMin());
                 }
 
             }
         } );
 
 
-        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+        heightSectionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             DecimalFormat df = new DecimalFormat("#.#");
             df.setRoundingMode(RoundingMode.HALF_UP);
 
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            if(newValue.doubleValue() > oldValue.doubleValue()){
-                selectedCustomRectangle.setTranslateY( selectedCustomRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue() ) * SCALE );
-            }else{
-                selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
+            if(!resetingSliders) {
+                if (newValue.doubleValue() > oldValue.doubleValue()) {
+                    selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
+                } else {
+                    selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
+                }
+
+                selectedCustomRectangle.setHeight(newValue.doubleValue() * SCALE);
+
+                heightSectionSlider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
             }
-
-            selectedCustomRectangle.setHeight(newValue.doubleValue() * SCALE);
-
-            slider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
-
         });
 
-        heightSection = new HBox(heightLabel, horizontalGrower(), slider, horizontalGrower(), textField);
+        heightSection = new HBox(heightLabel, horizontalGrower(), heightSectionSlider, horizontalGrower(), textField);
         heightSection.setPadding(new Insets(10,10,10,15));
         heightSection.setAlignment(Pos.CENTER_LEFT);
         heightSection.setMinHeight(30);
@@ -1012,6 +1033,20 @@ public class App extends Application {
 
     }
 
+
+    private void resetSliders(){
+        resetingSliders = true;
+        heightSectionSlider.adjustValue(1);
+        heightSectionSlider.setValue(1);
+        widthSectionSlider.setValue(1);
+
+        translationXSlider.setValue(1);
+        translationYSlider.setValue(1);
+
+        scaleXSlider.setValue(1);
+        scaleYSlider.setValue(1);
+        resetingSliders = false;
+    }
 
 
     private Pane getButtonsSection(){
@@ -1189,6 +1224,7 @@ public class App extends Application {
     private void saveCurrentShape(){
         if(isCurrentSimple){
             CustomRectangle currentRectangle = gridCanvas.getSimpleRectangle();
+            currentRectangle.redrawThumbnail();
 
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("id", currentRectangle.getUuid().toString());

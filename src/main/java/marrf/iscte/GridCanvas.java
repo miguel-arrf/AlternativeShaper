@@ -42,9 +42,20 @@ public class GridCanvas {
 
     public void addShape(CustomRectangle customRectangle){
         System.out.println("vou adicionar, getX: " + customRectangle.getX() + ", translateX: " + customRectangle.getTranslateX());
+        System.out.println("vou adicionar height: " + customRectangle.getHeight());
+
 
         customRectangle.setTranslateX(circle.getCenterX() + circle.getTranslateX() + customRectangle.getTranslationOffset().getX());
         customRectangle.setTranslateY(circle.getCenterY() + circle.getTranslateY() + customRectangle.getTranslationOffset().getY());
+
+        if(customRectangle.getHeight() <= SCALE){
+            customRectangle.addTranslationY(Math.abs(SCALE - customRectangle.getHeight()));
+        }else{
+            customRectangle.addTranslationY(- (customRectangle.getHeight() - SCALE));
+        }
+
+
+        //TEMOS QUE FAZER TRANSLATION DO OFFSET QUE JÁ EXISTIA!
 
         pane.getChildren().add(customRectangle.getRectangle());
         customRectangles.add(customRectangle);

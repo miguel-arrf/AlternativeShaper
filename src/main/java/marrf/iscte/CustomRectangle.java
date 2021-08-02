@@ -77,6 +77,47 @@ public class CustomRectangle {
     }
 
 
+    public void redrawThumbnail(){
+        if(isSelected){
+            temporarlyTurnOffStroke();
+        }
+
+
+        try{
+            WritableImage writableImage = new WritableImage((int)getWidth(),
+                    (int)getHeight());
+            WritableImage snapshot = stackPane.snapshot(null, writableImage);
+            RenderedImage renderedImage = SwingFXUtils.fromFXImage(writableImage, null);
+
+
+            Set<PosixFilePermission> fp = PosixFilePermissions.fromString("rwxrwxrwx");
+
+            //Write the snapshot to the chosen file
+            File file;
+            if(SystemUtils.IS_OS_WINDOWS){
+                file = Files.createTempFile("teste", ".png").toFile();
+            }else{
+                file = Files.createTempFile("teste", ".png",PosixFilePermissions.asFileAttribute(fp)).toFile();
+            }
+
+            ImageIO.write(renderedImage, "png", file);
+
+            Image image = new Image(file.toURL().toExternalForm());
+            ImageView imageView = new ImageView(image);
+            imageView.setSmooth(true);
+            imageView.setPreserveRatio(true);
+
+            thumbnail.getChildren().clear();
+            thumbnail.getChildren().add(imageView);
+        }catch (IOException ignored){
+
+        }
+
+        if(isSelected)
+            turnOnStroke();
+    }
+
+
     public Pane getThumbnail(Supplier<String> toPutIntoDragbord) {
 
 
@@ -106,15 +147,16 @@ public class CustomRectangle {
             Image image = new Image(file.toURL().toExternalForm());
             ImageView imageView = new ImageView(image);
             imageView.setSmooth(true);
-            imageView.setPreserveRatio(true);
+
 
             thumbnail.getChildren().clear();
             thumbnail.getChildren().add(imageView);
-        }catch (IOException e){
+        }catch (IOException ignored){
 
         }
 
         thumbnail.setMinWidth(0.0);
+
 
         thumbnail.setPadding(new Insets(10));
         thumbnail.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
@@ -226,6 +268,8 @@ public class CustomRectangle {
         stackPane.setMaxWidth(width);
         stackPane.setMinWidth(0);
         stackPane.setPrefWidth(width);
+
+        //redrawThumbnail();
     }
 
     public void setHeight(double height){
@@ -234,6 +278,8 @@ public class CustomRectangle {
         stackPane.setMaxHeight(height);
         stackPane.setMinHeight(0);
         stackPane.setPrefHeight(height);
+
+        //redrawThumbnail();
     }
 
     public DoubleProperty widthProperty(){
