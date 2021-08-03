@@ -17,7 +17,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -32,9 +31,6 @@ import org.json.simple.JSONObject;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -70,18 +66,18 @@ public class App extends Application {
 
     //private HBox widthSection;
     //private HBox heightSection;
-    private HBox translationYSection;
-    private HBox translationXSection;
-    private HBox scaleXSection;
-    private HBox scaleYSection;
+    //private HBox translationYSection;
+    //private HBox translationXSection;
+    //private HBox scaleXSection;
+    //private HBox scaleYSection;
 
 
     //private Slider heightSectionSlider;
     //private Slider widthSectionSlider;
-    private Slider translationXSlider;
-    private Slider translationYSlider;
-    private Slider scaleXSlider;
-    private Slider scaleYSlider;
+    //private Slider translationXSlider;
+    //private Slider translationYSlider;
+    //private Slider scaleXSlider;
+    //private Slider scaleYSlider;
 
     private boolean resetingSliders = false;
 
@@ -165,9 +161,8 @@ public class App extends Application {
                             //TODO aqui está a true, mas em algum momento não será...
                             isCurrentSimple = true;
 
-                            mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+                            //mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
 
-                            resetSliders();
 
                             addShape(customRectangleAdded, true);
 
@@ -224,13 +219,12 @@ public class App extends Application {
             isCurrentSimple = true;
             currentName.setText("simpleDefault");
 
-            mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+            //mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
             transformersBox.getChildren().clear();
 
             //mainPanel.getChildren().removeAll(widthSection, heightSection);
             //mainPanel.getChildren().addAll(widthSection, heightSection);
 
-            resetSliders();
 
 
             addShape(new CustomRectangle(SCALE, SCALE, true, Color.web("#55efc4")), true);
@@ -257,9 +251,9 @@ public class App extends Application {
             isCurrentSimple = false;
             currentName.setText("complexDefault");
 
-            mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+           // mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
             transformersBox.getChildren().clear();
-            transformersBox.getChildren().addAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+            //transformersBox.getChildren().addAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
         });
 
         HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
@@ -299,9 +293,11 @@ public class App extends Application {
             customRectangles.stream().filter(r -> r != customRectangleToAdd).forEach(CustomRectangle::turnOffStroke);
 
         }
-
         transformersBox.getChildren().clear();
-        transformersBox.getChildren().addAll(customRectangleToAdd.getWidthSection(), customRectangleToAdd.getHeightSection());
+
+        if(isCurrentSimple){
+            transformersBox.getChildren().addAll(customRectangleToAdd.getWidthSection(), customRectangleToAdd.getHeightSection());
+        }
 
     }
 
@@ -346,10 +342,10 @@ public class App extends Application {
 
     private void finishSetup(){
         addBasicAndComplexButtons();
-        setUpGetScaleXSection();
-        setUpGetScaleYSection();
-        setUpGetTranslationXSection();
-        setUpGetTranslationYSection();
+        //setUpGetScaleXSection();
+        //setUpGetScaleYSection();
+        //setUpGetTranslationXSection();
+        //setUpGetTranslationYSection();
 
         //setUpGetWidthSection();
         //setUpGetHeightSection();
@@ -432,6 +428,12 @@ public class App extends Application {
 
                         customRectangles.stream().filter(r -> r != rectangle).forEach(CustomRectangle::turnOffStroke);
                         customRectangles.stream().filter(r -> r != rectangle).forEach(CustomRectangle::toogleOffSelection);
+
+                        if(!isCurrentSimple){
+                            transformersBox.getChildren().clear();
+                            transformersBox.getChildren().addAll(rectangle.getScaleXSection(), rectangle.getScaleYSection(), rectangle.getTranslationXSection(), rectangle.getTranslationYSection());
+                        }
+
 
                         //selectedCustomRectangle.setStrokeWidth(2);
                         //selectedCustomRectangle.setStroke(Color.BLACK);
@@ -639,6 +641,7 @@ public class App extends Application {
         return horizontalGrower;
     }
 
+    /*
     private void setUpGetScaleXSection(){
         Label widthLabel = new Label("Scale X:");
         widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
@@ -906,7 +909,7 @@ public class App extends Application {
         translationYSection.setMinHeight(30);
         translationYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
-
+*/
 
 /*
     private void setUpGetWidthSection(){
@@ -1050,20 +1053,7 @@ public class App extends Application {
     }
 */
 
-    private void resetSliders(){
-        resetingSliders = true;
 
-        //heightSectionSlider.setValue(1);
-        //widthSectionSlider.setValue(1);
-
-        translationXSlider.setValue(1);
-        translationYSlider.setValue(1);
-
-        scaleXSlider.setValue(1);
-        scaleYSlider.setValue(1);
-
-        resetingSliders = false;
-    }
 
 
     private Pane getButtonsSection(){
