@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 
 import static marrf.iscte.App.horizontalGrower;
 
-public class CustomRectangle {
+public class BasicShape {
 
     private static final int SCALE = 40;
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
@@ -59,28 +59,37 @@ public class CustomRectangle {
     private HBox scaleXSection;
     private HBox scaleYSection;
 
-    private VBox thumbnail = new VBox();
+    private String shapeName = "defaultName";
 
-    public CustomRectangle(int width, int height) {
+    private final VBox thumbnail = new VBox();
+
+    public void setShapeName(String shapeName) {
+        this.shapeName = shapeName;
+    }
+
+    public String getShapeName() {
+        return shapeName;
+    }
+
+    public BasicShape(int width, int height) {
         rectangle = new Rectangle(width, height);
         setUpComponents();
     }
 
-    public CustomRectangle(int width, int height, boolean isSimple) {
+    public BasicShape(int width, int height, boolean isSimple) {
         rectangle = new Rectangle(width, height);
         this.isSimple = isSimple;
         setUpComponents();
     }
 
-
-    public CustomRectangle(int width, int height, boolean isSimple, Paint color) {
+    public BasicShape(int width, int height, boolean isSimple, Paint color) {
         rectangle = new Rectangle(width, height);
         rectangle.setFill(color);
         this.isSimple = isSimple;
         setUpComponents();
     }
 
-    public CustomRectangle() {
+    public BasicShape() {
         setUpComponents();
     }
 
@@ -582,6 +591,9 @@ public class CustomRectangle {
 
         if (wasSelected)
             turnOnStroke();
+
+        thumbnail.getChildren().add(new Label(getShapeName()));
+
     }
 
     public Pane getThumbnail(Supplier<String> toPutIntoDragbord) {
@@ -651,6 +663,8 @@ public class CustomRectangle {
         if (wasSelected) {
             turnOnStroke();
         }
+
+        thumbnail.getChildren().add(new Label(getShapeName()));
 
         return thumbnail;
     }
@@ -728,6 +742,14 @@ public class CustomRectangle {
 
     public void setScaleY(double scaleY) {
         rectangle.setScaleY(scaleY);
+    }
+
+    public double getScaleX(){
+        return rectangle.getScaleX();
+    }
+
+    public double getScaleY(){
+        return rectangle.getScaleY();
     }
 
     public DoubleProperty widthProperty() {

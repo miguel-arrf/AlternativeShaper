@@ -42,7 +42,7 @@ public class App extends Application {
     public static final int SCALE = 40;
     public static final int NUMBER_COLUMNS_AND_ROWS = 40;
 
-    private final CustomRectangle beingDrawnCustomRectangle = new CustomRectangle(SCALE,SCALE);
+    private final BasicShape beingDrawnBasicShape = new BasicShape(SCALE,SCALE);
 
     private final StackPane centerCustomRectangle = new StackPane();
 
@@ -52,8 +52,8 @@ public class App extends Application {
 
     private Pane sceneStackPane = getGraphSection();
 
-    private ArrayList<CustomRectangle> customRectangles = new ArrayList<>();
-    private CustomRectangle selectedCustomRectangle;
+    private ArrayList<BasicShape> basicShapes = new ArrayList<>();
+    private BasicShape selectedBasicShape;
 
     private boolean isCurrentSimple = true;
     private TextField currentName;
@@ -81,44 +81,44 @@ public class App extends Application {
 
     private boolean resetingSliders = false;
 
+    private ObservableList<BasicShape> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
 
-    private ObservableList<CustomRectangle> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
 
-    public CustomRectangle getDraggableCustomRectangle(){
 
-        CustomRectangle customRectangle = new CustomRectangle(20,20);
-        customRectangle.setFill(Color.rgb(0,0,255,1));
+    public BasicShape getDraggableCustomRectangle(){
 
-        customRectangles.add(customRectangle);
+        BasicShape basicShape = new BasicShape(20,20);
+        basicShape.setFill(Color.rgb(0,0,255,1));
 
-        customRectangle.setOnDragDetected(event -> {
-            Dragboard db = customRectangle.startDragAndDrop(TransferMode.ANY);
+        basicShapes.add(basicShape);
+
+        basicShape.setOnDragDetected(event -> {
+            Dragboard db = basicShape.startDragAndDrop(TransferMode.ANY);
 
             ClipboardContent content = new ClipboardContent();
-            content.putString(String.valueOf(customRectangles.indexOf(customRectangle)));
+            content.putString(String.valueOf(basicShapes.indexOf(basicShape)));
             db.setContent(content);
 
             event.consume();
         });
 
-        System.out.println("AAAAAHHHHH width: " + customRectangle.getWidth());
-        return customRectangle;
+        System.out.println("AAAAAHHHHH width: " + basicShape.getWidth());
+        return basicShape;
     }
 
-    public CustomRectangle getCopyWithBindWidthAndHeightFrom(int position){
-        CustomRectangle toCopyFrom = customRectangles.get(position);
+    public BasicShape getCopyWithBindWidthAndHeightFrom(int position){
+        BasicShape toCopyFrom = basicShapes.get(position);
         System.out.println("to copy from: width:" + toCopyFrom.getWidth() + ", height: " + toCopyFrom.getHeight());
 
-        CustomRectangle customRectangle = new CustomRectangle();
-        customRectangle.setFill(toCopyFrom.getFill());
-        customRectangle.setWidth(toCopyFrom.getWidth());
-        customRectangle.setHeight(toCopyFrom.getHeight());
+        BasicShape basicShape = new BasicShape();
+        basicShape.setFill(toCopyFrom.getFill());
+        basicShape.setWidth(toCopyFrom.getWidth());
+        basicShape.setHeight(toCopyFrom.getHeight());
+        basicShape.widthProperty().bind(toCopyFrom.widthProperty().multiply(toCopyFrom.scaleXProperty()));
+        basicShape.heightProperty().bind(toCopyFrom.heightProperty().multiply(toCopyFrom.scaleYProperty()));
+        basicShape.fillProperty().bind(toCopyFrom.fillProperty());
 
-        customRectangle.widthProperty().bind(toCopyFrom.widthProperty());
-        customRectangle.heightProperty().bind(toCopyFrom.heightProperty());
-        customRectangle.fillProperty().bind(toCopyFrom.fillProperty());
-
-        return customRectangle;
+        return basicShape;
     }
 
     private Pane getSeparator(){
@@ -131,13 +131,13 @@ public class App extends Application {
     }
 
     private Pane getBasicShape(){
-        CustomRectangle customRectangle = new CustomRectangle(100,100);
-        customRectangle.getRectangle();
+        BasicShape basicShape = new BasicShape(100,100);
+        basicShape.getRectangle();
 
-        customRectangle.setFill(Color.rgb(0,255,255,1));
-        customRectangles.add(customRectangle);
+        basicShape.setFill(Color.rgb(0,255,255,1));
+        basicShapes.add(basicShape);
 
-        return customRectangle.getThumbnail(() -> String.valueOf(customRectangles.indexOf(customRectangle)));
+        return basicShape.getThumbnail(() -> String.valueOf(basicShapes.indexOf(basicShape)));
 
     }
 
@@ -147,11 +147,11 @@ public class App extends Application {
 
         VBox content = new VBox(/*getBasicShape()*/);
 
-        sideBarThumbnails.addListener((ListChangeListener<? super CustomRectangle>) change -> {
+        sideBarThumbnails.addListener((ListChangeListener<? super BasicShape>) change -> {
             while (change.next()){
                 if(change.wasAdded()){
-                    for (CustomRectangle customRectangleAdded : change.getAddedSubList()) {
-                        Pane checkIfExists = customRectangleAdded.getThumbnail(() -> String.valueOf(customRectangles.indexOf(customRectangleAdded)));
+                    for (BasicShape basicShapeAdded : change.getAddedSubList()) {
+                        Pane checkIfExists = basicShapeAdded.getThumbnail(() -> String.valueOf(basicShapes.indexOf(basicShapeAdded)));
                         content.getChildren().remove(checkIfExists);//This only removes if it exists
                         content.getChildren().add(checkIfExists);
 
@@ -164,7 +164,7 @@ public class App extends Application {
                             //mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
 
 
-                            addShape(customRectangleAdded, true);
+                            addShape(basicShapeAdded, true);
 
                         });
 
@@ -227,7 +227,7 @@ public class App extends Application {
 
 
 
-            addShape(new CustomRectangle(SCALE, SCALE, true, Color.web("#55efc4")), true);
+            addShape(new BasicShape(SCALE, SCALE, true, Color.web("#55efc4")), true);
 
         });
 
@@ -276,33 +276,30 @@ public class App extends Application {
         return saveHB;
     }
 
-    private void addShape(CustomRectangle customRectangleToAdd){
-        addShape(customRectangleToAdd, false);
+    private void addShape(BasicShape basicShapeToAdd){
+        addShape(basicShapeToAdd, false);
     }
 
-    private void addShape(CustomRectangle customRectangleToAdd, boolean selected){
-        gridCanvas.addShape(customRectangleToAdd);
-        if(!customRectangles.contains(customRectangleToAdd)){
-            customRectangles.add(customRectangleToAdd);
+    private void addShape(BasicShape basicShapeToAdd, boolean selected){
+        gridCanvas.addShape(basicShapeToAdd);
+        if(!basicShapes.contains(basicShapeToAdd)){
+            basicShapes.add(basicShapeToAdd);
         }
         if(selected){
-            selectedCustomRectangle = customRectangleToAdd;
-            selectedCustomRectangle.turnOnStroke();
-            selectedCustomRectangle.toogleSelected();
+            selectedBasicShape = basicShapeToAdd;
+            selectedBasicShape.turnOnStroke();
+            selectedBasicShape.toogleSelected();
 
-            customRectangles.stream().filter(r -> r != customRectangleToAdd).forEach(CustomRectangle::turnOffStroke);
+            basicShapes.stream().filter(r -> r != basicShapeToAdd).forEach(BasicShape::turnOffStroke);
 
         }
         transformersBox.getChildren().clear();
 
         if(isCurrentSimple){
-            transformersBox.getChildren().addAll(customRectangleToAdd.getWidthSection(), customRectangleToAdd.getHeightSection());
+            transformersBox.getChildren().addAll(basicShapeToAdd.getWidthSection(), basicShapeToAdd.getHeightSection());
         }
 
     }
-
-
-
 
     public Pane getScenePanel(Scene scene){
         finishSetup();
@@ -334,7 +331,7 @@ public class App extends Application {
         borderPane.setRight(mainPanel);
         borderPane.setCenter(sceneStackPane);
 
-        addShape(new CustomRectangle(SCALE, SCALE, true, Color.web("#55efc4")));
+        addShape(new BasicShape(SCALE, SCALE, true, Color.web("#55efc4")), true);
 
 
         return borderPane;
@@ -372,7 +369,7 @@ public class App extends Application {
             Rectangle2D bounds = screen.getVisualBounds();
 
 
-            if(i == 0){
+            if(i == 1){
                 stage.setX(bounds.getMinX() + 100);
                 stage.setY(bounds.getMinY() + 100);
 
@@ -416,18 +413,18 @@ public class App extends Application {
         });
 
         pane.setOnMouseClicked(event -> {
-            customRectangles.forEach(rectangle -> {
+            basicShapes.forEach(rectangle -> {
                 Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth(), 0));
 
                 if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()) {
                     if (transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()) {
                         System.out.println("cliquei numa shape!");
-                        selectedCustomRectangle = rectangle;
-                        selectedCustomRectangle.turnOnStroke();
-                        selectedCustomRectangle.toogleSelected();
+                        selectedBasicShape = rectangle;
+                        selectedBasicShape.turnOnStroke();
+                        selectedBasicShape.toogleSelected();
 
-                        customRectangles.stream().filter(r -> r != rectangle).forEach(CustomRectangle::turnOffStroke);
-                        customRectangles.stream().filter(r -> r != rectangle).forEach(CustomRectangle::toogleOffSelection);
+                        basicShapes.stream().filter(r -> r != rectangle).forEach(BasicShape::turnOffStroke);
+                        basicShapes.stream().filter(r -> r != rectangle).forEach(BasicShape::toogleOffSelection);
 
                         if(!isCurrentSimple){
                             transformersBox.getChildren().clear();
@@ -464,9 +461,9 @@ public class App extends Application {
                 System.out.println("event x: " + event.getX() + ", y: " + event.getY());
 
                 if(!isCurrentSimple){
-                    CustomRectangle customRectangleToAdd = getCopyWithBindWidthAndHeightFrom(Integer.parseInt(db.getString()));
-                    addShape(customRectangleToAdd);
-                    customRectangleToAdd.toogleOffSelection();
+                    BasicShape basicShapeToAdd = getCopyWithBindWidthAndHeightFrom(Integer.parseInt(db.getString()));
+                    addShape(basicShapeToAdd);
+                    basicShapeToAdd.toogleOffSelection();
                     //TODO Here we need to reset the sliders... that's why a offset is being created when we drop in a new shape...
                 }else {
                     System.err.println("Não adicionei nada porque agora estamos numa current Simple!");
@@ -483,7 +480,7 @@ public class App extends Application {
 
 
         pane.setOnMouseMoved(event -> {
-            customRectangles.forEach(rectangle -> {
+            basicShapes.forEach(rectangle -> {
                 Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth(), 0));
 
                 if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()){
@@ -1053,9 +1050,6 @@ public class App extends Application {
     }
 */
 
-
-
-
     private Pane getButtonsSection(){
         HBox hBox = new HBox(getToFrontPane(), getColorButton(), getImageButton());
         hBox.setSpacing(10);
@@ -1230,7 +1224,8 @@ public class App extends Application {
 
     private void saveCurrentShape(){
         if(isCurrentSimple){
-            CustomRectangle currentRectangle = gridCanvas.getSimpleRectangle();
+            BasicShape currentRectangle = gridCanvas.getSimpleRectangle();
+            currentRectangle.setShapeName(currentName.getText());
             currentRectangle.redrawThumbnail();
 
             JSONObject jsonObject = new JSONObject();

@@ -18,47 +18,47 @@ public class GridCanvas {
     private final ArrayList<Double> initialHorizontalDrag = new ArrayList<>();
     private final ArrayList<Double> initialVerticalDrag = new ArrayList<>();
 
-    private final ArrayList<CustomRectangle> customRectangles = new ArrayList<>();
+    private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
 
     private final Pane pane = new Pane();
     private Circle circle;
 
     public boolean withBasicShape = false;
 
-    public ArrayList<CustomRectangle> getCurrentRectangles(){
-        return customRectangles;
+    public ArrayList<BasicShape> getCurrentRectangles(){
+        return basicShapes;
     }
 
-    public CustomRectangle getSimpleRectangle(){
-        if(customRectangles.size()>1){
+    public BasicShape getSimpleRectangle(){
+        if(basicShapes.size()>1){
             try {
                 throw new Exception("SOMETHING IS NOT RIGHT :c");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        return customRectangles.get(0);
+        return basicShapes.get(0);
     }
 
-    public void addShape(CustomRectangle customRectangle){
-        System.out.println("vou adicionar, getX: " + customRectangle.getX() + ", translateX: " + customRectangle.getTranslateX());
-        System.out.println("vou adicionar height: " + customRectangle.getHeight());
+    public void addShape(BasicShape basicShape){
+        System.out.println("vou adicionar, getX: " + basicShape.getX() + ", translateX: " + basicShape.getTranslateX());
+        System.out.println("vou adicionar height: " + basicShape.getHeight());
 
 
-        customRectangle.setTranslateX(circle.getCenterX() + circle.getTranslateX() + customRectangle.getTranslationOffset().getX());
-        customRectangle.setTranslateY(circle.getCenterY() + circle.getTranslateY() + customRectangle.getTranslationOffset().getY());
+        basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() + basicShape.getTranslationOffset().getX());
+        basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() + basicShape.getTranslationOffset().getY());
 
-        if(customRectangle.getHeight() <= SCALE){
-            customRectangle.addTranslationY(Math.abs(SCALE - customRectangle.getHeight()));
+        if(basicShape.getHeight() <= SCALE){
+            basicShape.addTranslationY(Math.abs(SCALE - basicShape.getHeight()));
         }else{
-            customRectangle.addTranslationY(- (customRectangle.getHeight() - SCALE));
+            basicShape.addTranslationY(- (basicShape.getHeight() - SCALE));
         }
 
 
         //TEMOS QUE FAZER TRANSLATION DO OFFSET QUE JÁ EXISTIA!
 
-        pane.getChildren().add(customRectangle.getRectangle());
-        customRectangles.add(customRectangle);
+        pane.getChildren().add(basicShape.getRectangle());
+        basicShapes.add(basicShape);
     }
 
     public GridCanvas(){
@@ -66,7 +66,7 @@ public class GridCanvas {
 
     public void clearEverything(boolean stillBasicShape){
         redraw();
-        customRectangles.clear();
+        basicShapes.clear();
 
         withBasicShape = stillBasicShape;
     }
