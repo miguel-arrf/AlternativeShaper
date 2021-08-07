@@ -7,10 +7,14 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+import java.awt.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -21,21 +25,33 @@ import static marrf.iscte.App.horizontalGrower;
 
 public class CompositionShape {
 
+    //Others
     private final int SCALE = 40;
     private final int NUMBER_COLUMNS_AND_ROWS = 40;
 
+    //This Composition Shape
+    private ArrayList<BasicShape> basicShapes = new ArrayList<>();
+    private String name;
+    private boolean isSelected = false;
     private final UUID uuid = UUID.randomUUID();
 
-    private boolean isSelected = false;
-    private ArrayList<BasicShape> basicShapes = new ArrayList<>();
-
+    //Modifiers boxes
     private HBox translationXBox;
     private HBox translationYBox;
     private HBox scaleXBox;
     private HBox scaleYBox;
 
-    private CompositionShape(ArrayList<BasicShape> basicShapesToAdd){
+    //Composition Shape Thumbnail
+    private final VBox thumbnail = new VBox();
+
+    public CompositionShape(ArrayList<BasicShape> basicShapesToAdd){
         basicShapes.addAll(basicShapesToAdd);
+        setUpComponents();
+    }
+
+    public CompositionShape(ArrayList<BasicShape> basicShapesToAdd, String compositionShapeName){
+        basicShapes.addAll(basicShapesToAdd);
+        this.name = compositionShapeName;
         setUpComponents();
     }
 
@@ -122,6 +138,28 @@ public class CompositionShape {
 
     public void setScaleX(double scaleX){
         basicShapes.forEach(basicShape -> basicShape.setScaleX(9.0));
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    //Thumbnail methods
+    public Pane getThumbnail(){
+        thumbnail.getChildren().clear();
+        thumbnail.setMinWidth(0.0);
+        thumbnail.setPadding(new Insets(10));
+        thumbnail.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
+
+        HBox.setHgrow(thumbnail, Priority.NEVER);
+        thumbnail.getChildren().add(new Label(getName()));
+
+        return thumbnail;
+    }
+
+    public void redrawThumbnail(){
+        thumbnail.getChildren().clear();
+        thumbnail.getChildren().add(new Label(getName()));
     }
 
 }

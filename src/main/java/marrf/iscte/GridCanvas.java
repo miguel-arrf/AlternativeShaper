@@ -29,6 +29,10 @@ public class GridCanvas {
         return basicShapes;
     }
 
+    public ArrayList<BasicShape> getSimpleRectangles(){
+        return basicShapes;
+    }
+
     public BasicShape getSimpleRectangle(){
         if(basicShapes.size()>1){
             try {

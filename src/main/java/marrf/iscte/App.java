@@ -42,47 +42,25 @@ public class App extends Application {
     public static final int SCALE = 40;
     public static final int NUMBER_COLUMNS_AND_ROWS = 40;
 
-    private final BasicShape beingDrawnBasicShape = new BasicShape(SCALE,SCALE);
-
     private final StackPane centerCustomRectangle = new StackPane();
 
     private Scene scene;
 
     private final GridCanvas gridCanvas = new GridCanvas();
 
-    private Pane sceneStackPane = getGraphSection();
+    private final Pane sceneStackPane = getGraphSection();
 
-    private ArrayList<BasicShape> basicShapes = new ArrayList<>();
+    private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private BasicShape selectedBasicShape;
+    private CompositionShape selectedCompositionShape;
 
     private boolean isCurrentSimple = true;
     private TextField currentName;
 
     private final BooleanProperty firstBasicShapeWasSaved = new SimpleBooleanProperty(false);
-
     private VBox mainPanel;
-
-    private VBox transformersBox = new VBox();
-
-    //private HBox widthSection;
-    //private HBox heightSection;
-    //private HBox translationYSection;
-    //private HBox translationXSection;
-    //private HBox scaleXSection;
-    //private HBox scaleYSection;
-
-
-    //private Slider heightSectionSlider;
-    //private Slider widthSectionSlider;
-    //private Slider translationXSlider;
-    //private Slider translationYSlider;
-    //private Slider scaleXSlider;
-    //private Slider scaleYSlider;
-
-    private boolean resetingSliders = false;
-
-    private ObservableList<BasicShape> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
-
+    private final VBox transformersBox = new VBox();
+    private final ObservableList<CustomShape> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
 
 
     public BasicShape getDraggableCustomRectangle(){
@@ -147,10 +125,13 @@ public class App extends Application {
 
         VBox content = new VBox(/*getBasicShape()*/);
 
-        sideBarThumbnails.addListener((ListChangeListener<? super BasicShape>) change -> {
+
+
+        sideBarThumbnails.addListener((ListChangeListener<? super CustomShape>) change -> {
             while (change.next()){
                 if(change.wasAdded()){
-                    for (BasicShape basicShapeAdded : change.getAddedSubList()) {
+
+                    for (CustomShape basicShapeAdded : change.getAddedSubList()) {
                         Pane checkIfExists = basicShapeAdded.getThumbnail(() -> String.valueOf(basicShapes.indexOf(basicShapeAdded)));
                         content.getChildren().remove(checkIfExists);//This only removes if it exists
                         content.getChildren().add(checkIfExists);
@@ -162,7 +143,6 @@ public class App extends Application {
                             isCurrentSimple = true;
 
                             //mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
-
 
                             addShape(basicShapeAdded, true);
 
@@ -219,13 +199,7 @@ public class App extends Application {
             isCurrentSimple = true;
             currentName.setText("simpleDefault");
 
-            //mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
             transformersBox.getChildren().clear();
-
-            //mainPanel.getChildren().removeAll(widthSection, heightSection);
-            //mainPanel.getChildren().addAll(widthSection, heightSection);
-
-
 
             addShape(new BasicShape(SCALE, SCALE, true, Color.web("#55efc4")), true);
 
@@ -251,9 +225,7 @@ public class App extends Application {
             isCurrentSimple = false;
             currentName.setText("complexDefault");
 
-           // mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
             transformersBox.getChildren().clear();
-            //transformersBox.getChildren().addAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
         });
 
         HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
@@ -276,28 +248,34 @@ public class App extends Application {
         return saveHB;
     }
 
-    private void addShape(BasicShape basicShapeToAdd){
+    private void addShape(CustomShape basicShapeToAdd){
         addShape(basicShapeToAdd, false);
     }
 
-    private void addShape(BasicShape basicShapeToAdd, boolean selected){
-        gridCanvas.addShape(basicShapeToAdd);
-        if(!basicShapes.contains(basicShapeToAdd)){
-            basicShapes.add(basicShapeToAdd);
-        }
-        if(selected){
-            selectedBasicShape = basicShapeToAdd;
-            selectedBasicShape.turnOnStroke();
-            selectedBasicShape.toogleSelected();
+    private void addShape(CustomShape basicShapeToAdd, boolean selected){
+            BasicShape tempBasicShape = (BasicShape) basicShapeToAdd;
 
-            basicShapes.stream().filter(r -> r != basicShapeToAdd).forEach(BasicShape::turnOffStroke);
+            gridCanvas.addShape(tempBasicShape);
+            if(!basicShapes.contains(tempBasicShape)){
+                basicShapes.add(tempBasicShape);
+            }
+            if(selected){
+                selectedBasicShape = tempBasicShape;
+                selectedBasicShape.turnOnStroke();
+                selectedBasicShape.toogleSelected();
 
-        }
-        transformersBox.getChildren().clear();
+                basicShapes.stream().filter(r -> r != tempBasicShape).forEach(BasicShape::turnOffStroke);
 
-        if(isCurrentSimple){
-            transformersBox.getChildren().addAll(basicShapeToAdd.getWidthSection(), basicShapeToAdd.getHeightSection());
-        }
+            }
+            transformersBox.getChildren().clear();
+
+            if(isCurrentSimple){
+                transformersBox.getChildren().addAll(tempBasicShape.getWidthSection(), tempBasicShape.getHeightSection());
+            }
+
+
+
+
 
     }
 
@@ -339,13 +317,6 @@ public class App extends Application {
 
     private void finishSetup(){
         addBasicAndComplexButtons();
-        //setUpGetScaleXSection();
-        //setUpGetScaleYSection();
-        //setUpGetTranslationXSection();
-        //setUpGetTranslationYSection();
-
-        //setUpGetWidthSection();
-        //setUpGetHeightSection();
 
     }
 
@@ -431,11 +402,6 @@ public class App extends Application {
                             transformersBox.getChildren().addAll(rectangle.getScaleXSection(), rectangle.getScaleYSection(), rectangle.getTranslationXSection(), rectangle.getTranslationYSection());
                         }
 
-
-                        //selectedCustomRectangle.setStrokeWidth(2);
-                        //selectedCustomRectangle.setStroke(Color.BLACK);
-
-                        //CustomRectangles.stream().filter(r -> r != CustomRectangle).forEach(r -> r.setStrokeWidth(0));                    }
                     }
                 }
             });
@@ -468,8 +434,6 @@ public class App extends Application {
                 }else {
                     System.err.println("Não adicionei nada porque agora estamos numa current Simple!");
                 }
-
-
 
                 success = true;
             }
@@ -567,7 +531,6 @@ public class App extends Application {
 
     public Shape getCustomRectangleClip(Pane parent){
         Rectangle clip = new Rectangle(300,300);
-        //clip.setStyle("-fx-background-color: #333234; -fx-background-radius: 20");
 
         clip.setTranslateX(SCALE);
         clip.setTranslateY(SCALE/2.0);
@@ -637,418 +600,6 @@ public class App extends Application {
 
         return horizontalGrower;
     }
-
-    /*
-    private void setUpGetScaleXSection(){
-        Label widthLabel = new Label("Scale X:");
-        widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        widthLabel.setTextFill(Color.web("#BDBDBD"));
-
-
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
-
-        scaleXSlider = new Slider();
-        scaleXSlider.setMax(10);
-        scaleXSlider.setMin(0.1);
-        scaleXSlider.setValue(1);
-
-
-        textField.setOnKeyPressed(keyEvent ->{
-            if(keyEvent.getCode().equals(KeyCode.ENTER)){
-
-                try{
-                    if(Double.parseDouble(textField.getText()) < scaleXSlider.getMin()){
-                        textField.setText(String.valueOf(scaleXSlider.getMin()));
-                    }
-
-                    scaleXSlider.setValue(Double.parseDouble(textField.getText()));
-
-                }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(scaleXSlider.getMin()));
-                    scaleXSlider.setValue(scaleXSlider.getMin());
-                }
-
-            }
-        } );
-
-        //TODO: TextField should allow for 0.##, and slider only for 0.#.
-        //TODO: Height pane
-
-
-        scaleXSlider.setMajorTickUnit(0.1);
-        scaleXSlider.setMinorTickCount(0);
-        scaleXSlider.setSnapToTicks(true);
-
-        scaleXSlider.valueProperty().addListener(((observableValue, number, t1) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-            scaleXSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
-        }));
-
-        scaleXSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-
-            if(!resetingSliders) {
-                selectedCustomRectangle.setScaleX(newValue.doubleValue());
-            }
-        });
-
-        scaleXSection = new HBox(widthLabel, horizontalGrower(), scaleXSlider, horizontalGrower(), textField);
-        scaleXSection.setPadding(new Insets(10,10,10,15));
-        scaleXSection.setAlignment(Pos.CENTER_LEFT);
-        scaleXSection.setMinHeight(30);
-        scaleXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-    }
-
-    private void setUpGetScaleYSection(){
-        Label heightLabel = new Label("Scale Y:");
-        heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        heightLabel.setTextFill(Color.web("#BDBDBD"));
-
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
-
-        scaleYSlider = new Slider();
-        scaleYSlider.setMax(10);
-        scaleYSlider.setMin(0.1);
-        scaleYSlider.setValue(1);
-
-        scaleYSlider.setMajorTickUnit(0.1);
-        scaleYSlider.setMinorTickCount(0);
-        scaleYSlider.setSnapToTicks(true);
-
-        textField.setOnKeyPressed(keyEvent ->{
-            if(keyEvent.getCode().equals(KeyCode.ENTER)){
-
-                try{
-                    if(Double.parseDouble(textField.getText()) < scaleYSlider.getMin()){
-                        textField.setText(String.valueOf(scaleYSlider.getMin()));
-                    }
-
-                    scaleYSlider.setValue(Double.parseDouble(textField.getText()));
-
-                }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(scaleYSlider.getMin()));
-                    scaleYSlider.setValue(scaleYSlider.getMin());
-                }
-
-            }
-        } );
-
-
-        scaleYSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-
-            if(!resetingSliders) {
-
-                var oldHeight = selectedCustomRectangle.getHeight();
-                selectedCustomRectangle.setScaleY(newValue.doubleValue());
-
-                if (newValue.doubleValue() > oldValue.doubleValue()) {
-                    selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() - Math.abs(selectedCustomRectangle.getHeight() - oldHeight));
-                    System.out.println("-> " + Math.abs(selectedCustomRectangle.getHeight() * oldValue.doubleValue() - selectedCustomRectangle.getHeight() * newValue.doubleValue()));
-                    System.out.println("altura: " + selectedCustomRectangle.getHeight());
-                }
-            }
-
-
-        });
-
-        scaleYSection = new HBox(heightLabel, horizontalGrower(), scaleYSlider, horizontalGrower(), textField);
-        scaleYSection.setPadding(new Insets(10,10,10,15));
-        scaleYSection.setAlignment(Pos.CENTER_LEFT);
-        scaleYSection.setMinHeight(30);
-        scaleYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-    }
-
-
-
-    private void setUpGetTranslationXSection(){
-        Label widthLabel = new Label("Translation X:");
-        widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        widthLabel.setTextFill(Color.web("#BDBDBD"));
-
-
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
-
-        translationXSlider = new Slider();
-        translationXSlider.setMax(SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
-        translationXSlider.setMin(-SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
-        translationXSlider.setValue(1);
-
-
-        textField.setOnKeyPressed(keyEvent ->{
-            if(keyEvent.getCode().equals(KeyCode.ENTER)){
-
-                try{
-                    if(Double.parseDouble(textField.getText()) < translationXSlider.getMin()){
-                        textField.setText(String.valueOf(translationXSlider.getMin()));
-                    }
-
-                    translationXSlider.setValue(Double.parseDouble(textField.getText()));
-
-                }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(translationXSlider.getMin()));
-                    translationXSlider.setValue(translationXSlider.getMin());
-                }
-
-            }
-        } );
-
-        //TODO: TextField should allow for 0.##, and slider only for 0.#.
-        //TODO: Height pane
-
-
-        translationXSlider.setMajorTickUnit(0.1);
-        translationXSlider.setMinorTickCount(0);
-        translationXSlider.setSnapToTicks(true);
-
-        translationXSlider.valueProperty().addListener(((observableValue, number, t1) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-            translationXSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
-        }));
-
-        translationXSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-
-            if(!resetingSliders) {
-                selectedCustomRectangle.addTranslationX(newValue.doubleValue() - oldValue.doubleValue());
-            }
-
-        });
-
-        translationXSection = new HBox(widthLabel, horizontalGrower(), translationXSlider, horizontalGrower(), textField);
-        translationXSection.setPadding(new Insets(10,10,10,15));
-        translationXSection.setAlignment(Pos.CENTER_LEFT);
-        translationXSection.setMinHeight(30);
-        translationXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-    }
-
-    private void setUpGetTranslationYSection(){
-        Label heightLabel = new Label("Translation Y:");
-        heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        heightLabel.setTextFill(Color.web("#BDBDBD"));
-
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
-
-        translationYSlider = new Slider();
-        translationYSlider.setMax(SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
-        translationYSlider.setMin(-SCALE*NUMBER_COLUMNS_AND_ROWS/2.0);
-        translationYSlider.setValue(1);
-
-        translationYSlider.setMajorTickUnit(0.1);
-        translationYSlider.setMinorTickCount(0);
-        translationYSlider.setSnapToTicks(true);
-
-        textField.setOnKeyPressed(keyEvent ->{
-            if(keyEvent.getCode().equals(KeyCode.ENTER)){
-
-                try{
-                    if(Double.parseDouble(textField.getText()) < translationYSlider.getMin()){
-                        textField.setText(String.valueOf(translationYSlider.getMin()));
-                    }
-
-                    translationYSlider.setValue(Double.parseDouble(textField.getText()));
-
-                }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(translationYSlider.getMin()));
-                    translationYSlider.setValue(translationYSlider.getMin());
-                }
-
-            }
-        } );
-
-
-        translationYSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-
-            var oldHeight = selectedCustomRectangle.getHeight();
-
-            if(!resetingSliders) {
-
-                selectedCustomRectangle.addTranslationY(newValue.doubleValue() - oldValue.doubleValue());
-            }
-        });
-
-        translationYSection = new HBox(heightLabel, horizontalGrower(), translationYSlider, horizontalGrower(), textField);
-        translationYSection.setPadding(new Insets(10,10,10,15));
-        translationYSection.setAlignment(Pos.CENTER_LEFT);
-        translationYSection.setMinHeight(30);
-        translationYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-    }
-*/
-
-/*
-    private void setUpGetWidthSection(){
-        Label widthLabel = new Label("Width:");
-        widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        widthLabel.setTextFill(Color.web("#BDBDBD"));
-
-
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
-
-
-
-        widthSectionSlider = new Slider();
-        widthSectionSlider.setMax(10);
-        widthSectionSlider.setMin(0.1);
-        widthSectionSlider.setValue(1);
-
-
-        textField.setOnKeyPressed(keyEvent ->{
-            if(keyEvent.getCode().equals(KeyCode.ENTER)){
-
-                try{
-                    if(Double.parseDouble(textField.getText()) < widthSectionSlider.getMin()){
-                        textField.setText(String.valueOf(widthSectionSlider.getMin()));
-                    }
-
-                    widthSectionSlider.setValue(Double.parseDouble(textField.getText()));
-
-                }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(widthSectionSlider.getMin()));
-                    widthSectionSlider.setValue(widthSectionSlider.getMin());
-                }
-
-            }
-        } );
-
-        //TODO: TextField should allow for 0.##, and slider only for 0.#.
-        //TODO: Height pane
-
-
-        widthSectionSlider.setMajorTickUnit(0.1);
-        widthSectionSlider.setMinorTickCount(0);
-        widthSectionSlider.setSnapToTicks(true);
-
-        widthSectionSlider.valueProperty().addListener(((observableValue, number, t1) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-            widthSectionSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
-        }));
-
-        widthSectionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-
-            if(!resetingSliders) {
-
-                selectedCustomRectangle.setWidth(newValue.doubleValue() * SCALE);
-            }
-        });
-
-        widthSection = new HBox(widthLabel, horizontalGrower(), widthSectionSlider, horizontalGrower(), textField);
-        widthSection.setPadding(new Insets(10,10,10,15));
-        widthSection.setAlignment(Pos.CENTER_LEFT);
-        widthSection.setMinHeight(30);
-
-        widthSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-    }
-
-    private void  setUpGetHeightSection(){
-        Label heightLabel = new Label("Height:");
-        heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        heightLabel.setTextFill(Color.web("#BDBDBD"));
-
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
-
-        heightSectionSlider = new Slider();
-        heightSectionSlider.setMax(10);
-        heightSectionSlider.setMin(0.1);
-        heightSectionSlider.setValue(1);
-
-        heightSectionSlider.setMajorTickUnit(0.1);
-        heightSectionSlider.setMinorTickCount(0);
-        heightSectionSlider.setSnapToTicks(true);
-
-        textField.setOnKeyPressed(keyEvent ->{
-            if(keyEvent.getCode().equals(KeyCode.ENTER)){
-
-                try{
-                    if(Double.parseDouble(textField.getText()) < heightSectionSlider.getMin()){
-                        textField.setText(String.valueOf(heightSectionSlider.getMin()));
-                    }
-
-                    heightSectionSlider.setValue(Double.parseDouble(textField.getText()));
-
-                }catch (NumberFormatException e){
-                    textField.setText(String.valueOf(heightSectionSlider.getMin()));
-                    heightSectionSlider.setValue(heightSectionSlider.getMin());
-                }
-
-            }
-        } );
-
-
-        heightSectionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-
-            if(!resetingSliders) {
-                if (newValue.doubleValue() > oldValue.doubleValue()) {
-                    selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
-                } else {
-                    selectedCustomRectangle.setTranslateY(selectedCustomRectangle.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
-                }
-
-                selectedCustomRectangle.setHeight(newValue.doubleValue() * SCALE);
-
-                heightSectionSlider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
-            }
-        });
-
-        heightSection = new HBox(heightLabel, horizontalGrower(), heightSectionSlider, horizontalGrower(), textField);
-        heightSection.setPadding(new Insets(10,10,10,15));
-        heightSection.setAlignment(Pos.CENTER_LEFT);
-        heightSection.setMinHeight(30);
-
-        heightSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-
-    }
-*/
 
     private Pane getButtonsSection(){
         HBox hBox = new HBox(getToFrontPane(), getColorButton(), getImageButton());
@@ -1229,7 +780,7 @@ public class App extends Application {
             currentRectangle.redrawThumbnail();
 
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("id", currentRectangle.getUuid().toString());
+            jsonObject.put("id", currentRectangle.getUUID().toString());
             jsonObject.put("basic", "true");
             jsonObject.put("color", currentRectangle.rectangle.getFill().toString());
             jsonObject.put("width", currentRectangle.getWidth());
@@ -1246,7 +797,6 @@ public class App extends Application {
 
                 firstBasicShapeWasSaved.setValue(true);
                 sideBarThumbnails.add(currentRectangle);
-                //sideBarThumbnails.add(customRectangles.get(0).getThumbnail(() -> String.valueOf(customRectangles.indexOf(customRectangles.get(0)))));
             }catch (IOException e){
                 firstBasicShapeWasSaved.setValue(false);
                 e.printStackTrace();
@@ -1254,6 +804,12 @@ public class App extends Application {
 
         }else{
             System.err.println("Current is not simple!");
+            ArrayList<BasicShape> basicShapes = gridCanvas.getSimpleRectangles();
+
+            CompositionShape compositionShape = new CompositionShape(basicShapes, currentName.getText());
+            compositionShape.redrawThumbnail();
+
+
         }
     }
 

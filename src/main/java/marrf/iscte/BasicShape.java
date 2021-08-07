@@ -38,7 +38,7 @@ import java.util.function.Supplier;
 
 import static marrf.iscte.App.horizontalGrower;
 
-public class BasicShape {
+public class BasicShape implements CustomShape {
 
     private static final int SCALE = 40;
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
@@ -97,7 +97,7 @@ public class BasicShape {
         return translationOffset;
     }
 
-    public UUID getUuid() {
+    public UUID getUUID() {
         return uuid;
     }
 
@@ -551,10 +551,10 @@ public class BasicShape {
         boolean wasSelected = isStrokeOn();
 
         if (wasSelected)
-            temporarlyTurnOffStroke();
+            temporarilyTurnOffStroke();
 
         if (isSelected)
-            temporarlyTurnOffStroke();
+            temporarilyTurnOffStroke();
 
         try {
             WritableImage writableImage = new WritableImage((int) getWidth(),
@@ -601,12 +601,12 @@ public class BasicShape {
         boolean wasSelected = isStrokeOn();
 
         if (wasSelected) {
-            temporarlyTurnOffStroke();
+            temporarilyTurnOffStroke();
         }
 
 
         if (isSelected) {
-            temporarlyTurnOffStroke();
+            temporarilyTurnOffStroke();
         }
 
         try {
@@ -684,7 +684,7 @@ public class BasicShape {
                 + "-fx-border-radius: 5;" + "-fx-border-color: rgba(255,255,255, 1); -fx-background-color: transparent");
     }
 
-    private void temporarlyTurnOffStroke() {
+    private void temporarilyTurnOffStroke() {
         strokePane.setStyle("-fx-background-color: transparent");
     }
 
@@ -845,6 +845,5 @@ public class BasicShape {
     public ObjectProperty<Paint> fillProperty() {
         return rectangle.fillProperty();
     }
-
 
 }
