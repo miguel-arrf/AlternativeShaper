@@ -136,17 +136,32 @@ public class App extends Application {
                         content.getChildren().remove(checkIfExists);//This only removes if it exists
                         content.getChildren().add(checkIfExists);
 
-                        checkIfExists.setOnMouseClicked(mouseEvent -> {
-                            System.out.println("I've clicked on a thumbnail!");
-                            gridCanvas.clearEverything(true);
-                            //TODO aqui está a true, mas em algum momento não será...
-                            isCurrentSimple = true;
+                        if(basicShapeAdded instanceof CompositionShape){
+                            checkIfExists.setOnMouseClicked(mouseEvent -> {
+                                System.out.println("I've clicked on a composition shape thumbnail!");
+                                gridCanvas.clearEverything(false);
+                                //TODO aqui está a true, mas em algum momento não será...
+                                isCurrentSimple = false;
 
-                            //mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+                                addShape(basicShapeAdded, true);
 
-                            addShape(basicShapeAdded, true);
+                            });
+                        }else{
+                            //It is BasicShape
+                            checkIfExists.setOnMouseClicked(mouseEvent -> {
+                                System.out.println("I've clicked on a basic shape thumbnail!");
+                                gridCanvas.clearEverything(true);
+                                //TODO aqui está a true, mas em algum momento não será...
+                                isCurrentSimple = true;
 
-                        });
+                                //mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
+
+                                addShape(basicShapeAdded, true);
+
+                            });
+                        }
+
+
 
                     }
                 }
@@ -253,29 +268,43 @@ public class App extends Application {
     }
 
     private void addShape(CustomShape basicShapeToAdd, boolean selected){
-            BasicShape tempBasicShape = (BasicShape) basicShapeToAdd;
+            if(basicShapeToAdd instanceof BasicShape){
+                BasicShape tempBasicShape = (BasicShape) basicShapeToAdd;
 
-            gridCanvas.addShape(tempBasicShape);
-            if(!basicShapes.contains(tempBasicShape)){
-                basicShapes.add(tempBasicShape);
+                gridCanvas.addShape(tempBasicShape);
+                if(!basicShapes.contains(tempBasicShape)){
+                    basicShapes.add(tempBasicShape);
+                }
+                if(selected){
+                    selectedBasicShape = tempBasicShape;
+                    selectedBasicShape.turnOnStroke();
+                    selectedBasicShape.toogleSelected();
+
+                    basicShapes.stream().filter(r -> r != tempBasicShape).forEach(BasicShape::turnOffStroke);
+
+                }
+                transformersBox.getChildren().clear();
+
+                if(isCurrentSimple){
+                    transformersBox.getChildren().addAll(tempBasicShape.getWidthSection(), tempBasicShape.getHeightSection());
+                }
+            }else{
+                //It is CompositionShape
+                CompositionShape compositionShape = (CompositionShape) basicShapeToAdd;
+
+                compositionShape.getBasicShapes().forEach(shape -> {
+
+                    gridCanvas.addShape(shape);
+                    if(!basicShapes.contains(shape)){
+                        basicShapes.add(shape);
+                    }
+
+                    transformersBox.getChildren().clear();
+
+
+                });
+
             }
-            if(selected){
-                selectedBasicShape = tempBasicShape;
-                selectedBasicShape.turnOnStroke();
-                selectedBasicShape.toogleSelected();
-
-                basicShapes.stream().filter(r -> r != tempBasicShape).forEach(BasicShape::turnOffStroke);
-
-            }
-            transformersBox.getChildren().clear();
-
-            if(isCurrentSimple){
-                transformersBox.getChildren().addAll(tempBasicShape.getWidthSection(), tempBasicShape.getHeightSection());
-            }
-
-
-
-
 
     }
 
@@ -808,6 +837,8 @@ public class App extends Application {
 
             CompositionShape compositionShape = new CompositionShape(basicShapes, currentName.getText());
             compositionShape.redrawThumbnail();
+
+            sideBarThumbnails.add(compositionShape);
 
 
         }

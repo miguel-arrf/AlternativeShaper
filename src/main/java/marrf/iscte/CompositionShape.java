@@ -20,10 +20,11 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static marrf.iscte.App.horizontalGrower;
 
-public class CompositionShape {
+public class CompositionShape implements CustomShape{
 
     //Others
     private final int SCALE = 40;
@@ -53,6 +54,10 @@ public class CompositionShape {
         basicShapes.addAll(basicShapesToAdd);
         this.name = compositionShapeName;
         setUpComponents();
+    }
+
+    public ArrayList<BasicShape> getBasicShapes() {
+        return basicShapes;
     }
 
     private void setUpComponents(){
@@ -140,26 +145,58 @@ public class CompositionShape {
         basicShapes.forEach(basicShape -> basicShape.setScaleX(9.0));
     }
 
-    public String getName() {
+
+    @Override
+    public void setShapeName(String shapeName) {
+        this.name = shapeName;
+    }
+
+    @Override
+    public String getShapeName() {
         return name;
     }
 
-    //Thumbnail methods
-    public Pane getThumbnail(){
+    @Override
+    public UUID getUUID() {
+        return uuid;
+    }
+
+    @Override
+    public Pane getScaleXSection() {
+        return scaleXBox;
+    }
+
+    @Override
+    public Pane getScaleYSection() {
+        return scaleYBox;
+    }
+
+    @Override
+    public Pane getTranslationXSection() {
+        return translationXBox;
+    }
+
+    @Override
+    public Pane getTranslationYSection() {
+        return translationYBox;
+    }
+
+    public void redrawThumbnail(){
+        thumbnail.getChildren().clear();
+        thumbnail.getChildren().add(new Label(getShapeName()));
+    }
+
+    @Override
+    public Pane getThumbnail(Supplier<String> toPutIntoDragbord) {
         thumbnail.getChildren().clear();
         thumbnail.setMinWidth(0.0);
         thumbnail.setPadding(new Insets(10));
         thumbnail.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
 
         HBox.setHgrow(thumbnail, Priority.NEVER);
-        thumbnail.getChildren().add(new Label(getName()));
+        thumbnail.getChildren().add(new Label(getShapeName()));
 
         return thumbnail;
-    }
-
-    public void redrawThumbnail(){
-        thumbnail.getChildren().clear();
-        thumbnail.getChildren().add(new Label(getName()));
     }
 
 }
