@@ -2,6 +2,7 @@ package marrf.iscte;
 
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -50,6 +51,12 @@ public class BasicShape implements CustomShape {
     private boolean isSimple = false;
     private boolean isSelected = false;
 
+    public final DoubleProperty translateXProperty = new SimpleDoubleProperty(0.0);
+    public final DoubleProperty translateYProperty = new SimpleDoubleProperty(0.0);
+
+    public DoubleProperty xTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
+    public DoubleProperty yTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
+
     private HBox widthSection;
     private HBox heightSection;
 
@@ -69,6 +76,20 @@ public class BasicShape implements CustomShape {
 
     public String getShapeName() {
         return shapeName;
+    }
+
+    public DoubleProperty getXPropertyProperty() {
+        return translateXProperty;
+    }
+
+    public DoubleProperty getYPropertyProperty() {
+        return translateYProperty;
+    }
+
+
+    public void setTranslateOffsetProperty(DoubleProperty x, DoubleProperty y){
+        this.xTranslateOffsetProperty.bind(x);
+        this.yTranslateOffsetProperty.bind(y);
     }
 
     public BasicShape(int width, int height) {
@@ -291,8 +312,8 @@ public class BasicShape implements CustomShape {
         widthLabel.setTextFill(Color.web("#BDBDBD"));
 
 
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
+        TextField textField = new TextField("0");
+        textField.setPromptText("0");
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(50);
@@ -301,7 +322,7 @@ public class BasicShape implements CustomShape {
         Slider translationXSlider = new Slider();
         translationXSlider.setMax(SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
         translationXSlider.setMin(-SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationXSlider.setValue(1);
+        translationXSlider.setValue(0);
 
 
         textField.setOnKeyPressed(keyEvent -> {
@@ -341,7 +362,7 @@ public class BasicShape implements CustomShape {
             textField.setText(String.valueOf(truncatedDouble));
 
             this.addTranslationX(newValue.doubleValue() - oldValue.doubleValue());
-
+            translateXProperty.setValue(truncatedDouble);
 
         });
 
@@ -358,8 +379,8 @@ public class BasicShape implements CustomShape {
         heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         heightLabel.setTextFill(Color.web("#BDBDBD"));
 
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
+        TextField textField = new TextField("0");
+        textField.setPromptText("0");
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(50);
@@ -368,7 +389,7 @@ public class BasicShape implements CustomShape {
         Slider translationYSlider = new Slider();
         translationYSlider.setMax(SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
         translationYSlider.setMin(-SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationYSlider.setValue(1);
+        translationYSlider.setValue(0);
 
         translationYSlider.setMajorTickUnit(0.1);
         translationYSlider.setMinorTickCount(0);
@@ -402,6 +423,8 @@ public class BasicShape implements CustomShape {
 
             var oldHeight = this.getHeight();
 
+            translateYProperty.setValue(truncatedDouble);
+
             this.addTranslationY(newValue.doubleValue() - oldValue.doubleValue());
 
         });
@@ -420,8 +443,8 @@ public class BasicShape implements CustomShape {
         widthLabel.setTextFill(Color.web("#BDBDBD"));
 
 
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
+        TextField textField = new TextField("1");
+        textField.setPromptText("1");
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(50);
@@ -486,8 +509,8 @@ public class BasicShape implements CustomShape {
         heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         heightLabel.setTextFill(Color.web("#BDBDBD"));
 
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
+        TextField textField = new TextField("1");
+        textField.setPromptText("1");
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(50);
@@ -596,7 +619,7 @@ public class BasicShape implements CustomShape {
 
     }
 
-    public Pane getThumbnail(Supplier<String> toPutIntoDragbord) {
+    public Pane getThumbnail(Supplier<String> toPutIntoDragbord, Supplier<CustomShape> supplier) {
 
         boolean wasSelected = isStrokeOn();
 
@@ -793,7 +816,7 @@ public class BasicShape implements CustomShape {
     }
 
     public void setTranslateX(double value) {
-        stackPane.setTranslateX(value);
+        stackPane.setTranslateX(value + xTranslateOffsetProperty.get());
     }
 
     public double getTranslateY() {
@@ -801,7 +824,7 @@ public class BasicShape implements CustomShape {
     }
 
     public void setTranslateY(double value) {
-        stackPane.setTranslateY(value);
+        stackPane.setTranslateY(value + xTranslateOffsetProperty.get());
     }
 
     public Paint getFill() {

@@ -15,7 +15,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
@@ -33,6 +32,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * JavaFX App
@@ -43,17 +43,14 @@ public class App extends Application {
     public static final int NUMBER_COLUMNS_AND_ROWS = 40;
 
     private final StackPane centerCustomRectangle = new StackPane();
-
     private Scene scene;
-
     private final GridCanvas gridCanvas = new GridCanvas();
-
     private final Pane sceneStackPane = getGraphSection();
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
-    private BasicShape selectedBasicShape;
-    private CompositionShape selectedCompositionShape;
+    private final ArrayList<CompositionShape> compositionShapes = new ArrayList<>();
 
+    private BasicShape selectedBasicShape;
     private boolean isCurrentSimple = true;
     private TextField currentName;
 
@@ -62,27 +59,9 @@ public class App extends Application {
     private final VBox transformersBox = new VBox();
     private final ObservableList<CustomShape> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
 
+    private CustomShape inDragCustomShape;
+    private CompositionShape selectedCompositionShape;
 
-    public BasicShape getDraggableCustomRectangle(){
-
-        BasicShape basicShape = new BasicShape(20,20);
-        basicShape.setFill(Color.rgb(0,0,255,1));
-
-        basicShapes.add(basicShape);
-
-        basicShape.setOnDragDetected(event -> {
-            Dragboard db = basicShape.startDragAndDrop(TransferMode.ANY);
-
-            ClipboardContent content = new ClipboardContent();
-            content.putString(String.valueOf(basicShapes.indexOf(basicShape)));
-            db.setContent(content);
-
-            event.consume();
-        });
-
-        System.out.println("AAAAAHHHHH width: " + basicShape.getWidth());
-        return basicShape;
-    }
 
     public BasicShape getCopyWithBindWidthAndHeightFrom(int position){
         BasicShape toCopyFrom = basicShapes.get(position);
@@ -96,6 +75,7 @@ public class App extends Application {
         basicShape.heightProperty().bind(toCopyFrom.heightProperty().multiply(toCopyFrom.scaleYProperty()));
         basicShape.fillProperty().bind(toCopyFrom.fillProperty());
 
+
         return basicShape;
     }
 
@@ -108,15 +88,32 @@ public class App extends Application {
         return rectangle;
     }
 
-    private Pane getBasicShape(){
-        BasicShape basicShape = new BasicShape(100,100);
-        basicShape.getRectangle();
 
-        basicShape.setFill(Color.rgb(0,255,255,1));
-        basicShapes.add(basicShape);
+    private String getStringToPutInDrag(CustomShape customShape){
+        if(customShape instanceof BasicShape){
+            return String.valueOf(basicShapes.indexOf(customShape));
+        }else{
+            //Instance of CompositionShape
+            CompositionShape compositionShape = (CompositionShape) customShape;
 
-        return basicShape.getThumbnail(() -> String.valueOf(basicShapes.indexOf(basicShape)));
+            ArrayList<Integer> positions = new ArrayList<>();
+            compositionShape.getBasicShapes().forEach(shape -> positions.add(basicShapes.indexOf(shape)));
 
+            System.out.println("i'm going to send: " + positions.toString());
+            return positions.toString();
+        }
+    }
+
+    private Supplier<CustomShape> getConsumer(CustomShape customShape){
+        return () -> {
+            if(customShape instanceof CompositionShape){
+                inDragCustomShape = customShape;
+                System.out.println("ISTO É ENGRAÇAAAAADO. Agora sei o que estou dragging numa variável temporária!");
+            }else{
+                inDragCustomShape = null;
+            }
+            return null;
+        };
     }
 
     private ScrollPane getScrollPane(){
@@ -125,34 +122,40 @@ public class App extends Application {
 
         VBox content = new VBox(/*getBasicShape()*/);
 
-
-
         sideBarThumbnails.addListener((ListChangeListener<? super CustomShape>) change -> {
             while (change.next()){
                 if(change.wasAdded()){
 
                     for (CustomShape basicShapeAdded : change.getAddedSubList()) {
-                        Pane checkIfExists = basicShapeAdded.getThumbnail(() -> String.valueOf(basicShapes.indexOf(basicShapeAdded)));
+
+                        Pane checkIfExists = basicShapeAdded.getThumbnail(() -> getStringToPutInDrag(basicShapeAdded), getConsumer(basicShapeAdded));
                         content.getChildren().remove(checkIfExists);//This only removes if it exists
                         content.getChildren().add(checkIfExists);
 
                         if(basicShapeAdded instanceof CompositionShape){
                             checkIfExists.setOnMouseClicked(mouseEvent -> {
                                 System.out.println("I've clicked on a composition shape thumbnail!");
+                                selectedCompositionShape = (CompositionShape) basicShapeAdded;
+
                                 gridCanvas.clearEverything(false);
                                 //TODO aqui está a true, mas em algum momento não será...
                                 isCurrentSimple = false;
+                                currentName.setText(basicShapeAdded.getShapeName());
 
-                                addShape(basicShapeAdded, true);
+                                //addShape(basicShapeAdded, true);
+                                addCompositionShape(selectedCompositionShape, false);
 
                             });
                         }else{
                             //It is BasicShape
                             checkIfExists.setOnMouseClicked(mouseEvent -> {
                                 System.out.println("I've clicked on a basic shape thumbnail!");
+                                selectedBasicShape = (BasicShape) basicShapeAdded;
+
                                 gridCanvas.clearEverything(true);
                                 //TODO aqui está a true, mas em algum momento não será...
                                 isCurrentSimple = true;
+                                currentName.setText(basicShapeAdded.getShapeName());
 
                                 //mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
 
@@ -209,15 +212,18 @@ public class App extends Application {
         HBox.setHgrow(basicShapeVBox, Priority.ALWAYS);
 
         basicShapeVBox.setOnMouseClicked(mouseEvent -> {
+
             System.out.println("I want to add a new basic shape!");
             gridCanvas.clearEverything(true);
             isCurrentSimple = true;
             currentName.setText("simpleDefault");
 
+
             transformersBox.getChildren().clear();
 
             addShape(new BasicShape(SCALE, SCALE, true, Color.web("#55efc4")), true);
 
+            selectedCompositionShape = null;
         });
 
 
@@ -241,6 +247,8 @@ public class App extends Application {
             currentName.setText("complexDefault");
 
             transformersBox.getChildren().clear();
+
+            selectedCompositionShape = new CompositionShape();
         });
 
         HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
@@ -263,8 +271,36 @@ public class App extends Application {
         return saveHB;
     }
 
-    private void addShape(CustomShape basicShapeToAdd){
-        addShape(basicShapeToAdd, false);
+
+
+    private void addCompositionShape(CompositionShape compositionShape, boolean itWasDragged){
+        System.out.println("here I am: dragged -> " + itWasDragged);
+        //First we add the basic shapes:
+
+        if(itWasDragged){
+            selectedCompositionShape.addCompositionShape(compositionShape);
+            Pane toAdd = compositionShape.getGraphicalRepresentPaneOfCompositionShape(compositionShape);
+            gridCanvas.addGroup(toAdd, compositionShape);
+            System.out.println("adicionei " + compositionShape + " a: " + selectedCompositionShape);
+        } else{
+            System.out.println("I'm displaying: " + compositionShape);
+            //I want to display a thumbnail of the selected composition shape.
+            Pane toAdd = compositionShape.getGraphicalRepresentationPaneWithoutBasicShape();
+            gridCanvas.addGroup(toAdd, compositionShape);
+
+            compositionShape.getBasicShapes().forEach(basicShape -> {
+                /*if(!basicShapes.contains(basicShape)){
+                    basicShapes.add(basicShape);
+                    gridCanvas.addShape(basicShape);
+                }
+                transformersBox.getChildren().clear();*/
+                basicShapes.add(basicShape);
+                gridCanvas.addShape(basicShape);
+            });
+            transformersBox.getChildren().clear();
+        }
+
+
     }
 
     private void addShape(CustomShape basicShapeToAdd, boolean selected){
@@ -281,31 +317,18 @@ public class App extends Application {
                     selectedBasicShape.toogleSelected();
 
                     basicShapes.stream().filter(r -> r != tempBasicShape).forEach(BasicShape::turnOffStroke);
-
                 }
                 transformersBox.getChildren().clear();
 
                 if(isCurrentSimple){
                     transformersBox.getChildren().addAll(tempBasicShape.getWidthSection(), tempBasicShape.getHeightSection());
                 }
-            }else{
-                //It is CompositionShape
-                CompositionShape compositionShape = (CompositionShape) basicShapeToAdd;
-
-                compositionShape.getBasicShapes().forEach(shape -> {
-
-                    gridCanvas.addShape(shape);
-                    if(!basicShapes.contains(shape)){
-                        basicShapes.add(shape);
-                    }
-
-                    transformersBox.getChildren().clear();
-
-
-                });
-
             }
 
+    }
+
+    private void addShape(CustomShape basicShapeToAdd){
+        addShape(basicShapeToAdd, false);
     }
 
     public Pane getScenePanel(Scene scene){
@@ -363,13 +386,11 @@ public class App extends Application {
         stage.setScene(scene);
         stage.show();
 
-
         for(int i = 0; i < Screen.getScreens().size(); i++){
             Screen screen = Screen.getScreens().get(i);
             Rectangle2D bounds = screen.getVisualBounds();
 
-
-            if(i == 1){
+            if(i == 0){
                 stage.setX(bounds.getMinX() + 100);
                 stage.setY(bounds.getMinY() + 100);
 
@@ -452,14 +473,30 @@ public class App extends Application {
             boolean success = false;
             if (db.hasString()) {
                 System.out.println("this was dropped: " + db.getString());
-
-                System.out.println("event x: " + event.getX() + ", y: " + event.getY());
+                //System.out.println("event x: " + event.getX() + ", y: " + event.getY());
 
                 if(!isCurrentSimple){
-                    BasicShape basicShapeToAdd = getCopyWithBindWidthAndHeightFrom(Integer.parseInt(db.getString()));
-                    addShape(basicShapeToAdd);
-                    basicShapeToAdd.toogleOffSelection();
-                    //TODO Here we need to reset the sliders... that's why a offset is being created when we drop in a new shape...
+
+                    if(db.getString().contains("[")){
+                        if(inDragCustomShape != selectedCompositionShape){
+                            CompositionShape inDrag = (CompositionShape) inDragCustomShape;
+                            compositionShapes.add(inDrag);
+                            addCompositionShape(inDrag, true);
+                        }else{
+                            System.err.println("Ia adicionar a comp shape X à comp shape X");
+                        }
+
+                    }else{
+                        BasicShape basicShapeToAdd = selectedCompositionShape.getCopyWithBindWidthAndHeightFrom(basicShapes.get(Integer.parseInt(db.getString())));
+                        addShape(basicShapeToAdd);
+                        basicShapeToAdd.toogleOffSelection();
+
+                        selectedCompositionShape.addBasicShape(basicShapeToAdd);
+
+                        //TODO Here we need to reset the sliders... that's why a offset is being created when we drop in a new shape...
+                    }
+
+
                 }else {
                     System.err.println("Não adicionei nada porque agora estamos numa current Simple!");
                 }
@@ -832,14 +869,12 @@ public class App extends Application {
             }
 
         }else{
-            System.err.println("Current is not simple!");
-            ArrayList<BasicShape> basicShapes = gridCanvas.getSimpleRectangles();
-
-            CompositionShape compositionShape = new CompositionShape(basicShapes, currentName.getText());
-            compositionShape.redrawThumbnail();
-
-            sideBarThumbnails.add(compositionShape);
-
+            System.out.println("vamos guardar composition: " + selectedCompositionShape);
+            selectedCompositionShape.setShapeName(currentName.getText());
+            selectedCompositionShape.redrawThumbnail();
+            if(!sideBarThumbnails.contains(selectedCompositionShape)){
+                sideBarThumbnails.add(selectedCompositionShape);
+            }
 
         }
     }

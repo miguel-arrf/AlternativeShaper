@@ -1,5 +1,6 @@
 package marrf.iscte;
 
+import javafx.scene.Group;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -19,17 +20,12 @@ public class GridCanvas {
     private final ArrayList<Double> initialVerticalDrag = new ArrayList<>();
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
+    private final ArrayList<CompositionShape> compositionShapes = new ArrayList<>();
 
     private final Pane pane = new Pane();
     private Circle circle;
 
-    public boolean withBasicShape = false;
-
     public ArrayList<BasicShape> getCurrentRectangles(){
-        return basicShapes;
-    }
-
-    public ArrayList<BasicShape> getSimpleRectangles(){
         return basicShapes;
     }
 
@@ -44,13 +40,28 @@ public class GridCanvas {
         return basicShapes.get(0);
     }
 
+    public ArrayList<BasicShape> getBasicShapes() {
+        return basicShapes;
+    }
+
+    public ArrayList<CompositionShape> getCompositionShapes() {
+        return compositionShapes;
+    }
+
     public void addShape(BasicShape basicShape){
-        System.out.println("vou adicionar, getX: " + basicShape.getX() + ", translateX: " + basicShape.getTranslateX());
-        System.out.println("vou adicionar height: " + basicShape.getHeight());
+        //System.out.println("vou adicionar, getX: " + basicShape.getX() + ", translateX: " + basicShape.getTranslateX());
+        //System.out.println("vou adicionar height: " + basicShape.getHeight());
 
+        /*basicShape.translateXProperty.addListener((observable, oldValue, newValue) -> {
 
-        basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() + basicShape.getTranslationOffset().getX());
-        basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() + basicShape.getTranslationOffset().getY());
+        });
+
+        basicShape.translateYProperty.addListener((observable, oldValue, newValue) -> {
+
+        });*/
+
+        basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() + basicShape.getTranslationOffset().getX() + basicShape.translateXProperty.get());
+        basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() + basicShape.getTranslationOffset().getY() + basicShape.translateYProperty.get());
 
         if(basicShape.getHeight() <= SCALE){
             basicShape.addTranslationY(Math.abs(SCALE - basicShape.getHeight()));
@@ -65,19 +76,22 @@ public class GridCanvas {
         basicShapes.add(basicShape);
     }
 
+    public void addGroup(Pane basicShape, CompositionShape compositionShape){
+        compositionShapes.add(compositionShape);
+        pane.getChildren().add(basicShape);
+    }
+
+
     public GridCanvas(){
     }
 
     public void clearEverything(boolean stillBasicShape){
         redraw();
         basicShapes.clear();
+        compositionShapes.clear();
 
-        withBasicShape = stillBasicShape;
     }
 
-    public GridCanvas(boolean withBasicShape){
-        this.withBasicShape = withBasicShape;
-    }
 
     private void redraw(){
         pane.getChildren().clear();

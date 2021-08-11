@@ -18,6 +18,6 @@ public interface CustomShape {
     public Pane getTranslationYSection();
 
     public void redrawThumbnail();
-    public Pane getThumbnail(Supplier<String> toPutIntoDragbord);
+    public Pane getThumbnail(Supplier<String> toPutIntoDragbord, Supplier<CustomShape> supplier);
 
 }
