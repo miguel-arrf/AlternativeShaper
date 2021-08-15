@@ -20,7 +20,7 @@ public class GridCanvas {
     private final ArrayList<Double> initialVerticalDrag = new ArrayList<>();
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
-    private final ArrayList<CompositionShape> compositionShapes = new ArrayList<>();
+    private final ArrayList<NewCompositionShape> compositionShapes = new ArrayList<>();
 
     private final Pane pane = new Pane();
     private Circle circle;
@@ -44,7 +44,7 @@ public class GridCanvas {
         return basicShapes;
     }
 
-    public ArrayList<CompositionShape> getCompositionShapes() {
+    public ArrayList<NewCompositionShape> getCompositionShapes() {
         return compositionShapes;
     }
 
@@ -76,7 +76,7 @@ public class GridCanvas {
         basicShapes.add(basicShape);
     }
 
-    public void addGroup(Pane basicShape, CompositionShape compositionShape){
+    public void addGroup(Pane basicShape, NewCompositionShape compositionShape){
         compositionShapes.add(compositionShape);
         pane.getChildren().add(basicShape);
     }

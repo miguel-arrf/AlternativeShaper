@@ -45,10 +45,7 @@ public class BasicShape implements CustomShape {
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
     private final Point2D translationOffset = new Point2D(0, -40);
     private final UUID uuid = UUID.randomUUID();
-    StackPane stackPane = new StackPane();
-    Rectangle rectangle = new Rectangle();
-    Pane strokePane = new Pane();
-    private boolean isSimple = false;
+    Rectangle rectangle;
     private boolean isSelected = false;
 
     public final DoubleProperty translateXProperty = new SimpleDoubleProperty(0.0);
@@ -66,6 +63,12 @@ public class BasicShape implements CustomShape {
     private HBox scaleXSection;
     private HBox scaleYSection;
 
+
+    private double width;
+    private double height;
+    private double scaleX;
+    private double scaleY;
+
     private String shapeName = "defaultName";
 
     private final VBox thumbnail = new VBox();
@@ -78,41 +81,20 @@ public class BasicShape implements CustomShape {
         return shapeName;
     }
 
-    public DoubleProperty getXPropertyProperty() {
-        return translateXProperty;
-    }
 
-    public DoubleProperty getYPropertyProperty() {
-        return translateYProperty;
-    }
+    public BasicShape(double width, double height, Paint color) {
+        this.width = width;
+        this.height = height;
 
+        this.scaleX = 1;
+        this.scaleY = 1;
 
-    public void setTranslateOffsetProperty(DoubleProperty x, DoubleProperty y){
-        this.xTranslateOffsetProperty.bind(x);
-        this.yTranslateOffsetProperty.bind(y);
-    }
-
-    public BasicShape(int width, int height) {
-        rectangle = new Rectangle(width, height);
-        setUpComponents();
-    }
-
-    public BasicShape(int width, int height, boolean isSimple) {
-        rectangle = new Rectangle(width, height);
-        this.isSimple = isSimple;
-        setUpComponents();
-    }
-
-    public BasicShape(int width, int height, boolean isSimple, Paint color) {
         rectangle = new Rectangle(width, height);
         rectangle.setFill(color);
-        this.isSimple = isSimple;
         setUpComponents();
     }
 
-    public BasicShape() {
-        setUpComponents();
-    }
+
 
     public Point2D getTranslationOffset() {
         return translationOffset;
@@ -122,29 +104,9 @@ public class BasicShape implements CustomShape {
         return uuid;
     }
 
-    private void setUpStackPane() {
-        if (!stackPane.getChildren().contains(rectangle)) {
-            stackPane.setAlignment(Pos.CENTER);
-
-            stackPane.getChildren().add(rectangle);
-            stackPane.getChildren().add(strokePane);
-
-
-            rectangle.widthProperty().addListener((observable, oldValue, newValue) -> stackPane.setPrefWidth(newValue.doubleValue() * rectangle.getScaleX()));
-
-            rectangle.heightProperty().addListener((observable, oldValue, newValue) -> stackPane.setPrefHeight(newValue.doubleValue() * rectangle.getScaleY()));
-
-            rectangle.scaleXProperty().addListener((observable, oldValue, newValue) -> stackPane.setPrefWidth(newValue.doubleValue() * rectangle.getWidth()));
-
-            rectangle.scaleYProperty().addListener((observable, oldValue, newValue) -> stackPane.setPrefHeight(newValue.doubleValue() * rectangle.getHeight()));
-
-            stackPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-
-        }
-    }
 
     private boolean isStrokeOn() {
-        return strokePane.getStyle().contains("-fx-border-radius");
+        return rectangle.getStyle().contains("-fx-border-radius");
     }
 
     public HBox getWidthSection() {
@@ -493,7 +455,6 @@ public class BasicShape implements CustomShape {
             textField.setText(String.valueOf(truncatedDouble));
 
             this.setScaleX(newValue.doubleValue());
-
         });
 
         scaleXSection = new HBox(widthLabel, horizontalGrower(), scaleXSlider, horizontalGrower(), textField);
@@ -582,7 +543,7 @@ public class BasicShape implements CustomShape {
         try {
             WritableImage writableImage = new WritableImage((int) getWidth(),
                     (int) getHeight());
-            WritableImage snapshot = stackPane.snapshot(null, writableImage);
+            WritableImage snapshot = rectangle.snapshot(null, writableImage);
             RenderedImage renderedImage = SwingFXUtils.fromFXImage(writableImage, null);
 
 
@@ -635,7 +596,7 @@ public class BasicShape implements CustomShape {
         try {
             WritableImage writableImage = new WritableImage((int) getWidth(),
                     (int) getHeight());
-            WritableImage snapshot = stackPane.snapshot(null, writableImage);
+            WritableImage snapshot = rectangle.snapshot(null, writableImage);
             RenderedImage renderedImage = SwingFXUtils.fromFXImage(writableImage, null);
 
 
@@ -702,30 +663,30 @@ public class BasicShape implements CustomShape {
 
     public void turnOnStroke() {
 
-        strokePane.setStyle("-fx-padding: 0;" + "-fx-border-style: solid inside;"
+        rectangle.setStyle("-fx-padding: 0;" + "-fx-border-style: solid inside;"
                 + "-fx-border-width: 5;" + "-fx-border-insets: -10;"
                 + "-fx-border-radius: 5;" + "-fx-border-color: rgba(255,255,255, 1); -fx-background-color: transparent");
+
+        rectangle.setStyle("-fx-stroke: black; -fx-stroke-width: 5;");
     }
 
     private void temporarilyTurnOffStroke() {
-        strokePane.setStyle("-fx-background-color: transparent");
+        rectangle.setStyle("-fx-background-color: transparent");
     }
 
     public void turnOffStroke() {
-        strokePane.setStyle("-fx-background-color: transparent");
+        rectangle.setStyle("-fx-background-color: transparent");
     }
 
     public void turnOffStrokeIfNotSelected() {
         if (!isSelected) {
-            strokePane.setStyle("-fx-background-color: transparent");
+            rectangle.setStyle("-fx-background-color: transparent");
         }
     }
 
-    public StackPane getRectangle() {
-        setUpStackPane();
-        strokePane.setMouseTransparent(true);
+    public Rectangle getRectangle() {
 
-        return stackPane;
+        return rectangle;
     }
 
     private void setUpComponents() {
@@ -760,11 +721,18 @@ public class BasicShape implements CustomShape {
     }
 
     public void setScaleX(double scaleX) {
-        rectangle.setScaleX(scaleX);
+        this.scaleX = scaleX;
+        rectangle.setWidth(scaleX * width);
+
+       /* strokePane.setMaxWidth(getWidth() * scaleX);
+        strokePane.setMinWidth(getWidth()*scaleX);
+        strokePane.setPrefWidth(getWidth()*scaleX);*/
+
     }
 
     public void setScaleY(double scaleY) {
-        rectangle.setScaleY(scaleY);
+        this.scaleY = scaleY;
+        rectangle.setHeight(height * scaleY);
     }
 
     public double getScaleX(){
@@ -780,7 +748,7 @@ public class BasicShape implements CustomShape {
     }
 
     public double getX() {
-        return stackPane.getLayoutBounds().getMinX();
+        return rectangle.getLayoutBounds().getMinX();
     }
 
     public void setX(double x) {
@@ -788,7 +756,7 @@ public class BasicShape implements CustomShape {
     }
 
     public double getY() {
-        return stackPane.getLayoutBounds().getMaxY();
+        return rectangle.getLayoutBounds().getMaxY();
     }
 
     public void setY(double y) {
@@ -796,7 +764,7 @@ public class BasicShape implements CustomShape {
     }
 
     public Point2D localToScene(double d1, double d2) {
-        return stackPane.localToScene(d1, d2);
+        return rectangle.localToScene(d1, d2);
     }
 
     public DoubleProperty heightProperty() {
@@ -804,27 +772,27 @@ public class BasicShape implements CustomShape {
     }
 
     public void addTranslationX(double value) {
-        stackPane.setTranslateX(getTranslateX() + value);
+        rectangle.setTranslateX(getTranslateX() + value);
     }
 
     public void addTranslationY(double value) {
-        stackPane.setTranslateY(getTranslateY() + value);
+        rectangle.setTranslateY(getTranslateY() + value);
     }
 
     public double getTranslateX() {
-        return stackPane.getTranslateX();
+        return rectangle.getTranslateX();
     }
 
     public void setTranslateX(double value) {
-        stackPane.setTranslateX(value + xTranslateOffsetProperty.get());
+        rectangle.setTranslateX(value + xTranslateOffsetProperty.get());
     }
 
     public double getTranslateY() {
-        return stackPane.getTranslateY();
+        return rectangle.getTranslateY();
     }
 
     public void setTranslateY(double value) {
-        stackPane.setTranslateY(value + xTranslateOffsetProperty.get());
+        rectangle.setTranslateY(value + xTranslateOffsetProperty.get());
     }
 
     public Paint getFill() {
@@ -837,15 +805,11 @@ public class BasicShape implements CustomShape {
 
     public double getWidth() {
         return rectangle.getWidth();
-        //return stackPane.getWidth();
     }
 
     public void setWidth(double width) {
-        rectangle.setWidth(width);
-
-        stackPane.setMaxWidth(width);
-        stackPane.setMinWidth(0);
-        stackPane.setPrefWidth(width);
+        this.width = width;
+        rectangle.setWidth(width * scaleX);
 
         //redrawThumbnail();
     }
@@ -856,11 +820,9 @@ public class BasicShape implements CustomShape {
     }
 
     public void setHeight(double height) {
-        rectangle.setHeight(height);
+        this.height = height;
+        rectangle.setHeight(height * scaleY);
 
-        stackPane.setMaxHeight(height);
-        stackPane.setMinHeight(0);
-        stackPane.setPrefHeight(height);
 
         //redrawThumbnail();
     }

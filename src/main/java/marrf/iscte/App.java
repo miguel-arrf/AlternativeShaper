@@ -12,7 +12,9 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Dragboard;
@@ -22,8 +24,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.json.simple.JSONObject;
@@ -48,7 +48,7 @@ public class App extends Application {
     private final Pane sceneStackPane = getGraphSection();
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
-    private final ArrayList<CompositionShape> compositionShapes = new ArrayList<>();
+
 
     private BasicShape selectedBasicShape;
     private boolean isCurrentSimple = true;
@@ -60,24 +60,11 @@ public class App extends Application {
     private final ObservableList<CustomShape> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
 
     private CustomShape inDragCustomShape;
-    private CompositionShape selectedCompositionShape;
 
+    private NewCompositionShape selectedCompositionShape;
+    private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
 
-    public BasicShape getCopyWithBindWidthAndHeightFrom(int position){
-        BasicShape toCopyFrom = basicShapes.get(position);
-        System.out.println("to copy from: width:" + toCopyFrom.getWidth() + ", height: " + toCopyFrom.getHeight());
-
-        BasicShape basicShape = new BasicShape();
-        basicShape.setFill(toCopyFrom.getFill());
-        basicShape.setWidth(toCopyFrom.getWidth());
-        basicShape.setHeight(toCopyFrom.getHeight());
-        basicShape.widthProperty().bind(toCopyFrom.widthProperty().multiply(toCopyFrom.scaleXProperty()));
-        basicShape.heightProperty().bind(toCopyFrom.heightProperty().multiply(toCopyFrom.scaleYProperty()));
-        basicShape.fillProperty().bind(toCopyFrom.fillProperty());
-
-
-        return basicShape;
-    }
+    private final Orchestrator orchestrator = new Orchestrator();
 
     private Pane getSeparator(){
         Pane rectangle = new Pane();
@@ -93,20 +80,14 @@ public class App extends Application {
         if(customShape instanceof BasicShape){
             return String.valueOf(basicShapes.indexOf(customShape));
         }else{
-            //Instance of CompositionShape
-            CompositionShape compositionShape = (CompositionShape) customShape;
 
-            ArrayList<Integer> positions = new ArrayList<>();
-            compositionShape.getBasicShapes().forEach(shape -> positions.add(basicShapes.indexOf(shape)));
-
-            System.out.println("i'm going to send: " + positions.toString());
-            return positions.toString();
+            return "positions.toString();";
         }
     }
 
     private Supplier<CustomShape> getConsumer(CustomShape customShape){
         return () -> {
-            if(customShape instanceof CompositionShape){
+            if(customShape instanceof NewCompositionShape){
                 inDragCustomShape = customShape;
                 System.out.println("ISTO É ENGRAÇAAAAADO. Agora sei o que estou dragging numa variável temporária!");
             }else{
@@ -132,10 +113,10 @@ public class App extends Application {
                         content.getChildren().remove(checkIfExists);//This only removes if it exists
                         content.getChildren().add(checkIfExists);
 
-                        if(basicShapeAdded instanceof CompositionShape){
+                        if(basicShapeAdded instanceof NewCompositionShape){
                             checkIfExists.setOnMouseClicked(mouseEvent -> {
                                 System.out.println("I've clicked on a composition shape thumbnail!");
-                                selectedCompositionShape = (CompositionShape) basicShapeAdded;
+                                selectedCompositionShape = (NewCompositionShape) basicShapeAdded;
 
                                 gridCanvas.clearEverything(false);
                                 //TODO aqui está a true, mas em algum momento não será...
@@ -143,7 +124,6 @@ public class App extends Application {
                                 currentName.setText(basicShapeAdded.getShapeName());
 
                                 //addShape(basicShapeAdded, true);
-                                addCompositionShape(selectedCompositionShape, false);
 
                             });
                         }else{
@@ -159,7 +139,7 @@ public class App extends Application {
 
                                 //mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
 
-                                addShape(basicShapeAdded, true, false);
+                                addShape(basicShapeAdded);
 
                             });
                         }
@@ -183,15 +163,15 @@ public class App extends Application {
         return scrollPane;
     }
 
-    public HBox addBasicAndComplexButtons(){
+    public void addBasicAndComplexButtons(){
 
-        Image basicPlus = new Image(App.class.getResource("/icons/plus.png").toExternalForm());
+        Image basicPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/plus.png")).toExternalForm());
         ImageView basicPlusImageView = new ImageView(basicPlus);
         basicPlusImageView.setSmooth(true);
         basicPlusImageView.setPreserveRatio(true);
         basicPlusImageView.setFitWidth(12);
 
-        Image complexPlus = new Image(App.class.getResource("/icons/plus.png").toExternalForm());
+        Image complexPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/plus.png")).toExternalForm());
         ImageView complexPlusImageView = new ImageView(complexPlus);
         complexPlusImageView.setSmooth(true);
         complexPlusImageView.setPreserveRatio(true);
@@ -221,7 +201,7 @@ public class App extends Application {
 
             transformersBox.getChildren().clear();
 
-            addShape(new BasicShape(SCALE, SCALE, true, Color.web("#55efc4")), true, false);
+            addShape(new BasicShape(SCALE, SCALE, Color.web("#55efc4")));
 
             selectedCompositionShape = null;
         });
@@ -248,7 +228,9 @@ public class App extends Application {
 
             transformersBox.getChildren().clear();
 
-            selectedCompositionShape = new CompositionShape();
+            selectedCompositionShape = new NewCompositionShape(orchestrator);
+            newCompositionShapes.add(selectedCompositionShape);
+
         });
 
         HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
@@ -268,42 +250,12 @@ public class App extends Application {
             }
         });
 
-        return saveHB;
-    }
-
-
-
-    private void addCompositionShape(CompositionShape compositionShape, boolean itWasDragged){
-        System.out.println("here I am: dragged -> " + itWasDragged);
-        //First we add the basic shapes:
-
-        if(itWasDragged){
-            selectedCompositionShape.addCompositionShape(compositionShape);
-            Pane toAdd = compositionShape.getGraphicalRepresentPaneOfCompositionShape(compositionShape);
-            gridCanvas.addGroup(toAdd, compositionShape);
-            System.out.println("adicionei " + compositionShape + " a: " + selectedCompositionShape);
-        } else{
-            System.out.println("I'm displaying: " + compositionShape);
-            //I want to display a thumbnail of the selected composition shape.
-            Pane toAdd = compositionShape.getGraphicalRepresentationPaneWithoutBasicShape();
-            gridCanvas.addGroup(toAdd, compositionShape);
-
-            compositionShape.getBasicShapes().forEach(basicShape -> {
-                /*if(!basicShapes.contains(basicShape)){
-                    basicShapes.add(basicShape);
-                    gridCanvas.addShape(basicShape);
-                }
-                transformersBox.getChildren().clear();*/
-                basicShapes.add(basicShape);
-                gridCanvas.addShape(basicShape);
-            });
-            transformersBox.getChildren().clear();
-        }
-
 
     }
 
-    private void addShape(CustomShape basicShapeToAdd, boolean selected, boolean notHoverable){
+
+
+    private void addShape(CustomShape basicShapeToAdd){
             if(basicShapeToAdd instanceof BasicShape){
                 BasicShape tempBasicShape = (BasicShape) basicShapeToAdd;
 
@@ -311,13 +263,11 @@ public class App extends Application {
                 if(!basicShapes.contains(tempBasicShape)){
                         basicShapes.add(tempBasicShape);
                 }
-                if(selected){
-                    selectedBasicShape = tempBasicShape;
-                    selectedBasicShape.turnOnStroke();
-                    selectedBasicShape.toogleSelected();
+                selectedBasicShape = tempBasicShape;
+                selectedBasicShape.turnOnStroke();
+                selectedBasicShape.toogleSelected();
 
-                    basicShapes.stream().filter(r -> r != tempBasicShape).forEach(BasicShape::turnOffStroke);
-                }
+                basicShapes.stream().filter(r -> r != tempBasicShape).forEach(BasicShape::turnOffStroke);
                 transformersBox.getChildren().clear();
 
                 if(isCurrentSimple){
@@ -325,10 +275,6 @@ public class App extends Application {
                 }
             }
 
-    }
-
-    private void addShape(CustomShape basicShapeToAdd){
-        addShape(basicShapeToAdd, false, false);
     }
 
     public Pane getScenePanel(Scene scene){
@@ -361,7 +307,7 @@ public class App extends Application {
         borderPane.setRight(mainPanel);
         borderPane.setCenter(sceneStackPane);
 
-        addShape(new BasicShape(SCALE, SCALE, true, Color.web("#55efc4")), true, false);
+        addShape(new BasicShape(SCALE, SCALE, Color.web("#55efc4")));
 
 
         return borderPane;
@@ -417,13 +363,9 @@ public class App extends Application {
         pane.getChildren().add(anchorPane);
         getAnchorPaneClip(anchorPane);
 
-        pane.setOnMouseEntered(event -> {
-            scene.setCursor(Cursor.CLOSED_HAND);
-        });
+        pane.setOnMouseEntered(event -> scene.setCursor(Cursor.CLOSED_HAND));
 
-        pane.setOnMouseExited(event -> {
-            scene.setCursor(Cursor.DEFAULT);
-        });
+        pane.setOnMouseExited(event -> scene.setCursor(Cursor.DEFAULT));
 
         pane.setOnDragEntered(event -> {
             if (event.getGestureSource() != pane &&
@@ -433,29 +375,27 @@ public class App extends Application {
             event.consume();
         });
 
-        pane.setOnMouseClicked(event -> {
-            basicShapes.forEach(rectangle -> {
-                Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth()    , 0));
+        pane.setOnMouseClicked(event -> basicShapes.forEach(rectangle -> {
+            Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth()    , 0));
 
-                if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()) {
-                    if (transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()) {
-                        System.out.println("cliquei numa shape!");
-                        selectedBasicShape = rectangle;
-                        selectedBasicShape.turnOnStroke();
-                        selectedBasicShape.toogleSelected();
+            if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()) {
+                if (transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()) {
+                    System.out.println("cliquei numa shape!");
+                    selectedBasicShape = rectangle;
+                    selectedBasicShape.turnOnStroke();
+                    selectedBasicShape.toogleSelected();
 
-                        basicShapes.stream().filter(r -> r != rectangle).forEach(BasicShape::turnOffStroke);
-                        basicShapes.stream().filter(r -> r != rectangle).forEach(BasicShape::toogleOffSelection);
+                    basicShapes.stream().filter(r -> r != rectangle).forEach(BasicShape::turnOffStroke);
+                    basicShapes.stream().filter(r -> r != rectangle).forEach(BasicShape::toogleOffSelection);
 
-                        if(!isCurrentSimple){
-                            transformersBox.getChildren().clear();
-                            transformersBox.getChildren().addAll(rectangle.getScaleXSection(), rectangle.getScaleYSection(), rectangle.getTranslationXSection(), rectangle.getTranslationYSection());
-                        }
-
+                    if(!isCurrentSimple){
+                        transformersBox.getChildren().clear();
+                        transformersBox.getChildren().addAll(rectangle.getScaleXSection(), rectangle.getScaleYSection(), rectangle.getTranslationXSection(), rectangle.getTranslationYSection());
                     }
+
                 }
-            });
-        });
+            }
+        }));
 
         pane.setOnDragOver(event -> {
             Dragboard db = event.getDragboard();
@@ -477,28 +417,12 @@ public class App extends Application {
 
                 if(!isCurrentSimple){
 
-                    if(db.getString().contains("[")){
-                        if(inDragCustomShape != selectedCompositionShape){
-                            CompositionShape inDrag = (CompositionShape) inDragCustomShape;
-                            compositionShapes.add(inDrag);
-                            addCompositionShape(inDrag, true);
-                        }else{
-                            System.err.println("Ia adicionar a comp shape X à comp shape X");
-                        }
+                    if(!db.getString().contains("[")){
+                        System.out.println("I was dropped a simple shape");
 
-                    }else{
-                        BasicShape basicShapeToAdd = selectedCompositionShape.getCopyWithBindWidthAndHeightFrom(basicShapes.get(Integer.parseInt(db.getString())));
-                        addShape(basicShapeToAdd);
-                        basicShapeToAdd.toogleOffSelection();
-
-                        selectedCompositionShape.addBasicShape(basicShapeToAdd);
-
-                        //TODO Here we need to reset the sliders... that's why a offset is being created when we drop in a new shape...
+                        addShape(selectedCompositionShape.addBasicShape(basicShapes.get(Integer.parseInt(db.getString())).getUUID().toString()));
                     }
 
-
-                }else {
-                    System.err.println("Não adicionei nada porque agora estamos numa current Simple!");
                 }
 
                 success = true;
@@ -509,22 +433,19 @@ public class App extends Application {
         });
 
 
-        pane.setOnMouseMoved(event -> {
-            basicShapes.forEach(rectangle -> {
-                Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth(), 0));
+        pane.setOnMouseMoved(event -> basicShapes.forEach(rectangle -> {
+            Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth(), 0));
 
-                if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()){
-                    if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()){
-                        rectangle.turnOnStroke();
-                    }else{
-                        rectangle.turnOffStrokeIfNotSelected();
-                    }
+            if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()){
+                if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()){
+                    rectangle.turnOnStroke();
                 }else{
                     rectangle.turnOffStrokeIfNotSelected();
                 }
-            });
-
-        });
+            }else{
+                rectangle.turnOffStrokeIfNotSelected();
+            }
+        }));
 
         return pane;
     }
@@ -640,14 +561,7 @@ public class App extends Application {
         return nameHB;
     }
 
-    private VBox verticalGrower(){
-        var verticalGrower = new VBox();
 
-        VBox.setVgrow(verticalGrower, Priority.ALWAYS);
-        verticalGrower.setMaxHeight(Double.MAX_VALUE);
-
-        return verticalGrower;
-    }
 
     public static HBox horizontalGrower(){
         var horizontalGrower = new HBox();
@@ -658,162 +572,8 @@ public class App extends Application {
         return horizontalGrower;
     }
 
-    private HBox horizontalGrower(int maxSize){
-        var horizontalGrower = new HBox();
 
-        HBox.setHgrow(horizontalGrower, Priority.ALWAYS);
-        horizontalGrower.setMaxHeight(maxSize);
 
-        return horizontalGrower;
-    }
-
-    private Pane getButtonsSection(){
-        HBox hBox = new HBox(getToFrontPane(), getColorButton(), getImageButton());
-        hBox.setSpacing(10);
-        hBox.setPrefHeight(30);
-
-        return hBox;
-    }
-
-    private Pane getToFrontPane(){
-        Label widthLabel = new Label("To front:");
-        widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        widthLabel.setTextFill(Color.web("#BDBDBD"));
-
-        HBox heightHB = new HBox(widthLabel, horizontalGrower(), getCheckButton());
-        heightHB.setPadding(new Insets(10,10,10,15));
-        heightHB.setAlignment(Pos.CENTER_LEFT);
-        heightHB.setMaxHeight(30);
-        HBox.setHgrow(heightHB, Priority.ALWAYS);
-
-        heightHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-
-        return heightHB;
-    }
-
-    private Pane getCheckButton(){
-        var isPressed = new Object() {
-            Boolean value = false;
-        };
-
-        Image image = new Image(this.getClass().getResource("/icons/checkmark.png").toExternalForm());
-        ImageView imageView = new ImageView(image);
-        imageView.setSmooth(true);
-        imageView.setPreserveRatio(true);
-        imageView.setFitWidth(12);
-
-        StackPane pane = new StackPane();
-        pane.setAlignment(Pos.CENTER);
-
-        pane.setStyle("-fx-background-color: #4F4F4F;-fx-background-radius: 7");
-
-        pane.setOnMouseClicked(event -> {
-            if(isPressed.value){
-                pane.getChildren().clear();
-                pane.setStyle("-fx-background-color: #4F4F4F;-fx-background-radius: 7");
-            }else{
-                pane.getChildren().add(imageView);
-                pane.setStyle("-fx-background-color: #6FCF97; -fx-background-radius: 7");
-            }
-
-            isPressed.value = !isPressed.value;
-        });
-
-        pane.setOnMouseEntered(event -> {
-            pane.setStyle("-fx-background-color: #9B9B9B;-fx-background-radius: 7");
-        });
-
-        pane.setOnMouseExited(event -> {
-            if(isPressed.value){
-                pane.setStyle("-fx-background-color: #6FCF97; -fx-background-radius: 7");
-            }else{
-                pane.setStyle("-fx-background-color: #4F4F4F;-fx-background-radius: 7");
-            }
-        });
-
-        pane.setPrefSize(20,20);
-
-        pane.setMaxWidth(20);
-        pane.setMaxHeight(20);
-
-        return pane;
-    }
-
-    private Tooltip createToolTip() {
-        Tooltip thisToolTip = new Tooltip();
-
-        String htmlStr = "<body style=\"background-color:cornsilk; "
-                + "border-style: none;\"> <u><b><font color=\"red\">Click Mouse's right button to see options</font></b></u><br><br>(3) Subha Jawahar of Chennai<br> now @ Chennai<br>Female <-> Married <-> Alive<br>Period : 1800 to 2099<br>D/o Dr. Subbiah [2] - <br> <b>Spouse :</b> Jawahar Rajamanickam [7] <br><br><b>Children :</b><br><br>Rudhra Jawahar [9]<br>Mithran Jawahar [10]<br><br></body>\n";
-        WebView browser = new WebView();
-        WebEngine webEngine = browser.getEngine();
-        webEngine.loadContent(htmlStr);
-
-        thisToolTip.setStyle("\n"
-                + "    -fx-border-color: black;\n"
-                + "    -fx-border-width: 1px;\n"
-                + "    -fx-font: normal bold 12pt \"Times New Roman\" ;\n"
-                + "    -fx-background-color: cornsilk;\n"
-                + "    -fx-text-fill: black;\n"
-                + "    -fx-background-radius: 4;\n"
-                + "    -fx-border-radius: 4;\n"
-                + "    -fx-opacity: 1.0;");
-
-        thisToolTip.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-
-        thisToolTip.setGraphic(browser);
-        thisToolTip.setAutoHide(false);
-        thisToolTip.setMaxWidth(300);
-        thisToolTip.setGraphicTextGap(0.0);
-
-        System.out.println("here!");
-
-        return thisToolTip;
-    }
-
-    private Pane getColorButton(){
-
-        Label colorLabel = new Label("Color");
-        colorLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        colorLabel.setTextFill(Color.web("#F2C94C"));
-
-        HBox colorHB = new HBox(colorLabel);
-        colorHB.setPadding(new Insets(10));
-        colorHB.setAlignment(Pos.CENTER);
-        colorHB.setMaxHeight(30);
-        HBox.setHgrow(colorHB, Priority.ALWAYS);
-
-        colorHB.setStyle("-fx-background-color: #644832;-fx-background-radius: 20");
-
-        colorHB.setOnMouseEntered(event -> colorHB.setStyle("-fx-background-color: #C3834A;-fx-background-radius: 20"));
-
-        colorHB.setOnMouseExited(event -> colorHB.setStyle("-fx-background-color: #644832;-fx-background-radius: 20"));
-
-        return colorHB;
-    }
-
-    private Pane getImageButton(){
-        Label imageLabel = new Label("Image");
-        imageLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        imageLabel.setTextFill(Color.web("#56CCF2"));
-
-        HBox imageHB = new HBox(imageLabel);
-        imageHB.setPadding(new Insets(10));
-        imageHB.setAlignment(Pos.CENTER);
-        imageHB.setMaxHeight(30);
-        HBox.setHgrow(imageHB, Priority.ALWAYS);
-
-        imageHB.setStyle("-fx-background-color: #355765;-fx-background-radius: 20");
-
-        imageHB.setOnMouseEntered(event -> {
-            imageHB.setStyle("-fx-background-color: #4176B4;-fx-background-radius: 20");
-        });
-
-        imageHB.setOnMouseExited(event -> {
-            imageHB.setStyle("-fx-background-color: #355765;-fx-background-radius: 20");
-        });
-
-        return imageHB;
-    }
 
     private Pane getSaveButtonSection(){
         Label saveLabel = new Label("Save");
@@ -832,9 +592,7 @@ public class App extends Application {
 
         saveHB.setOnMouseExited(event -> saveHB.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 20"));
 
-        saveHB.setOnMouseClicked(mouseEvent -> {
-            saveCurrentShape();
-        });
+        saveHB.setOnMouseClicked(mouseEvent -> saveCurrentShape());
 
         return saveHB;
     }
@@ -854,7 +612,7 @@ public class App extends Application {
             jsonObject.put("name", currentName.getText());
 
             try{
-                FileWriter fileWriter = new FileWriter("C:\\Users\\Miguel\\Downloads\\objetos\\test.json");
+                FileWriter fileWriter = new FileWriter("C:\\Users\\mferr\\Downloads\\objetos\\test.json");
                 System.out.println("vou escrever: " + jsonObject.toJSONString());
                 fileWriter.append("\n");
                 fileWriter.append(jsonObject.toJSONString());
@@ -868,13 +626,8 @@ public class App extends Application {
                 e.printStackTrace();
             }
 
-        }else{
-            System.out.println("vamos guardar composition: " + selectedCompositionShape);
-            selectedCompositionShape.setShapeName(currentName.getText());
-            selectedCompositionShape.redrawThumbnail();
-            if(!sideBarThumbnails.contains(selectedCompositionShape)){
-                sideBarThumbnails.add(selectedCompositionShape);
-            }
+            orchestrator.addAllBasicShapes(basicShapes);
+
 
         }
     }
