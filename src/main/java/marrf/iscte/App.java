@@ -159,7 +159,7 @@ public class App extends Application {
 
                                 //mainPanel.getChildren().removeAll(scaleXSection, scaleYSection, translationXSection, translationYSection);
 
-                                addShape(basicShapeAdded, true);
+                                addShape(basicShapeAdded, true, false);
 
                             });
                         }
@@ -221,7 +221,7 @@ public class App extends Application {
 
             transformersBox.getChildren().clear();
 
-            addShape(new BasicShape(SCALE, SCALE, true, Color.web("#55efc4")), true);
+            addShape(new BasicShape(SCALE, SCALE, true, Color.web("#55efc4")), true, false);
 
             selectedCompositionShape = null;
         });
@@ -303,13 +303,13 @@ public class App extends Application {
 
     }
 
-    private void addShape(CustomShape basicShapeToAdd, boolean selected){
+    private void addShape(CustomShape basicShapeToAdd, boolean selected, boolean notHoverable){
             if(basicShapeToAdd instanceof BasicShape){
                 BasicShape tempBasicShape = (BasicShape) basicShapeToAdd;
 
                 gridCanvas.addShape(tempBasicShape);
                 if(!basicShapes.contains(tempBasicShape)){
-                    basicShapes.add(tempBasicShape);
+                        basicShapes.add(tempBasicShape);
                 }
                 if(selected){
                     selectedBasicShape = tempBasicShape;
@@ -328,7 +328,7 @@ public class App extends Application {
     }
 
     private void addShape(CustomShape basicShapeToAdd){
-        addShape(basicShapeToAdd, false);
+        addShape(basicShapeToAdd, false, false);
     }
 
     public Pane getScenePanel(Scene scene){
@@ -361,7 +361,7 @@ public class App extends Application {
         borderPane.setRight(mainPanel);
         borderPane.setCenter(sceneStackPane);
 
-        addShape(new BasicShape(SCALE, SCALE, true, Color.web("#55efc4")), true);
+        addShape(new BasicShape(SCALE, SCALE, true, Color.web("#55efc4")), true, false);
 
 
         return borderPane;
@@ -435,7 +435,7 @@ public class App extends Application {
 
         pane.setOnMouseClicked(event -> {
             basicShapes.forEach(rectangle -> {
-                Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth(), 0));
+                Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth()    , 0));
 
                 if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()) {
                     if (transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()) {

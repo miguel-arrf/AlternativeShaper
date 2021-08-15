@@ -78,12 +78,15 @@ public class CompositionShape implements CustomShape{
         scaleYMapComposition.put(new SimpleDoubleProperty(0.0), uuid);
     }
 
-    private ArrayList<BasicShape> getFromParent(ArrayList<BasicShape> toAddTo, CompositionShape compositionShapeParent){
+    private ArrayList<BasicShape> getFromParent(ArrayList<BasicShape> toAddTo, CompositionShape compositionShapeParent, boolean byePassThis){
         //toAddTo.addAll(compositionShapeParent.basicShapes);
-        toAddTo.addAll(compositionShapeParent.basicShapes.stream().map(this::getCopyWithBindWidthAndHeightFrom).collect(Collectors.toList()));
+        if(!byePassThis){
+            toAddTo.addAll(compositionShapeParent.basicShapes.stream().map(this::getCopyWithBindWidthAndHeightFrom).collect(Collectors.toList()));
+            //TODO we can remove the getCopy from the line above, but we need to make sure that all the sabes that were added, are copies. Let's do it.
+        }
 
         compositionShapeParent.compositionShapesMap.forEach((id, compositionShape) -> {
-            getFromParent(toAddTo, compositionShape);
+            getFromParent(toAddTo, compositionShape, false);
             //toAddTo.addAll(compositionShape.getBasicShapes().stream().map(compositionShape::getCopyWithBindWidthAndHeightFrom).collect(Collectors.toList()));
             //getFromParent(toAddTo, compositionShape)
             //compositionShape.compositionShapesMap.forEach((id1, compositionShape1) -> toAddTo.addAll(getFromParent(toAddTo, compositionShape1)));
@@ -94,7 +97,7 @@ public class CompositionShape implements CustomShape{
 
     private ArrayList<BasicShape> getGraphicalRepresentation(){
         ArrayList<BasicShape> toReturn = new ArrayList<>();
-        return getFromParent(toReturn, this);
+        return getFromParent(toReturn, this, true);
     }
 
     public Pane getGraphicalRepresentationPane(){
@@ -110,7 +113,7 @@ public class CompositionShape implements CustomShape{
         Pane toReturn = new Pane();
 
         ArrayList<BasicShape> arrayList = new ArrayList<>();
-        getFromParent(arrayList, compositionShapeToGetGraphicalRepresentation);
+        getFromParent(arrayList, compositionShapeToGetGraphicalRepresentation, false);
 
         arrayList.forEach(basicShape -> toReturn.getChildren().add(basicShape.getRectangle()));
 
@@ -143,6 +146,7 @@ public class CompositionShape implements CustomShape{
         basicShape.widthProperty().bind(originalBasicShape.widthProperty().multiply(originalBasicShape.scaleXProperty()));
         basicShape.heightProperty().bind(originalBasicShape.heightProperty().multiply(originalBasicShape.scaleYProperty()));
         basicShape.fillProperty().bind(originalBasicShape.fillProperty());
+
 
         basicShape.setTranslateY(originalBasicShape.getTranslateY());
         basicShape.setTranslateX(originalBasicShape.getTranslateX());
