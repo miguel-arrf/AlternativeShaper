@@ -65,7 +65,7 @@ public class Orchestrator {
 
             jsonObject.put("id", basicShape.getUUID().toString());
             jsonObject.put("basic", "true");
-            jsonObject.put("color", basicShape.rectangle.getFill().toString());
+            jsonObject.put("color", basicShape.getFill().toString());
             jsonObject.put("width", basicShape.getWidth());
             jsonObject.put("height", basicShape.getHeight());
             jsonObject.put("name", basicShape.getShapeName());

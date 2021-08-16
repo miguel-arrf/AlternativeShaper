@@ -1,6 +1,7 @@
 package marrf.iscte;
 
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
@@ -17,12 +18,12 @@ import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import org.apache.commons.lang3.SystemUtils;
 
 import javax.imageio.ImageIO;
-import javax.swing.plaf.synth.SynthOptionPaneUI;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
@@ -38,13 +39,13 @@ import java.util.function.Supplier;
 
 import static marrf.iscte.App.horizontalGrower;
 
-public class BasicShape implements CustomShape {
+public class BasicShapeOld implements CustomShape {
 
     private static final int SCALE = 40;
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
-    private final Point2D translationOffset = new Point2D(0, 0); //-20 -60
+    private final Point2D translationOffset = new Point2D(0, -40);
     private final UUID uuid = UUID.randomUUID();
-    private final Pane rectangle;
+    Rectangle rectangle;
     private boolean isSelected = false;
 
     public final DoubleProperty translateXProperty = new SimpleDoubleProperty(0.0);
@@ -52,9 +53,6 @@ public class BasicShape implements CustomShape {
 
     public DoubleProperty xTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
     public DoubleProperty yTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
-
-
-
 
     private HBox widthSection;
     private HBox heightSection;
@@ -71,11 +69,7 @@ public class BasicShape implements CustomShape {
     private double scaleX;
     private double scaleY;
 
-    private final Paint color;
     private String shapeName = "defaultName";
-
-    private boolean strokeShowing = false;
-
 
     private final VBox thumbnail = new VBox();
 
@@ -88,36 +82,19 @@ public class BasicShape implements CustomShape {
     }
 
 
-    public BasicShape(double width, double height, Paint color) {
+    public BasicShapeOld(double width, double height, Paint color) {
         this.width = width;
         this.height = height;
 
         this.scaleX = 1;
         this.scaleY = 1;
 
-        this.color = color;
-
-        rectangle = new Pane();
-        rectangle.setPrefSize(width, height);
-
-        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
-        Background background = new Background(backgroundFill);
-        rectangle.setBackground(background);
+        rectangle = new Rectangle(width, height);
+        rectangle.setFill(color);
         setUpComponents();
-
-
-        /*xScaleTranslate.addListener((observableValue, number, t1) -> {
-            if(getWidth() >= SCALE){
-                addTranslationX(t1.doubleValue() - number.doubleValue());
-            }
-        });*/
-
-
     }
 
-    public Paint getFill() {
-        return color;
-    }
+
 
     public Point2D getTranslationOffset() {
         return translationOffset;
@@ -271,11 +248,11 @@ public class BasicShape implements CustomShape {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            /*if (newValue.doubleValue() > oldValue.doubleValue()) {
+            if (newValue.doubleValue() > oldValue.doubleValue()) {
                 this.setTranslateY(this.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
             } else {
                 this.setTranslateY(this.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
-            }*/
+            }
 
             this.setHeight(newValue.doubleValue() * SCALE);
 
@@ -533,6 +510,7 @@ public class BasicShape implements CustomShape {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
+            var oldHeight = this.getHeight();
             this.setScaleY(newValue.doubleValue());
 
 
@@ -674,45 +652,34 @@ public class BasicShape implements CustomShape {
 
     public void toogleSelected() {
         isSelected = !isSelected;
-        System.out.println("here coiso");
     }
 
     public void turnOnStroke() {
 
-        if(!strokeShowing){
-            System.out.println("turn on stroke");
-            rectangle.setStyle("-fx-padding: 0;" + "-fx-border-style: solid inside;"
-                    + "-fx-border-width: 5;" + "-fx-border-insets: -10;"
-                    + "-fx-border-radius: 5;" + "-fx-border-color: rgba(255,255,255, 1);");
-        }
+        rectangle.setStyle("-fx-padding: 0;" + "-fx-border-style: solid inside;"
+                + "-fx-border-width: 5;" + "-fx-border-insets: -10;"
+                + "-fx-border-radius: 5;" + "-fx-border-color: rgba(255,255,255, 1); -fx-background-color: transparent");
 
-        strokeShowing = true;
+        rectangle.setStyle("-fx-stroke: white; -fx-stroke-width: 5; -fx-stroke-line-cap: round ; -fx-stroke-line-join: round ; -fx-stroke-type: outside; -fx-background-insets: 20;");
+
+
     }
 
     private void temporarilyTurnOffStroke() {
-        rectangle.setStyle("");
-
-        strokeShowing = false;
+        rectangle.setStyle("-fx-background-color: transparent");
     }
 
     public void turnOffStroke() {
-
-        rectangle.setStyle("");
-        strokeShowing = false;
-    }
-
-    public boolean isSelected() {
-        return isSelected;
+        rectangle.setStyle("-fx-background-color: transparent");
     }
 
     public void turnOffStrokeIfNotSelected() {
         if (!isSelected) {
-            rectangle.setStyle("");
-            strokeShowing = false;
+            rectangle.setStyle("-fx-background-color: transparent");
         }
     }
 
-    public Pane getRectangle() {
+    public Rectangle getRectangle() {
 
         return rectangle;
     }
@@ -748,34 +715,55 @@ public class BasicShape implements CustomShape {
         return rectangle.scaleYProperty();
     }
 
-    public void setScaleX(double newScaleX) {
-            if(newScaleX > scaleX){
-                addTranslationX( -1 * (newScaleX*width - scaleX * width) * 0.5);
-            }else{
-                addTranslationX( (scaleX * width - newScaleX*width) * 0.5);
-            }
+    public void setScaleX(double scaleX) {
+        this.scaleX = scaleX;
+        rectangle.setWidth(scaleX * width);
 
-        this.scaleX = newScaleX;
-        rectangle.setPrefWidth(scaleX*width);
+       /* strokePane.setMaxWidth(getWidth() * scaleX);
+        strokePane.setMinWidth(getWidth()*scaleX);
+        strokePane.setPrefWidth(getWidth()*scaleX);*/
+
     }
 
-    public double getScaleX() {
-        return scaleX;
+    public void setScaleY(double scaleY) {
+        this.scaleY = scaleY;
+        rectangle.setHeight(height * scaleY);
     }
 
-    public double getScaleY() {
-        return scaleY;
+    public double getScaleX(){
+        return rectangle.getScaleX();
     }
 
-    public void setScaleY(double newScaleY) {
-        if(newScaleY > scaleX){
-            addTranslationY( -1 * (newScaleY*height - scaleY * height) * 0.5);
-        }else{
-            addTranslationY( (scaleY * height - newScaleY*height) * 0.5);
-        }
+    public double getScaleY(){
+        return rectangle.getScaleY();
+    }
 
-        this.scaleY = newScaleY;
-        rectangle.setPrefHeight(scaleY * height);
+    public DoubleProperty widthProperty() {
+        return rectangle.widthProperty();
+    }
+
+    public double getX() {
+        return rectangle.getLayoutBounds().getMinX();
+    }
+
+    public void setX(double x) {
+        rectangle.setX(x);
+    }
+
+    public double getY() {
+        return rectangle.getLayoutBounds().getMaxY();
+    }
+
+    public void setY(double y) {
+        rectangle.setY(y);
+    }
+
+    public Point2D localToScene(double d1, double d2) {
+        return rectangle.localToScene(d1, d2);
+    }
+
+    public DoubleProperty heightProperty() {
+        return rectangle.heightProperty();
     }
 
     public void addTranslationX(double value) {
@@ -802,51 +790,40 @@ public class BasicShape implements CustomShape {
         rectangle.setTranslateY(value + xTranslateOffsetProperty.get());
     }
 
+    public Paint getFill() {
+        return rectangle.getFill();
+    }
+
+    public void setFill(Paint color) {
+        rectangle.setFill(color);
+    }
+
     public double getWidth() {
-        return width;
+        return rectangle.getWidth();
     }
 
-    public void setWidth(double newWidth) {
-        if(newWidth > width){
-            addTranslationX( -1 * (newWidth * scaleX - width * scaleX) * 0.5);
-        }else{
-            addTranslationX( (width * scaleX - newWidth * scaleX) * 0.5);
-        }
+    public void setWidth(double width) {
+        this.width = width;
+        rectangle.setWidth(width * scaleX);
 
-        this.width = newWidth;
-        rectangle.setPrefWidth(width*scaleX);
-    }
-
-    public void setHeight(double newHeight) {
-        if(newHeight > height){
-            addTranslationY(-1 * (newHeight * scaleY - height * scaleY) * 0.5);
-        }else{
-            addTranslationY( (height * scaleY - newHeight * scaleY) *0.5 );
-        }
-
-        this.height = newHeight;
-        rectangle.setPrefHeight(height*scaleY);
+        //redrawThumbnail();
     }
 
     public double getHeight() {
-        return  height;
+        return rectangle.getHeight();
+        //return stackPane.getHeight();
     }
 
+    public void setHeight(double height) {
+        this.height = height;
+        rectangle.setHeight(height * scaleY);
 
 
-    public Point2D localToScene(double d1, double d2) {
-        return rectangle.localToScene(d1, d2);
+        //redrawThumbnail();
     }
 
-    public double getX() {
-        return rectangle.getLayoutBounds().getMinX();
+    public ObjectProperty<Paint> fillProperty() {
+        return rectangle.fillProperty();
     }
-
-
-    public double getY() {
-        return rectangle.getLayoutBounds().getMaxY();
-    }
-
-
 
 }

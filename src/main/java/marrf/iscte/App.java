@@ -48,6 +48,7 @@ public class App extends Application {
     private final Pane sceneStackPane = getGraphSection();
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
+    private final ArrayList<BasicShape> displayingBasicShape = new ArrayList<>();
 
 
     private BasicShape selectedBasicShape;
@@ -226,6 +227,7 @@ public class App extends Application {
             isCurrentSimple = false;
             currentName.setText("complexDefault");
 
+
             transformersBox.getChildren().clear();
 
             selectedCompositionShape = new NewCompositionShape(orchestrator);
@@ -272,6 +274,8 @@ public class App extends Application {
 
                 if(isCurrentSimple){
                     transformersBox.getChildren().addAll(tempBasicShape.getWidthSection(), tempBasicShape.getHeightSection());
+                }else{
+                    transformersBox.getChildren().addAll(tempBasicShape.getScaleXSection(), tempBasicShape.getScaleYSection(), tempBasicShape.getTranslationXSection(), tempBasicShape.getTranslationYSection());
                 }
             }
 
@@ -376,10 +380,13 @@ public class App extends Application {
         });
 
         pane.setOnMouseClicked(event -> basicShapes.forEach(rectangle -> {
-            Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth()    , 0));
+            System.out.println("basicShapes : " + basicShapes.size());
 
-            if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()) {
-                if (transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()) {
+            Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth() * rectangle.getScaleX(), 0));
+
+
+            if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth() * rectangle.getScaleX()) {
+                if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight() * rectangle.getScaleY()){
                     System.out.println("cliquei numa shape!");
                     selectedBasicShape = rectangle;
                     selectedBasicShape.turnOnStroke();
@@ -434,17 +441,30 @@ public class App extends Application {
 
 
         pane.setOnMouseMoved(event -> basicShapes.forEach(rectangle -> {
-            Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth(), 0));
+            Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth() * rectangle.getScaleX(), 0));
 
-            if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth()){
-                if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight()){
+
+            if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth() * rectangle.getScaleX()) {
+                if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight() * rectangle.getScaleY()){
                     rectangle.turnOnStroke();
                 }else{
                     rectangle.turnOffStrokeIfNotSelected();
+                    if(!rectangle.isSelected()){
+                        if(transformersBox.getChildren().contains(rectangle.getScaleXSection())){
+                            transformersBox.getChildren().clear();
+                        }
+                    }
+
                 }
             }else{
                 rectangle.turnOffStrokeIfNotSelected();
+                if(!rectangle.isSelected()){
+                    if(transformersBox.getChildren().contains(rectangle.getScaleXSection())){
+                        transformersBox.getChildren().clear();
+                    }
+                }
             }
+
         }));
 
         return pane;
@@ -606,7 +626,7 @@ public class App extends Application {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("id", currentRectangle.getUUID().toString());
             jsonObject.put("basic", "true");
-            jsonObject.put("color", currentRectangle.rectangle.getFill().toString());
+            jsonObject.put("color", currentRectangle.getFill().toString());
             jsonObject.put("width", currentRectangle.getWidth());
             jsonObject.put("height", currentRectangle.getHeight());
             jsonObject.put("name", currentName.getText());

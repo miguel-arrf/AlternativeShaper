@@ -49,25 +49,22 @@ public class GridCanvas {
     }
 
     public void addShape(BasicShape basicShape){
-        //System.out.println("vou adicionar, getX: " + basicShape.getX() + ", translateX: " + basicShape.getTranslateX());
-        //System.out.println("vou adicionar height: " + basicShape.getHeight());
 
-        /*basicShape.translateXProperty.addListener((observable, oldValue, newValue) -> {
+        double translateXBy = basicShape.getWidth() * basicShape.scaleXProperty().get() / 2;
+        double translateYBy = basicShape.getHeight() * basicShape.scaleYProperty().get() / 2 ;
 
-        });
+        //basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() + basicShape.getTranslationOffset().getX() + basicShape.translateXProperty.get());
+        //basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() + basicShape.getTranslationOffset().getY() + basicShape.translateYProperty.get());
 
-        basicShape.translateYProperty.addListener((observable, oldValue, newValue) -> {
+        basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() - translateXBy);
+        basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() - translateYBy);
 
-        });*/
 
-        basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() + basicShape.getTranslationOffset().getX() + basicShape.translateXProperty.get());
-        basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() + basicShape.getTranslationOffset().getY() + basicShape.translateYProperty.get());
-
-        if(basicShape.getHeight() <= SCALE){
+        /*if(basicShape.getHeight() < SCALE){
             basicShape.addTranslationY(Math.abs(SCALE - basicShape.getHeight()));
         }else{
             basicShape.addTranslationY(- (basicShape.getHeight() - SCALE));
-        }
+        }*/
 
 
         //TEMOS QUE FAZER TRANSLATION DO OFFSET QUE JÁ EXISTIA!
