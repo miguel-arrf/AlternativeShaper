@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class NewCompositionShape implements CustomShape{
@@ -106,8 +107,8 @@ public class NewCompositionShape implements CustomShape{
         Information translationX = new Information(basicShapesID, 0.0);
         Information translationY = new Information(basicShapesID, 0.0);
 
-        Information scaleX = new Information(basicShapesID, 0.0);
-        Information scaleY = new Information(basicShapesID, 0.0);
+        Information scaleX = new Information(basicShapesID, 1.0);
+        Information scaleY = new Information(basicShapesID, 1.0);
 
         basicShapesXTranslation.add(translationX);
         basicShapesYTranslation.add(translationY);
@@ -266,8 +267,15 @@ public class NewCompositionShape implements CustomShape{
             return value;
         }
 
-        public Consumer<Double> getConsumer(){
-            return this::setValue;
+        public Function<Double, Double> getConsumer(){
+            return a -> {
+                if(a == null){
+                    return getValue();
+                }else{
+                    setValue(a);
+                    return a;
+                }
+            };
         }
 
         public String getId() {

@@ -23,6 +23,7 @@ import org.apache.commons.lang3.SystemUtils;
 
 import javax.imageio.ImageIO;
 import javax.swing.plaf.synth.SynthOptionPaneUI;
+import java.awt.*;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
@@ -55,10 +56,10 @@ public class BasicShape implements CustomShape {
     public DoubleProperty xTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
     public DoubleProperty yTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
 
-    private Consumer<Double> writeTranslateX;
-    private Consumer<Double> writeTranslateY;
-    private Consumer<Double> writeScaleX;
-    private Consumer<Double> writeScaleY;
+    private Function<Double, Double> writeTranslateX;
+    private Function<Double, Double> writeTranslateY;
+    private Function<Double, Double> writeScaleX;
+    private Function<Double, Double> writeScaleY;
 
     private HBox widthSection;
     private HBox heightSection;
@@ -91,7 +92,7 @@ public class BasicShape implements CustomShape {
         return shapeName;
     }
 
-    public BasicShape(double width, double height, Paint color, Consumer<Double> writeTranslateX, Consumer<Double> writeTranslateY, Consumer<Double> writeScaleX, Consumer<Double> writeScaleY) {
+    public BasicShape(double width, double height, Paint color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Double, Double> writeScaleX, Function<Double, Double> writeScaleY) {
         this.writeTranslateX = writeTranslateX;
         this.writeTranslateY = writeTranslateY;
         this.writeScaleX = writeScaleX;
@@ -114,6 +115,10 @@ public class BasicShape implements CustomShape {
         setUpComponents();
     }
 
+    public Point2D getInitialTranslation(){
+        return new Point2D(writeTranslateX.apply(null), writeTranslateY.apply(null));
+    }
+
     public BasicShape(double width, double height, Paint color) {
         this.width = width;
         this.height = height;
@@ -126,10 +131,10 @@ public class BasicShape implements CustomShape {
         rectangle = new Pane();
         rectangle.setPrefSize(width, height);
 
-        writeScaleY = a -> a.doubleValue();
-        writeScaleX = a -> a.doubleValue();
-        writeTranslateX = a -> a.doubleValue();
-        writeTranslateY = a -> a.doubleValue();
+        writeScaleY = a -> 1.0;
+        writeScaleX = a -> 1.0;
+        writeTranslateX = a -> 0.0;
+        writeTranslateY = a -> 0.0;
 
         BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
         Background background = new Background(backgroundFill);
@@ -371,7 +376,7 @@ public class BasicShape implements CustomShape {
             this.addTranslationX(newValue.doubleValue() - oldValue.doubleValue());
             translateXProperty.setValue(truncatedDouble);
 
-            writeTranslateX.accept(truncatedDouble);
+            writeTranslateX.apply(truncatedDouble);
         });
 
         translationXSection = new HBox(widthLabel, horizontalGrower(), translationXSlider, horizontalGrower(), textField);
@@ -433,7 +438,7 @@ public class BasicShape implements CustomShape {
 
             this.addTranslationY(newValue.doubleValue() - oldValue.doubleValue());
 
-            writeTranslateY.accept(truncatedDouble);
+            writeTranslateY.apply(truncatedDouble);
         });
 
         translationYSection = new HBox(heightLabel, horizontalGrower(), translationYSlider, horizontalGrower(), textField);
@@ -501,7 +506,7 @@ public class BasicShape implements CustomShape {
 
             this.setScaleX(newValue.doubleValue());
 
-            writeScaleX.accept(truncatedDouble);
+            writeScaleX.apply(truncatedDouble);
         });
 
         scaleXSection = new HBox(widthLabel, horizontalGrower(), scaleXSlider, horizontalGrower(), textField);
@@ -561,7 +566,7 @@ public class BasicShape implements CustomShape {
 
             this.setScaleY(newValue.doubleValue());
 
-            writeScaleY.accept(truncatedDouble);
+            writeScaleY.apply(truncatedDouble);
         });
 
         scaleYSection = new HBox(heightLabel, horizontalGrower(), scaleYSlider, horizontalGrower(), textField);

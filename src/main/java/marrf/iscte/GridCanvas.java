@@ -50,8 +50,8 @@ public class GridCanvas {
 
     public void addShape(BasicShape basicShape){
 
-        double translateXBy = basicShape.getWidth() * basicShape.scaleXProperty().get() / 2;
-        double translateYBy = basicShape.getHeight() * basicShape.scaleYProperty().get() / 2 ;
+        double translateXBy = basicShape.getWidth() * basicShape.scaleXProperty().get() / 2 + basicShape.getInitialTranslation().getX() * -1;
+        double translateYBy = basicShape.getHeight() * basicShape.scaleYProperty().get() / 2 + basicShape.getInitialTranslation().getY() * -1;
 
         //basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() + basicShape.getTranslationOffset().getX() + basicShape.translateXProperty.get());
         //basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() + basicShape.getTranslationOffset().getY() + basicShape.translateYProperty.get());

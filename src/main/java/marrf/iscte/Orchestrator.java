@@ -10,6 +10,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Orchestrator {
 
@@ -36,7 +37,7 @@ public class Orchestrator {
         saveFile();
     }
 
-    public BasicShape getCopyOfBasicShape(String id, Consumer<Double> writeTranslateX, Consumer<Double> writeTranslateY, Consumer<Double> writeScaleX, Consumer<Double> writeScaleY){
+    public BasicShape getCopyOfBasicShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Double, Double> writeScaleX, Function<Double, Double> writeScaleY){
         BasicShape toReturn = null;
 
         Optional<BasicShape> shape = basicShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
