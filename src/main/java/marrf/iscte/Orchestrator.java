@@ -9,10 +9,12 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class Orchestrator {
 
-    private String path = "C:\\Users\\mferr\\Downloads\\objetos\\test.json";
+    //private String path = "C:\\Users\\mferr\\Downloads\\objetos\\test.json";
+    private String path = "/Users/miguelferreira/Downloads/alternativeShaperSaves/test.txt";
 
     private ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
@@ -34,7 +36,7 @@ public class Orchestrator {
         saveFile();
     }
 
-    public BasicShape getCopyOfBasicShape(String id){
+    public BasicShape getCopyOfBasicShape(String id, Consumer<Double> writeTranslateX, Consumer<Double> writeTranslateY, Consumer<Double> writeScaleX, Consumer<Double> writeScaleY){
         BasicShape toReturn = null;
 
         Optional<BasicShape> shape = basicShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
@@ -42,7 +44,7 @@ public class Orchestrator {
         if(shape.isPresent()){
             BasicShape toCopyFrom = shape.get();
 
-            toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill());
+            toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY, writeScaleX, writeScaleY);
         }
 
 
@@ -77,24 +79,28 @@ public class Orchestrator {
     }
 
     private JSONArray getCompositionShapesJSON(){
-        JSONArray array = new JSONArray();
+        JSONArray list = new JSONArray();
 
+        System.out.println("composition shape size: " + newCompositionShapes.size());
 
         for(NewCompositionShape newCompositionShape : newCompositionShapes){
             JSONObject jsonObject = new JSONObject();
 
-            jsonObject.put("id", newCompositionShape.getID());
+            jsonObject.put("id", newCompositionShape.getID().toString());
             jsonObject.put("name", newCompositionShape.getName());
             jsonObject.put("basicShapes", newCompositionShape.getBasicShapesJSON());
             jsonObject.put("compositionShapes", newCompositionShape.getCompositionShapesJSON());
+
+            list.add(jsonObject);
         }
 
-        return array;
+        return list;
     }
 
     private void saveFile(){
-        JSONObject jsonObject = new JSONObject();
+        System.out.println("Orchestrator saveFile()");
 
+        JSONObject jsonObject = new JSONObject();
 
         jsonObject.put("basicShapes", getBasicShapesJSON());
         jsonObject.put("compositionShapes", getCompositionShapesJSON());
@@ -104,6 +110,8 @@ public class Orchestrator {
             fileWriter.write(jsonObject.toJSONString());
             fileWriter.flush();
             fileWriter.close();
+
+            System.out.println("Guardei: " + jsonObject.toJSONString());
         }catch (IOException e){
             e.printStackTrace();
         }

@@ -34,6 +34,8 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.text.DecimalFormat;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static marrf.iscte.App.horizontalGrower;
@@ -53,8 +55,10 @@ public class BasicShape implements CustomShape {
     public DoubleProperty xTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
     public DoubleProperty yTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
 
-
-
+    private Consumer<Double> writeTranslateX;
+    private Consumer<Double> writeTranslateY;
+    private Consumer<Double> writeScaleX;
+    private Consumer<Double> writeScaleY;
 
     private HBox widthSection;
     private HBox heightSection;
@@ -87,8 +91,12 @@ public class BasicShape implements CustomShape {
         return shapeName;
     }
 
+    public BasicShape(double width, double height, Paint color, Consumer<Double> writeTranslateX, Consumer<Double> writeTranslateY, Consumer<Double> writeScaleX, Consumer<Double> writeScaleY) {
+        this.writeTranslateX = writeTranslateX;
+        this.writeTranslateY = writeTranslateY;
+        this.writeScaleX = writeScaleX;
+        this.writeScaleY = writeScaleY;
 
-    public BasicShape(double width, double height, Paint color) {
         this.width = width;
         this.height = height;
 
@@ -104,15 +112,29 @@ public class BasicShape implements CustomShape {
         Background background = new Background(backgroundFill);
         rectangle.setBackground(background);
         setUpComponents();
+    }
 
+    public BasicShape(double width, double height, Paint color) {
+        this.width = width;
+        this.height = height;
 
-        /*xScaleTranslate.addListener((observableValue, number, t1) -> {
-            if(getWidth() >= SCALE){
-                addTranslationX(t1.doubleValue() - number.doubleValue());
-            }
-        });*/
+        this.scaleX = 1;
+        this.scaleY = 1;
 
+        this.color = color;
 
+        rectangle = new Pane();
+        rectangle.setPrefSize(width, height);
+
+        writeScaleY = a -> a.doubleValue();
+        writeScaleX = a -> a.doubleValue();
+        writeTranslateX = a -> a.doubleValue();
+        writeTranslateY = a -> a.doubleValue();
+
+        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+        Background background = new Background(backgroundFill);
+        rectangle.setBackground(background);
+        setUpComponents();
     }
 
     public Paint getFill() {
@@ -349,6 +371,7 @@ public class BasicShape implements CustomShape {
             this.addTranslationX(newValue.doubleValue() - oldValue.doubleValue());
             translateXProperty.setValue(truncatedDouble);
 
+            writeTranslateX.accept(truncatedDouble);
         });
 
         translationXSection = new HBox(widthLabel, horizontalGrower(), translationXSlider, horizontalGrower(), textField);
@@ -410,6 +433,7 @@ public class BasicShape implements CustomShape {
 
             this.addTranslationY(newValue.doubleValue() - oldValue.doubleValue());
 
+            writeTranslateY.accept(truncatedDouble);
         });
 
         translationYSection = new HBox(heightLabel, horizontalGrower(), translationYSlider, horizontalGrower(), textField);
@@ -476,6 +500,8 @@ public class BasicShape implements CustomShape {
             textField.setText(String.valueOf(truncatedDouble));
 
             this.setScaleX(newValue.doubleValue());
+
+            writeScaleX.accept(truncatedDouble);
         });
 
         scaleXSection = new HBox(widthLabel, horizontalGrower(), scaleXSlider, horizontalGrower(), textField);
@@ -535,7 +561,7 @@ public class BasicShape implements CustomShape {
 
             this.setScaleY(newValue.doubleValue());
 
-
+            writeScaleY.accept(truncatedDouble);
         });
 
         scaleYSection = new HBox(heightLabel, horizontalGrower(), scaleYSlider, horizontalGrower(), textField);

@@ -22,12 +22,15 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.json.simple.JSONObject;
 
+import java.awt.*;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,7 +51,7 @@ public class App extends Application {
     private final Pane sceneStackPane = getGraphSection();
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
-    private final ArrayList<BasicShape> displayingBasicShape = new ArrayList<>();
+    private final ArrayList<BasicShape> basicShapesToSave = new ArrayList<>();
 
 
     private BasicShape selectedBasicShape;
@@ -124,8 +127,8 @@ public class App extends Application {
                                 isCurrentSimple = false;
                                 currentName.setText(basicShapeAdded.getShapeName());
 
+                                addCompositionShape(selectedCompositionShape);
                                 //addShape(basicShapeAdded, true);
-
                             });
                         }else{
                             //It is BasicShape
@@ -162,6 +165,10 @@ public class App extends Application {
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
         return scrollPane;
+    }
+
+    private void addCompositionShape(NewCompositionShape compositionShape){
+        compositionShape.getBasicShapes().forEach(basicShape -> addShape(basicShape));
     }
 
     public void addBasicAndComplexButtons(){
@@ -202,7 +209,10 @@ public class App extends Application {
 
             transformersBox.getChildren().clear();
 
-            addShape(new BasicShape(SCALE, SCALE, Color.web("#55efc4")));
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc5"));
+
+            addShape(toAdd);
+            basicShapesToSave.add(toAdd);
 
             selectedCompositionShape = null;
         });
@@ -227,12 +237,9 @@ public class App extends Application {
             isCurrentSimple = false;
             currentName.setText("complexDefault");
 
-
             transformersBox.getChildren().clear();
-
             selectedCompositionShape = new NewCompositionShape(orchestrator);
             newCompositionShapes.add(selectedCompositionShape);
-
         });
 
         HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
@@ -311,8 +318,9 @@ public class App extends Application {
         borderPane.setRight(mainPanel);
         borderPane.setCenter(sceneStackPane);
 
-        addShape(new BasicShape(SCALE, SCALE, Color.web("#55efc4")));
-
+        BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"));
+        addShape(toAdd);
+        basicShapesToSave.add(toAdd);
 
         return borderPane;
     }
@@ -428,6 +436,8 @@ public class App extends Application {
                         System.out.println("I was dropped a simple shape");
 
                         addShape(selectedCompositionShape.addBasicShape(basicShapes.get(Integer.parseInt(db.getString())).getUUID().toString()));
+                    }else{
+                        System.out.println("I was dropped a composition shape");
                     }
 
                 }
@@ -646,9 +656,13 @@ public class App extends Application {
                 e.printStackTrace();
             }
 
-            orchestrator.addAllBasicShapes(basicShapes);
+            orchestrator.addAllBasicShapes(basicShapesToSave);
 
 
+        }else{
+            selectedCompositionShape.setShapeName(currentName.getText());
+            sideBarThumbnails.add(selectedCompositionShape);
+            orchestrator.addAllCompositionShapes(newCompositionShapes);
         }
     }
 
