@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -28,10 +27,10 @@ public class NewCompositionShape implements CustomShape{
 
     private final Map<String, NewCompositionShape> compositionShapeMap = new HashMap<>();
 
-    private final Map<String, Double> compositionShapesXTranslation = new HashMap<>();
-    private final Map<String, Double> compositionShapesYTranslation = new HashMap<>();
-    private final Map<String, Double> compositionShapesScaleX = new HashMap<>();
-    private final Map<String, Double> compositionShapesScaleY = new HashMap<>();
+    private final ArrayList<Information> compositionShapesXTranslation = new ArrayList<>();
+    private final ArrayList<Information> compositionShapesYTranslation = new ArrayList<>();
+    private final ArrayList<Information> compositionShapesScaleX = new ArrayList<>();
+    private final ArrayList<Information> compositionShapesScaleY = new ArrayList<>();
 
     private final ArrayList<Information> basicShapesXTranslation = new ArrayList<>();
     private final ArrayList<Information> basicShapesYTranslation = new ArrayList<>();
@@ -90,12 +89,18 @@ public class NewCompositionShape implements CustomShape{
         compositionShapeMap.forEach((id, compositionShape) -> {
             JSONObject jsonObject = new JSONObject();
 
-            jsonObject.put("id", compositionShape.getID());
-            jsonObject.put("translationX",compositionShapesXTranslation.get(id));
-            jsonObject.put("translationY", compositionShapesYTranslation.get(id));
+            int position = 0;
+            for (Information information : compositionShapesXTranslation) {
+                if(information.getId().equals(id))
+                    position = compositionShapesXTranslation.indexOf(information);
+            }
 
-            jsonObject.put("scaleX", compositionShapesScaleX.get(id));
-            jsonObject.put("scaleY", compositionShapesScaleY.get(id));
+            jsonObject.put("id", compositionShape.getID());
+            jsonObject.put("translationX",compositionShapesXTranslation.get(position));
+            jsonObject.put("translationY", compositionShapesYTranslation.get(position));
+
+            jsonObject.put("scaleX", compositionShapesScaleX.get(position));
+            jsonObject.put("scaleY", compositionShapesScaleY.get(position));
 
             array.add(jsonObject);
         });
@@ -116,7 +121,6 @@ public class NewCompositionShape implements CustomShape{
         basicShapesScaleX.add(scaleX);
         basicShapesScaleY.add(scaleY);
 
-        System.out.println("TAMANHOOOOOO: " + basicShapesXTranslation.size());
 
         return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer(), scaleX.getConsumer(), scaleY.getConsumer());
     }
@@ -139,16 +143,50 @@ public class NewCompositionShape implements CustomShape{
         return basicShapes;
     }
 
-    public void addNewCompositionShape(NewCompositionShape NewCompositionShape){
+    public Pane getTeste(){
+        Pane toReturn = new Pane();
+
+        compositionShapeMap.forEach((newID, compositionShape) -> {
+            int position = compositionShapesXTranslation.indexOf(compositionShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get());
+
+            Information translationX = compositionShapesXTranslation.get(position);
+            Information translationY = compositionShapesYTranslation.get(position);
+            Information scaleY = compositionShapesScaleX.get(position);
+            Information scaleX = compositionShapesScaleY.get(position);
+
+            //Adding basic shapes
+            compositionShape.getBasicShapes().forEach(basicShape -> {
+                double translateXBy = basicShape.getWidth() * basicShape.scaleXProperty().get() / 2 + basicShape.getInitialTranslation().getX() * -1;
+                double translateYBy = basicShape.getHeight() * basicShape.scaleYProperty().get() / 2 + basicShape.getInitialTranslation().getY() * -1;
+
+                basicShape.setTranslateX(translationX.getValue() - translateXBy);
+                basicShape.setTranslateY(translationY.getValue() - translateYBy);
+
+                basicShape.setScaleX(basicShape.getScaleX() + scaleX.getValue());
+                basicShape.setScaleY(basicShape.getScaleY() + scaleY.getValue());
+
+                toReturn.getChildren().add(basicShape.getRectangle());
+            });
+
+            toReturn.getChildren().add(compositionShape.getTeste());
+
+        });
+
+        return toReturn;
+    }
+
+    public Pane addNewCompositionShape(NewCompositionShape NewCompositionShape){
         String id = UUID.randomUUID().toString();
 
         compositionShapeMap.put(id, NewCompositionShape);
 
-        compositionShapesXTranslation.put(id, 0.0);
-        compositionShapesYTranslation.put(id, 0.0);
+        compositionShapesXTranslation.add(new Information(id, 0.0));
+        compositionShapesYTranslation.add(new Information(id, 0.0));
 
-        compositionShapesScaleX.put(id, 1.0);
-        compositionShapesScaleY.put(id, 1.0);
+        compositionShapesScaleX.add(new Information(id, 0.0));
+        compositionShapesScaleY.add(new Information(id, 0.0));
+
+        return getTeste();
     }
 
     private void setUpComponents(){

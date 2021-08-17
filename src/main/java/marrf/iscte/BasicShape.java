@@ -22,8 +22,6 @@ import javafx.scene.text.FontWeight;
 import org.apache.commons.lang3.SystemUtils;
 
 import javax.imageio.ImageIO;
-import javax.swing.plaf.synth.SynthOptionPaneUI;
-import java.awt.*;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +33,6 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.text.DecimalFormat;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -56,10 +53,10 @@ public class BasicShape implements CustomShape {
     public DoubleProperty xTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
     public DoubleProperty yTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
 
-    private Function<Double, Double> writeTranslateX;
-    private Function<Double, Double> writeTranslateY;
-    private Function<Double, Double> writeScaleX;
-    private Function<Double, Double> writeScaleY;
+    private final Function<Double, Double> writeTranslateX;
+    private final Function<Double, Double> writeTranslateY;
+    private final Function<Double, Double> writeScaleX;
+    private final Function<Double, Double> writeScaleY;
 
     private HBox widthSection;
     private HBox heightSection;
@@ -73,8 +70,8 @@ public class BasicShape implements CustomShape {
 
     private double width;
     private double height;
-    private double scaleX;
-    private double scaleY;
+    private double scaleX = 1.0;
+    private double scaleY = 1.0;
 
     private final Paint color;
     private String shapeName = "defaultName";
@@ -101,9 +98,6 @@ public class BasicShape implements CustomShape {
         this.width = width;
         this.height = height;
 
-        this.scaleX = 1;
-        this.scaleY = 1;
-
         this.color = color;
 
         rectangle = new Pane();
@@ -112,6 +106,10 @@ public class BasicShape implements CustomShape {
         BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
         Background background = new Background(backgroundFill);
         rectangle.setBackground(background);
+
+        setScaleX(writeScaleX.apply(null));
+        setScaleY(writeScaleY.apply(null));
+
         setUpComponents();
     }
 
@@ -122,9 +120,6 @@ public class BasicShape implements CustomShape {
     public BasicShape(double width, double height, Paint color) {
         this.width = width;
         this.height = height;
-
-        this.scaleX = 1;
-        this.scaleY = 1;
 
         this.color = color;
 
@@ -705,7 +700,6 @@ public class BasicShape implements CustomShape {
 
     public void toogleSelected() {
         isSelected = !isSelected;
-        System.out.println("here coiso");
     }
 
     public void turnOnStroke() {

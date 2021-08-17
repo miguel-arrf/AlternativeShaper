@@ -1,15 +1,13 @@
 package marrf.iscte;
 
+import javafx.scene.layout.Pane;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import javax.swing.text.html.Option;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Orchestrator {
@@ -48,6 +46,28 @@ public class Orchestrator {
             toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY, writeScaleX, writeScaleY);
         }
 
+
+        return toReturn;
+    }
+
+    public Pane getCopyOfCompositionShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Double, Double> writeScaleX, Function<Double, Double> writeScaleY){
+        Pane toReturn = new Pane();
+
+        Optional<NewCompositionShape> compositionShape = newCompositionShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
+
+        if(compositionShape.isPresent()){
+            NewCompositionShape toCopyFrom = compositionShape.get();
+
+            toCopyFrom.getBasicShapes().forEach(basicShape -> {
+                basicShape.setTranslateX(basicShape.getInitialTranslation().getX());
+                basicShape.setTranslateY(basicShape.getInitialTranslation().getY());
+
+                toReturn.getChildren().add(basicShape.getRectangle());
+            });
+
+
+
+        }
 
         return toReturn;
     }

@@ -84,8 +84,8 @@ public class App extends Application {
         if(customShape instanceof BasicShape){
             return String.valueOf(basicShapes.indexOf(customShape));
         }else{
-
-            return "positions.toString();";
+            return "[";
+            //return "positions.toString();";
         }
     }
 
@@ -127,7 +127,7 @@ public class App extends Application {
                                 isCurrentSimple = false;
                                 currentName.setText(basicShapeAdded.getShapeName());
 
-                                addCompositionShape(selectedCompositionShape);
+                                addCompositionShape(selectedCompositionShape, false);
                                 //addShape(basicShapeAdded, true);
                             });
                         }else{
@@ -167,8 +167,14 @@ public class App extends Application {
         return scrollPane;
     }
 
-    private void addCompositionShape(NewCompositionShape compositionShape){
-        compositionShape.getBasicShapes().forEach(basicShape -> addShape(basicShape));
+    private void addCompositionShape(NewCompositionShape compositionShape, boolean wasDragged){
+        if(wasDragged){
+            gridCanvas.addGroup(selectedCompositionShape.addNewCompositionShape(compositionShape), compositionShape);
+        }else {
+            //I've clicked on a thumbnail
+            compositionShape.getBasicShapes().forEach(basicShape -> addShape(basicShape));
+
+        }
     }
 
     public void addBasicAndComplexButtons(){
@@ -434,10 +440,11 @@ public class App extends Application {
 
                     if(!db.getString().contains("[")){
                         System.out.println("I was dropped a simple shape");
-
+                        System.out.println("i was dropped: " + db.getString());
                         addShape(selectedCompositionShape.addBasicShape(basicShapes.get(Integer.parseInt(db.getString())).getUUID().toString()));
                     }else{
                         System.out.println("I was dropped a composition shape");
+                        addCompositionShape((NewCompositionShape) inDragCustomShape, true);
                     }
 
                 }
