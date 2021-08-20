@@ -35,7 +35,7 @@ public class Orchestrator {
         saveFile();
     }
 
-    public BasicShape getCopyOfBasicShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Double, Double> writeScaleX, Function<Double, Double> writeScaleY){
+    public BasicShape getCopyOfBasicShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY){
         BasicShape toReturn = null;
 
         Optional<BasicShape> shape = basicShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
@@ -43,14 +43,14 @@ public class Orchestrator {
         if(shape.isPresent()){
             BasicShape toCopyFrom = shape.get();
 
-            toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY, writeScaleX, writeScaleY);
+            toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY);
         }
 
 
         return toReturn;
     }
 
-    public Pane getCopyOfCompositionShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Double, Double> writeScaleX, Function<Double, Double> writeScaleY){
+    public Pane getCopyOfCompositionShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY){
         Pane toReturn = new Pane();
 
         Optional<NewCompositionShape> compositionShape = newCompositionShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();

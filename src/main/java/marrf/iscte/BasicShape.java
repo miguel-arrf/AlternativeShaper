@@ -55,8 +55,6 @@ public class BasicShape implements CustomShape {
 
     private final Function<Double, Double> writeTranslateX;
     private final Function<Double, Double> writeTranslateY;
-    private final Function<Double, Double> writeScaleX;
-    private final Function<Double, Double> writeScaleY;
 
     private HBox widthSection;
     private HBox heightSection;
@@ -64,20 +62,13 @@ public class BasicShape implements CustomShape {
     private HBox translationXSection;
     private HBox translationYSection;
 
-    private HBox scaleXSection;
-    private HBox scaleYSection;
-
-
     private double width;
     private double height;
-    private double scaleX = 1.0;
-    private double scaleY = 1.0;
 
     private final Paint color;
     private String shapeName = "defaultName";
 
     private boolean strokeShowing = false;
-
 
     private final VBox thumbnail = new VBox();
 
@@ -89,11 +80,9 @@ public class BasicShape implements CustomShape {
         return shapeName;
     }
 
-    public BasicShape(double width, double height, Paint color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Double, Double> writeScaleX, Function<Double, Double> writeScaleY) {
+    public BasicShape(double width, double height, Paint color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {
         this.writeTranslateX = writeTranslateX;
         this.writeTranslateY = writeTranslateY;
-        this.writeScaleX = writeScaleX;
-        this.writeScaleY = writeScaleY;
 
         this.width = width;
         this.height = height;
@@ -106,9 +95,6 @@ public class BasicShape implements CustomShape {
         BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
         Background background = new Background(backgroundFill);
         rectangle.setBackground(background);
-
-        setScaleX(writeScaleX.apply(null));
-        setScaleY(writeScaleY.apply(null));
 
         setUpComponents();
     }
@@ -126,8 +112,6 @@ public class BasicShape implements CustomShape {
         rectangle = new Pane();
         rectangle.setPrefSize(width, height);
 
-        writeScaleY = a -> 1.0;
-        writeScaleX = a -> 1.0;
         writeTranslateX = a -> 0.0;
         writeTranslateY = a -> 0.0;
 
@@ -162,14 +146,6 @@ public class BasicShape implements CustomShape {
         return heightSection;
     }
 
-    public HBox getScaleXSection() {
-        return scaleXSection;
-    }
-
-    public HBox getScaleYSection() {
-        return scaleYSection;
-    }
-
     public HBox getTranslationXSection() {
         return translationXSection;
     }
@@ -184,8 +160,8 @@ public class BasicShape implements CustomShape {
         widthLabel.setTextFill(Color.web("#BDBDBD"));
 
 
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
+        TextField textField = new TextField("1");
+        textField.setPromptText("1");
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(50);
@@ -251,8 +227,8 @@ public class BasicShape implements CustomShape {
         heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         heightLabel.setTextFill(Color.web("#BDBDBD"));
 
-        TextField textField = new TextField("0.1");
-        textField.setPromptText("0.1");
+        TextField textField = new TextField("1");
+        textField.setPromptText("1");
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(50);
@@ -292,13 +268,7 @@ public class BasicShape implements CustomShape {
 
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
-
-            /*if (newValue.doubleValue() > oldValue.doubleValue()) {
-                this.setTranslateY(this.getTranslateY() - Math.abs(oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
-            } else {
-                this.setTranslateY(this.getTranslateY() + (oldValue.doubleValue() - newValue.doubleValue()) * SCALE);
-            }*/
-
+            
             this.setHeight(newValue.doubleValue() * SCALE);
 
             heightSectionSlider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
@@ -370,7 +340,6 @@ public class BasicShape implements CustomShape {
 
             this.addTranslationX(newValue.doubleValue() - oldValue.doubleValue());
             translateXProperty.setValue(truncatedDouble);
-
             writeTranslateX.apply(truncatedDouble);
         });
 
@@ -444,133 +413,6 @@ public class BasicShape implements CustomShape {
 
     }
 
-    public void setUpScaleXBox() {
-        Label widthLabel = new Label("Scale X:");
-        widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        widthLabel.setTextFill(Color.web("#BDBDBD"));
-
-
-        TextField textField = new TextField("1");
-        textField.setPromptText("1");
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
-
-        Slider scaleXSlider = new Slider();
-        scaleXSlider.setMax(10);
-        scaleXSlider.setMin(0.1);
-        scaleXSlider.setValue(1);
-
-
-        textField.setOnKeyPressed(keyEvent -> {
-            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-
-                try {
-                    if (Double.parseDouble(textField.getText()) < scaleXSlider.getMin()) {
-                        textField.setText(String.valueOf(scaleXSlider.getMin()));
-                    }
-
-                    scaleXSlider.setValue(Double.parseDouble(textField.getText()));
-
-                } catch (NumberFormatException e) {
-                    textField.setText(String.valueOf(scaleXSlider.getMin()));
-                    scaleXSlider.setValue(scaleXSlider.getMin());
-                }
-
-            }
-        });
-
-        //TODO: TextField should allow for 0.##, and slider only for 0.#.
-        //TODO: Height pane
-
-
-        scaleXSlider.setMajorTickUnit(0.1);
-        scaleXSlider.setMinorTickCount(0);
-        scaleXSlider.setSnapToTicks(true);
-
-        scaleXSlider.valueProperty().addListener(((observableValue, number, t1) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-            scaleXSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
-        }));
-
-        scaleXSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-
-            this.setScaleX(newValue.doubleValue());
-
-            writeScaleX.apply(truncatedDouble);
-        });
-
-        scaleXSection = new HBox(widthLabel, horizontalGrower(), scaleXSlider, horizontalGrower(), textField);
-        scaleXSection.setPadding(new Insets(10, 10, 10, 15));
-        scaleXSection.setAlignment(Pos.CENTER_LEFT);
-        scaleXSection.setMinHeight(30);
-        scaleXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-
-    }
-
-    public void setUpScaleYBox() {
-        Label heightLabel = new Label("Scale Y:");
-        heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        heightLabel.setTextFill(Color.web("#BDBDBD"));
-
-        TextField textField = new TextField("1");
-        textField.setPromptText("1");
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
-
-        Slider scaleYSlider = new Slider();
-        scaleYSlider.setMax(10);
-        scaleYSlider.setMin(0.1);
-        scaleYSlider.setValue(1);
-
-        scaleYSlider.setMajorTickUnit(0.1);
-        scaleYSlider.setMinorTickCount(0);
-        scaleYSlider.setSnapToTicks(true);
-
-        textField.setOnKeyPressed(keyEvent -> {
-            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-
-                try {
-                    if (Double.parseDouble(textField.getText()) < scaleYSlider.getMin()) {
-                        textField.setText(String.valueOf(scaleYSlider.getMin()));
-                    }
-
-                    scaleYSlider.setValue(Double.parseDouble(textField.getText()));
-
-                } catch (NumberFormatException e) {
-                    textField.setText(String.valueOf(scaleYSlider.getMin()));
-                    scaleYSlider.setValue(scaleYSlider.getMin());
-                }
-
-            }
-        });
-
-
-        scaleYSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-
-            this.setScaleY(newValue.doubleValue());
-
-            writeScaleY.apply(truncatedDouble);
-        });
-
-        scaleYSection = new HBox(heightLabel, horizontalGrower(), scaleYSlider, horizontalGrower(), textField);
-        scaleYSection.setPadding(new Insets(10, 10, 10, 15));
-        scaleYSection.setAlignment(Pos.CENTER_LEFT);
-        scaleYSection.setMinHeight(30);
-        scaleYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-
-    }
 
     public void redrawThumbnail() {
         boolean wasSelected = isStrokeOn();
@@ -746,9 +588,6 @@ public class BasicShape implements CustomShape {
         setUpHeightBox();
         setUpWidthBox();
 
-        setUpScaleXBox();
-        setUpScaleYBox();
-
         setUpTranslationXBox();
         setUpTranslationYBox();
     }
@@ -771,36 +610,6 @@ public class BasicShape implements CustomShape {
 
     public DoubleProperty scaleYProperty() {
         return rectangle.scaleYProperty();
-    }
-
-    public void setScaleX(double newScaleX) {
-            if(newScaleX > scaleX){
-                addTranslationX( -1 * (newScaleX*width - scaleX * width) * 0.5);
-            }else{
-                addTranslationX( (scaleX * width - newScaleX*width) * 0.5);
-            }
-
-        this.scaleX = newScaleX;
-        rectangle.setPrefWidth(scaleX*width);
-    }
-
-    public double getScaleX() {
-        return scaleX;
-    }
-
-    public double getScaleY() {
-        return scaleY;
-    }
-
-    public void setScaleY(double newScaleY) {
-        if(newScaleY > scaleX){
-            addTranslationY( -1 * (newScaleY*height - scaleY * height) * 0.5);
-        }else{
-            addTranslationY( (scaleY * height - newScaleY*height) * 0.5);
-        }
-
-        this.scaleY = newScaleY;
-        rectangle.setPrefHeight(scaleY * height);
     }
 
     public void addTranslationX(double value) {
@@ -832,25 +641,18 @@ public class BasicShape implements CustomShape {
     }
 
     public void setWidth(double newWidth) {
-        if(newWidth > width){
-            addTranslationX( -1 * (newWidth * scaleX - width * scaleX) * 0.5);
-        }else{
-            addTranslationX( (width * scaleX - newWidth * scaleX) * 0.5);
-        }
-
         this.width = newWidth;
-        rectangle.setPrefWidth(width*scaleX);
+        rectangle.setPrefWidth(width);
     }
 
     public void setHeight(double newHeight) {
         if(newHeight > height){
-            addTranslationY(-1 * (newHeight * scaleY - height * scaleY) * 0.5);
+            this.addTranslationY(- Math.abs(height - newHeight));
         }else{
-            addTranslationY( (height * scaleY - newHeight * scaleY) *0.5 );
+            this.addTranslationY( (height - newHeight));
         }
-
         this.height = newHeight;
-        rectangle.setPrefHeight(height*scaleY);
+        rectangle.setPrefHeight(height);
     }
 
     public double getHeight() {

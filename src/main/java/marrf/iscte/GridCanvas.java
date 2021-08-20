@@ -44,38 +44,22 @@ public class GridCanvas {
         return basicShapes;
     }
 
-    /*public ArrayList<NewCompositionShape> getCompositionShapes() {
-        return compositionShapes;
-    }*/
 
     public void addShape(BasicShape basicShape){
 
-        double translateXBy = basicShape.getWidth() * basicShape.scaleXProperty().get() / 2 + basicShape.getInitialTranslation().getX() * -1;
-        double translateYBy = basicShape.getHeight() * basicShape.scaleYProperty().get() / 2 + basicShape.getInitialTranslation().getY() * -1;
-
-        //basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() + basicShape.getTranslationOffset().getX() + basicShape.translateXProperty.get());
-        //basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() + basicShape.getTranslationOffset().getY() + basicShape.translateYProperty.get());
+        double translateXBy = basicShape.getInitialTranslation().getX() * -1;
+        double translateYBy = basicShape.getHeight() * basicShape.scaleYProperty().get() + basicShape.getInitialTranslation().getY() * -1;
 
         basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() - translateXBy);
         basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() - translateYBy);
 
+        Pane toAdd = basicShape.getRectangle();
 
-        /*if(basicShape.getHeight() < SCALE){
-            basicShape.addTranslationY(Math.abs(SCALE - basicShape.getHeight()));
-        }else{
-            basicShape.addTranslationY(- (basicShape.getHeight() - SCALE));
-        }*/
-
-
-        //TEMOS QUE FAZER TRANSLATION DO OFFSET QUE JÁ EXISTIA!
-
-        pane.getChildren().add(basicShape.getRectangle());
+        pane.getChildren().add(toAdd);
         basicShapes.add(basicShape);
     }
 
     public void addGroup(Pane basicShape, NewCompositionShape compositionShape){
-        //compositionShapes.add(compositionShape);
-
         basicShape.setTranslateX(basicShape.getTranslateX() + circle.getCenterX() + circle.getTranslateX());
         basicShape.setTranslateY(basicShape.getTranslateY() + circle.getCenterY() + circle.getTranslateY());
 

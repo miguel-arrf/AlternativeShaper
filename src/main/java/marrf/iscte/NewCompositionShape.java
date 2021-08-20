@@ -29,21 +29,15 @@ public class NewCompositionShape implements CustomShape{
 
     private final ArrayList<Information> compositionShapesXTranslation = new ArrayList<>();
     private final ArrayList<Information> compositionShapesYTranslation = new ArrayList<>();
-    private final ArrayList<Information> compositionShapesScaleX = new ArrayList<>();
-    private final ArrayList<Information> compositionShapesScaleY = new ArrayList<>();
 
     private final ArrayList<Information> basicShapesXTranslation = new ArrayList<>();
     private final ArrayList<Information> basicShapesYTranslation = new ArrayList<>();
-    private final ArrayList<Information> basicShapesScaleX = new ArrayList<>();
-    private final ArrayList<Information> basicShapesScaleY = new ArrayList<>();
 
     private final Orchestrator orchestrator;
 
     //Modifiers boxes
     private HBox translationXBox;
     private HBox translationYBox;
-    private HBox scaleXBox;
-    private HBox scaleYBox;
 
     //Composition Shape Thumbnail
     private final VBox thumbnail = new VBox();
@@ -65,17 +59,14 @@ public class NewCompositionShape implements CustomShape{
     public JSONArray getBasicShapesJSON(){
         JSONArray array = new JSONArray();
 
-        basicShapesScaleX.forEach(information -> {
+        basicShapesXTranslation.forEach(information -> {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("id", information.getId());
 
-            int position = basicShapesScaleX.indexOf(information);
+            int position = basicShapesXTranslation.indexOf(information);
 
             jsonObject.put("translationX", basicShapesXTranslation.get(position).getValue());
             jsonObject.put("translationY", basicShapesYTranslation.get(position).getValue());
-
-            jsonObject.put("scaleX", information.getValue());
-            jsonObject.put("scaleY", basicShapesScaleY.get(position).getValue());
 
             array.add(jsonObject);
         });
@@ -99,9 +90,6 @@ public class NewCompositionShape implements CustomShape{
             jsonObject.put("translationX",compositionShapesXTranslation.get(position));
             jsonObject.put("translationY", compositionShapesYTranslation.get(position));
 
-            jsonObject.put("scaleX", compositionShapesScaleX.get(position));
-            jsonObject.put("scaleY", compositionShapesScaleY.get(position));
-
             array.add(jsonObject);
         });
 
@@ -112,31 +100,22 @@ public class NewCompositionShape implements CustomShape{
         Information translationX = new Information(basicShapesID, 0.0);
         Information translationY = new Information(basicShapesID, 0.0);
 
-        Information scaleX = new Information(basicShapesID, 1.0);
-        Information scaleY = new Information(basicShapesID, 1.0);
-
         basicShapesXTranslation.add(translationX);
         basicShapesYTranslation.add(translationY);
 
-        basicShapesScaleX.add(scaleX);
-        basicShapesScaleY.add(scaleY);
-
-
-        return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer(), scaleX.getConsumer(), scaleY.getConsumer());
+        return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer());
     }
 
     public ArrayList<BasicShape> getBasicShapes(){
         ArrayList<BasicShape> basicShapes = new ArrayList<>();
 
-        basicShapesScaleX.forEach(information -> {
-            int position = basicShapesScaleX.indexOf(information);
+        basicShapesXTranslation.forEach(information -> {
+            int position = basicShapesXTranslation.indexOf(information);
 
             Information translationX = basicShapesXTranslation.get(position);
             Information translationY = basicShapesYTranslation.get(position);
 
-            Information scaleY = basicShapesScaleY.get(position);
-
-            basicShapes.add(orchestrator.getCopyOfBasicShape(information.id, translationX.getConsumer(), translationY.getConsumer(), information.getConsumer(), scaleY.getConsumer()));
+            basicShapes.add(orchestrator.getCopyOfBasicShape(information.id, translationX.getConsumer(), translationY.getConsumer()));
         });
 
 
@@ -146,24 +125,20 @@ public class NewCompositionShape implements CustomShape{
     public Pane getTeste(){
         Pane toReturn = new Pane();
 
+
         compositionShapeMap.forEach((newID, compositionShape) -> {
             int position = compositionShapesXTranslation.indexOf(compositionShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get());
 
             Information translationX = compositionShapesXTranslation.get(position);
             Information translationY = compositionShapesYTranslation.get(position);
-            Information scaleY = compositionShapesScaleX.get(position);
-            Information scaleX = compositionShapesScaleY.get(position);
 
             //Adding basic shapes
             compositionShape.getBasicShapes().forEach(basicShape -> {
-                double translateXBy = basicShape.getWidth() * basicShape.scaleXProperty().get() / 2 + basicShape.getInitialTranslation().getX() * -1;
-                double translateYBy = basicShape.getHeight() * basicShape.scaleYProperty().get() / 2 + basicShape.getInitialTranslation().getY() * -1;
+                double translateXBy = basicShape.getInitialTranslation().getX() * -1;
+                double translateYBy = basicShape.getHeight() + basicShape.getInitialTranslation().getY() * -1;
 
                 basicShape.setTranslateX(translationX.getValue() - translateXBy);
                 basicShape.setTranslateY(translationY.getValue() - translateYBy);
-
-                basicShape.setScaleX(basicShape.getScaleX() + scaleX.getValue());
-                basicShape.setScaleY(basicShape.getScaleY() + scaleY.getValue());
 
                 toReturn.getChildren().add(basicShape.getRectangle());
             });
@@ -183,18 +158,12 @@ public class NewCompositionShape implements CustomShape{
         compositionShapesXTranslation.add(new Information(id, 0.0));
         compositionShapesYTranslation.add(new Information(id, 0.0));
 
-        compositionShapesScaleX.add(new Information(id, 0.0));
-        compositionShapesScaleY.add(new Information(id, 0.0));
-
         return getTeste();
     }
 
     private void setUpComponents(){
         setUpTranslationXBox();
         setUpTranslationYBox();
-
-        setUpScaleXBox();
-        setUpScaleYBox();
     }
 
     private void setUpTranslationXBox(){
@@ -211,20 +180,6 @@ public class NewCompositionShape implements CustomShape{
         translationYBox.setMinHeight(30);
         translationYBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
-    private void setUpScaleXBox(){
-        scaleXBox = new HBox(new Label("scale y"));
-        scaleXBox.setPadding(new Insets(10, 10, 10, 15));
-        scaleXBox.setAlignment(Pos.CENTER_LEFT);
-        scaleXBox.setMinHeight(30);
-        scaleXBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-    }
-    private void setUpScaleYBox(){
-        scaleYBox = new HBox(new Label("scale y"));
-        scaleYBox.setPadding(new Insets(10, 10, 10, 15));
-        scaleYBox.setAlignment(Pos.CENTER_LEFT);
-        scaleYBox.setMinHeight(30);
-        scaleYBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-    }
 
     @Override
     public void setShapeName(String shapeName) {
@@ -239,16 +194,6 @@ public class NewCompositionShape implements CustomShape{
     @Override
     public UUID getUUID() {
         return getID();
-    }
-
-    @Override
-    public Pane getScaleXSection() {
-        return scaleXBox;
-    }
-
-    @Override
-    public Pane getScaleYSection() {
-        return scaleYBox;
     }
 
     @Override
@@ -292,7 +237,7 @@ public class NewCompositionShape implements CustomShape{
         return thumbnail;
     }
 
-    public class Information{
+    public static class Information{
         private String id;
         private Double value;
 

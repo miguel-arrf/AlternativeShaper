@@ -12,8 +12,6 @@ public interface CustomShape {
 
     public UUID getUUID();
 
-    public Pane getScaleXSection();
-    public Pane getScaleYSection();
     public Pane getTranslationXSection();
     public Pane getTranslationYSection();
 

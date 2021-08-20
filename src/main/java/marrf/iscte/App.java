@@ -30,7 +30,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.json.simple.JSONObject;
 
-import java.awt.*;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -173,7 +172,7 @@ public class App extends Application {
         }else {
             //I've clicked on a thumbnail
             compositionShape.getBasicShapes().forEach(basicShape -> addShape(basicShape));
-
+            gridCanvas.addGroup(compositionShape.getTeste(), compositionShape);
         }
     }
 
@@ -288,7 +287,7 @@ public class App extends Application {
                 if(isCurrentSimple){
                     transformersBox.getChildren().addAll(tempBasicShape.getWidthSection(), tempBasicShape.getHeightSection());
                 }else{
-                    transformersBox.getChildren().addAll(tempBasicShape.getScaleXSection(), tempBasicShape.getScaleYSection(), tempBasicShape.getTranslationXSection(), tempBasicShape.getTranslationYSection());
+                    transformersBox.getChildren().addAll(tempBasicShape.getTranslationXSection(), tempBasicShape.getTranslationYSection());
                 }
             }
 
@@ -396,11 +395,11 @@ public class App extends Application {
         pane.setOnMouseClicked(event -> basicShapes.forEach(rectangle -> {
             System.out.println("basicShapes : " + basicShapes.size());
 
-            Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth() * rectangle.getScaleX(), 0));
+            Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth() , 0));
 
 
-            if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth() * rectangle.getScaleX()) {
-                if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight() * rectangle.getScaleY()){
+            if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth() ) {
+                if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight() ){
                     System.out.println("cliquei numa shape!");
                     selectedBasicShape = rectangle;
                     selectedBasicShape.turnOnStroke();
@@ -411,7 +410,7 @@ public class App extends Application {
 
                     if(!isCurrentSimple){
                         transformersBox.getChildren().clear();
-                        transformersBox.getChildren().addAll(rectangle.getScaleXSection(), rectangle.getScaleYSection(), rectangle.getTranslationXSection(), rectangle.getTranslationYSection());
+                        transformersBox.getChildren().addAll( rectangle.getTranslationXSection(), rectangle.getTranslationYSection());
                     }
 
                 }
@@ -458,16 +457,16 @@ public class App extends Application {
 
 
         pane.setOnMouseMoved(event -> basicShapes.forEach(rectangle -> {
-            Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth() * rectangle.getScaleX(), 0));
+            Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth() , 0));
 
 
-            if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth() * rectangle.getScaleX()) {
-                if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight() * rectangle.getScaleY()){
+            if(transformation.getX() - event.getSceneX() >= 0 && transformation.getX() - event.getSceneX() <= rectangle.getWidth() ) {
+                if(transformation.getY() - event.getSceneY() >= 0 && transformation.getY() - event.getSceneY() <= rectangle.getHeight() ){
                     rectangle.turnOnStroke();
                 }else{
                     rectangle.turnOffStrokeIfNotSelected();
                     if(!rectangle.isSelected()){
-                        if(transformersBox.getChildren().contains(rectangle.getScaleXSection())){
+                        if(transformersBox.getChildren().contains(rectangle.getTranslationXSection())){
                             transformersBox.getChildren().clear();
                         }
                     }
@@ -476,7 +475,7 @@ public class App extends Application {
             }else{
                 rectangle.turnOffStrokeIfNotSelected();
                 if(!rectangle.isSelected()){
-                    if(transformersBox.getChildren().contains(rectangle.getScaleXSection())){
+                    if(transformersBox.getChildren().contains(rectangle.getTranslationXSection())){
                         transformersBox.getChildren().clear();
                     }
                 }
