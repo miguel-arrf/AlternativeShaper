@@ -2,14 +2,19 @@ package marrf.iscte;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.control.Label;
+import javafx.scene.effect.ColorInput;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -122,11 +127,14 @@ public class NewCompositionShape implements CustomShape{
         return basicShapes;
     }
 
-    public Pane getTeste(){
-        Pane toReturn = new Pane();
+    public void getTeste(Pane toAdd){
 
 
         compositionShapeMap.forEach((newID, compositionShape) -> {
+            Group addTo = new Group();
+
+
+
             int position = compositionShapesXTranslation.indexOf(compositionShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get());
 
             Information translationX = compositionShapesXTranslation.get(position);
@@ -140,14 +148,41 @@ public class NewCompositionShape implements CustomShape{
                 basicShape.setTranslateX(translationX.getValue() - translateXBy);
                 basicShape.setTranslateY(translationY.getValue() - translateYBy);
 
-                toReturn.getChildren().add(basicShape.getRectangle());
+                Pane rectangle = basicShape.getRectangle();
+                /*rectangle.setOnMouseMoved(event -> {
+                    System.out.println("fuck i'm here!! NO REC: " + rectangle);
+                });
+
+                rectangle.addEventFilter(MouseEvent.MOUSE_MOVED, event -> {
+                    System.out.println("WOW, IS THIS WORKIIIING? RREEEC");
+                });*/
+
+                addTo.getChildren().add(rectangle);
+            });
+            toAdd.getChildren().add(addTo);
+
+            compositionShape.getTeste(toAdd);
+
+            Rectangle rectangle = new Rectangle(addTo.getLayoutBounds().getWidth(), addTo.getLayoutBounds().getHeight());
+            rectangle.setFill(Color.web("rgba(255,255,255,0.2)"));
+            rectangle.setX(addTo.getLayoutBounds().getMinX());
+            rectangle.setY(addTo.getLayoutBounds().getMinY());
+
+            addTo.setOnMouseEntered(event -> {
+                addTo.getChildren().add(rectangle);
+
             });
 
-            toReturn.getChildren().add(compositionShape.getTeste());
+            addTo.setOnMouseExited(event -> {
+                addTo.getChildren().remove(rectangle);
+            });
+
+            /*addTo.addEventFilter(MouseEvent.MOUSE_MOVED, event -> {
+                System.out.println("WOW, IS THIS WORKIIIING?");
+            });*/
 
         });
 
-        return toReturn;
     }
 
     public Pane addNewCompositionShape(NewCompositionShape NewCompositionShape){
@@ -158,7 +193,10 @@ public class NewCompositionShape implements CustomShape{
         compositionShapesXTranslation.add(new Information(id, 0.0));
         compositionShapesYTranslation.add(new Information(id, 0.0));
 
-        return getTeste();
+        Pane toAdd = new Pane();
+        getTeste(toAdd);
+
+        return toAdd;
     }
 
     private void setUpComponents(){

@@ -172,7 +172,12 @@ public class App extends Application {
         }else {
             //I've clicked on a thumbnail
             compositionShape.getBasicShapes().forEach(basicShape -> addShape(basicShape));
-            gridCanvas.addGroup(compositionShape.getTeste(), compositionShape);
+            Pane toAdd = new Pane();
+            compositionShape.getTeste(toAdd);
+            System.out.println("com: " + compositionShape.getBasicShapes().size());
+            System.out.println("Ó AMIGOOOOO: " + toAdd.getLayoutBounds());
+
+            gridCanvas.addGroup(toAdd, compositionShape);
         }
     }
 
@@ -365,6 +370,8 @@ public class App extends Application {
 
     private Pane getGraphSection(){
         StackPane pane = new StackPane();
+        pane.setPickOnBounds(false);
+
         pane.setAlignment(Pos.CENTER);
         pane.setMinHeight(300);
         pane.setMinWidth(300);
@@ -377,6 +384,8 @@ public class App extends Application {
         pane.getChildren().add(grid);
 
         AnchorPane anchorPane = new AnchorPane();
+        anchorPane.setPickOnBounds(false);
+
         pane.getChildren().add(anchorPane);
         getAnchorPaneClip(anchorPane);
 
@@ -389,7 +398,6 @@ public class App extends Application {
                     event.getDragboard().hasString()) {
                 System.out.println("estou dragging: " + event.getDragboard().getString());
             }
-            event.consume();
         });
 
         pane.setOnMouseClicked(event -> basicShapes.forEach(rectangle -> {
@@ -422,7 +430,6 @@ public class App extends Application {
             if (db.hasString()) {
                 event.acceptTransferModes( TransferMode.ANY );
             }
-            event.consume();
         });
 
         pane.setOnDragDropped(event -> {
@@ -452,7 +459,6 @@ public class App extends Application {
             }
             event.setDropCompleted(success);
 
-            event.consume();
         });
 
 
