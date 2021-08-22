@@ -121,6 +121,7 @@ public class App extends Application {
                                 System.out.println("I've clicked on a composition shape thumbnail!");
                                 selectedCompositionShape = (NewCompositionShape) basicShapeAdded;
 
+                                transformersBox.getChildren().clear();
                                 gridCanvas.clearEverything(false);
                                 //TODO aqui está a true, mas em algum momento não será...
                                 isCurrentSimple = false;
@@ -135,6 +136,7 @@ public class App extends Application {
                                 System.out.println("I've clicked on a basic shape thumbnail!");
                                 selectedBasicShape = (BasicShape) basicShapeAdded;
 
+                                transformersBox.getChildren().clear();
                                 gridCanvas.clearEverything(true);
                                 //TODO aqui está a true, mas em algum momento não será...
                                 isCurrentSimple = true;
@@ -169,13 +171,13 @@ public class App extends Application {
     private void addCompositionShape(NewCompositionShape compositionShape, boolean wasDragged){
         if(wasDragged){
             gridCanvas.addGroup(selectedCompositionShape.addNewCompositionShape(compositionShape), compositionShape);
+
         }else {
             //I've clicked on a thumbnail
-            compositionShape.getBasicShapes().forEach(basicShape -> addShape(basicShape));
+            compositionShape.getBasicShapes().forEach(this::addShape);
             Pane toAdd = new Pane();
-            compositionShape.getTeste(toAdd);
-            System.out.println("com: " + compositionShape.getBasicShapes().size());
-            System.out.println("Ó AMIGOOOOO: " + toAdd.getLayoutBounds());
+            compositionShape.getTeste(toAdd, true, 0,0);
+            System.out.println("tamanho de basic shapes: " + compositionShape.getBasicShapes().size());
 
             gridCanvas.addGroup(toAdd, compositionShape);
         }
@@ -216,7 +218,6 @@ public class App extends Application {
             isCurrentSimple = true;
             currentName.setText("simpleDefault");
 
-
             transformersBox.getChildren().clear();
 
             BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc5"));
@@ -248,7 +249,7 @@ public class App extends Application {
             currentName.setText("complexDefault");
 
             transformersBox.getChildren().clear();
-            selectedCompositionShape = new NewCompositionShape(orchestrator);
+            selectedCompositionShape = new NewCompositionShape(orchestrator, transformersBox);
             newCompositionShapes.add(selectedCompositionShape);
         });
 
@@ -401,7 +402,7 @@ public class App extends Application {
         });
 
         pane.setOnMouseClicked(event -> basicShapes.forEach(rectangle -> {
-            System.out.println("basicShapes : " + basicShapes.size());
+            //System.out.println("basicShapes : " + basicShapes.size());
 
             Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth() , 0));
 
@@ -439,8 +440,7 @@ public class App extends Application {
             Dragboard db = event.getDragboard();
             boolean success = false;
             if (db.hasString()) {
-                System.out.println("this was dropped: " + db.getString());
-                //System.out.println("event x: " + event.getX() + ", y: " + event.getY());
+                //System.out.println("this was dropped: " + db.getString());
 
                 if(!isCurrentSimple){
 

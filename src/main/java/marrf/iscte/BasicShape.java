@@ -301,7 +301,6 @@ public class BasicShape implements CustomShape {
         translationXSlider.setMin(-SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
         translationXSlider.setValue(0);
 
-
         textField.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 
@@ -322,7 +321,6 @@ public class BasicShape implements CustomShape {
 
         //TODO: TextField should allow for 0.##, and slider only for 0.#.
         //TODO: Height pane
-
 
         translationXSlider.setMajorTickUnit(0.1);
         translationXSlider.setMinorTickCount(0);
@@ -547,7 +545,6 @@ public class BasicShape implements CustomShape {
     public void turnOnStroke() {
 
         if(!strokeShowing){
-            System.out.println("turn on stroke");
             rectangle.setStyle("-fx-padding: 0;" + "-fx-border-style: solid inside;"
                     + "-fx-border-width: 5;" + "-fx-border-insets: -10;"
                     + "-fx-border-radius: 5;" + "-fx-border-color: rgba(255,255,255, 1);");

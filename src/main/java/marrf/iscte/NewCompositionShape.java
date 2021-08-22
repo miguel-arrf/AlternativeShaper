@@ -3,11 +3,14 @@ package marrf.iscte;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.Node;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
-import javafx.scene.effect.ColorInput;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -15,15 +18,23 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static marrf.iscte.App.horizontalGrower;
 
 public class NewCompositionShape implements CustomShape{
 
@@ -40,6 +51,12 @@ public class NewCompositionShape implements CustomShape{
 
     private final Orchestrator orchestrator;
 
+    private Node selected;
+    private Information selectedTranslationX;
+    private Information selectedTranslationY;
+
+    private Pane transformersBox;
+
     //Modifiers boxes
     private HBox translationXBox;
     private HBox translationYBox;
@@ -47,9 +64,10 @@ public class NewCompositionShape implements CustomShape{
     //Composition Shape Thumbnail
     private final VBox thumbnail = new VBox();
 
-    public NewCompositionShape(Orchestrator orchestrator){
+    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox){
         this.orchestrator = orchestrator;
-        setUpComponents();
+        this.transformersBox = transformersBox;
+        //setUpComponents();
     }
 
     public UUID getID() {
@@ -59,7 +77,6 @@ public class NewCompositionShape implements CustomShape{
     public String getName() {
         return name;
     }
-
 
     public JSONArray getBasicShapesJSON(){
         JSONArray array = new JSONArray();
@@ -127,13 +144,79 @@ public class NewCompositionShape implements CustomShape{
         return basicShapes;
     }
 
-    public void getTeste(Pane toAdd){
-
+    public void getTeste(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY){
 
         compositionShapeMap.forEach((newID, compositionShape) -> {
             Group addTo = new Group();
 
+            int position = compositionShapesXTranslation.indexOf(compositionShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get());
 
+            Information translationX = compositionShapesXTranslation.get(position);
+            Information translationY = compositionShapesYTranslation.get(position);
+
+            //Adding basic shapes
+            compositionShape.getBasicShapes().forEach(basicShape -> {
+                double translateXBy = basicShape.getInitialTranslation().getX();
+                double translateYBy = basicShape.getHeight() + basicShape.getInitialTranslation().getY() * -1;
+
+                //Este é o translation X e Y final porque já não temos mais profundidade de composition shapes, visto que já é uma basic shape.
+                basicShape.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
+                basicShape.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
+
+                Pane rectangle = basicShape.getRectangle();
+
+                addTo.getChildren().add(rectangle);
+            });
+
+            if(toAdd instanceof Pane){
+                Pane toAddTemp = (Pane) toAdd;
+                toAddTemp.getChildren().add(addTo);
+            }else if(toAdd instanceof Group){
+                Group toAddTemp = (Group) toAdd;
+                toAddTemp.getChildren().add(addTo);
+            }
+            //toAdd.getChildren().add(addTo);
+
+            if(addHover)
+                System.out.println("first translation X: " + translationX);
+
+            compositionShape.getTeste(addTo, false, translationX.getValue() + upperTranslationX, translationY.getValue() + upperTranslationY);
+
+            if(addHover){
+                Rectangle rectangle = new Rectangle(addTo.getLayoutBounds().getWidth() + 20, addTo.getLayoutBounds().getHeight() + 20);
+                rectangle.setArcWidth(10);
+                rectangle.setArcHeight(10);
+                rectangle.setFill(Color.web("rgba(255,255,255,0.2)"));
+                rectangle.setX(addTo.getLayoutBounds().getMinX() - 10);
+                rectangle.setY(addTo.getLayoutBounds().getMinY() - 10);
+
+                addTo.setOnMouseEntered(event -> addTo.getChildren().add(rectangle));
+
+                addTo.setOnMouseExited(event -> addTo.getChildren().remove(rectangle));
+
+                addTo.setOnMouseClicked(event -> {
+
+                    selected = addTo;
+                    selectedTranslationX = translationX;
+                    selectedTranslationY = translationY;
+
+                    setUpComponents();
+                    System.out.println("I've clicked on here. It should now be true!");
+
+                    transformersBox.getChildren().clear();
+                    transformersBox.getChildren().addAll(getTransformers());
+                });
+            }
+
+        });
+
+    }
+
+/*
+    public void getTesteVelho(Node toAdd, boolean addHover){
+
+        compositionShapeMap.forEach((newID, compositionShape) -> {
+            Group addTo = new Group();
 
             int position = compositionShapesXTranslation.indexOf(compositionShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get());
 
@@ -145,45 +228,57 @@ public class NewCompositionShape implements CustomShape{
                 double translateXBy = basicShape.getInitialTranslation().getX() * -1;
                 double translateYBy = basicShape.getHeight() + basicShape.getInitialTranslation().getY() * -1;
 
+                //Este é o translation X e Y final porque já não temos mais profundidade de composition shapes, visto que já é uma basic shape.
                 basicShape.setTranslateX(translationX.getValue() - translateXBy);
                 basicShape.setTranslateY(translationY.getValue() - translateYBy);
 
                 Pane rectangle = basicShape.getRectangle();
-                /*rectangle.setOnMouseMoved(event -> {
-                    System.out.println("fuck i'm here!! NO REC: " + rectangle);
+
+                addTo.getChildren().add(rectangle);
+            });
+
+            if(toAdd instanceof Pane){
+                Pane toAddTemp = (Pane) toAdd;
+                toAddTemp.getChildren().add(addTo);
+            }else if(toAdd instanceof Group){
+                Group toAddTemp = (Group) toAdd;
+                toAddTemp.getChildren().add(addTo);
+            }
+            //toAdd.getChildren().add(addTo);
+
+            if(addHover)
+                System.out.println("first translation X: " + translationX);
+
+            compositionShape.getTeste(addTo, false);
+
+            if(addHover){
+                Rectangle rectangle = new Rectangle(addTo.getLayoutBounds().getWidth(), addTo.getLayoutBounds().getHeight());
+                rectangle.setFill(Color.web("rgba(255,255,255,0.2)"));
+                rectangle.setX(addTo.getLayoutBounds().getMinX());
+                rectangle.setY(addTo.getLayoutBounds().getMinY());
+
+                addTo.setOnMouseEntered(event -> addTo.getChildren().add(rectangle));
+
+                addTo.setOnMouseExited(event -> addTo.getChildren().remove(rectangle));
+
+                addTo.setOnMouseClicked(event -> {
+
+                    selected = addTo;
+                    selectedTranslationX = translationX;
+                    selectedTranslationY = translationY;
+
+                    setUpComponents();
+                    System.out.println("I've clicked on here. It should now be true!");
+
+                    transformersBox.getChildren().clear();
+                    transformersBox.getChildren().addAll(getTransformers());
                 });
-
-                rectangle.addEventFilter(MouseEvent.MOUSE_MOVED, event -> {
-                    System.out.println("WOW, IS THIS WORKIIIING? RREEEC");
-                });*/
-
-                addTo.getChildren().add(rectangle);
-            });
-            toAdd.getChildren().add(addTo);
-
-            compositionShape.getTeste(toAdd);
-
-            Rectangle rectangle = new Rectangle(addTo.getLayoutBounds().getWidth(), addTo.getLayoutBounds().getHeight());
-            rectangle.setFill(Color.web("rgba(255,255,255,0.2)"));
-            rectangle.setX(addTo.getLayoutBounds().getMinX());
-            rectangle.setY(addTo.getLayoutBounds().getMinY());
-
-            addTo.setOnMouseEntered(event -> {
-                addTo.getChildren().add(rectangle);
-
-            });
-
-            addTo.setOnMouseExited(event -> {
-                addTo.getChildren().remove(rectangle);
-            });
-
-            /*addTo.addEventFilter(MouseEvent.MOUSE_MOVED, event -> {
-                System.out.println("WOW, IS THIS WORKIIIING?");
-            });*/
+            }
 
         });
 
     }
+ */
 
     public Pane addNewCompositionShape(NewCompositionShape NewCompositionShape){
         String id = UUID.randomUUID().toString();
@@ -194,7 +289,7 @@ public class NewCompositionShape implements CustomShape{
         compositionShapesYTranslation.add(new Information(id, 0.0));
 
         Pane toAdd = new Pane();
-        getTeste(toAdd);
+        getTeste(toAdd, true, 0,0);
 
         return toAdd;
     }
@@ -204,19 +299,136 @@ public class NewCompositionShape implements CustomShape{
         setUpTranslationYBox();
     }
 
+    public ArrayList<Node> getTransformers(){
+        ArrayList<Node> toReturn = new ArrayList<>();
+        toReturn.add(translationXBox);
+        toReturn.add(translationYBox);
+
+        return toReturn;
+    }
+
     private void setUpTranslationXBox(){
-        translationXBox = new HBox(new Label("translation x"));
+        Label translationLabel = new Label("Translation X:");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+
+        double labelSize = TextUtils.computeTextWidth(translationLabel.getFont(), translationLabel.getText(), 0.0D) + 10;
+        translationLabel.setPrefWidth(labelSize);
+        translationLabel.setMinWidth(labelSize);
+        translationLabel.setMaxWidth(labelSize);
+
+        String truncatedValue = Double.toString(BigDecimal.valueOf(selectedTranslationX.getValue()).setScale(2, RoundingMode.HALF_UP).doubleValue());
+
+        TextField textField = new TextField(truncatedValue);
+        textField.setPromptText(truncatedValue);
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setMinWidth(90);
+        textField.setPrefWidth(90);
+        textField.setAlignment(Pos.CENTER);
+
+
+        Slider slider = getSlider(selectedTranslationX, aDouble -> {
+            selected.setTranslateX(selected.getTranslateX() + aDouble);
+        }, aDouble -> {
+            Double truncatedDouble = BigDecimal.valueOf(aDouble).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+        });
+
+        textField.setOnKeyPressed(event -> {
+            if(event.getCode().equals(KeyCode.ENTER)){
+                try {
+                    if (Double.parseDouble(textField.getText()) < slider.getMin()) {
+                        textField.setText(String.valueOf(slider.getMin()));
+                    }else if(Double.parseDouble(textField.getText()) > slider.getMax()){
+                        textField.setText(String.valueOf(slider.getMax()));
+                    }
+
+                    slider.setValue(Double.parseDouble(textField.getText()));
+
+                } catch (NumberFormatException e) {
+                    textField.setText("0");
+                    slider.setValue(0);
+                }
+            }
+        });
+
+        translationXBox = new HBox(translationLabel, slider,horizontalGrower(), textField);
         translationXBox.setPadding(new Insets(10, 10, 10, 15));
         translationXBox.setAlignment(Pos.CENTER_LEFT);
+        translationXBox.setSpacing(10);
         translationXBox.setMinHeight(30);
         translationXBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
     private void setUpTranslationYBox(){
-        translationYBox = new HBox(new Label("translation y"));
+        Label translationLabel = new Label("Translation Y:");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+
+        double labelSize = TextUtils.computeTextWidth(translationLabel.getFont(), translationLabel.getText(), 0.0D) + 10;
+        translationLabel.setPrefWidth(labelSize);
+        translationLabel.setMinWidth(labelSize);
+        translationLabel.setMaxWidth(labelSize);
+
+        String truncatedValue = Double.toString(BigDecimal.valueOf(selectedTranslationY.getValue()).setScale(2, RoundingMode.HALF_UP).doubleValue());
+
+        TextField textField = new TextField(truncatedValue);
+        textField.setPromptText(truncatedValue);
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setMinWidth(90);
+        textField.setPrefWidth(90);
+        textField.setAlignment(Pos.CENTER);
+
+        Slider slider = getSlider(selectedTranslationY, aDouble -> {
+            selected.setTranslateY(selected.getTranslateY() + aDouble);
+        }, aDouble -> {
+            Double truncatedDouble = BigDecimal.valueOf(aDouble).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+        });
+
+        textField.setOnKeyPressed(event -> {
+            if(event.getCode().equals(KeyCode.ENTER)){
+                try {
+                    if (Double.parseDouble(textField.getText()) < slider.getMin()) {
+                        textField.setText(String.valueOf(slider.getMin()));
+                    }else if(Double.parseDouble(textField.getText()) > slider.getMax()){
+                        textField.setText(String.valueOf(slider.getMax()));
+                    }
+
+                    slider.setValue(Double.parseDouble(textField.getText()));
+
+                } catch (NumberFormatException e) {
+                    textField.setText("0");
+                    slider.setValue(0);
+                }
+            }
+        });
+
+        translationYBox = new HBox(translationLabel, slider,horizontalGrower(), textField);
         translationYBox.setPadding(new Insets(10, 10, 10, 15));
         translationYBox.setAlignment(Pos.CENTER_LEFT);
-        translationYBox.setMinHeight(30);
+        translationYBox.setMinHeight(40);
         translationYBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+    }
+
+    private Slider getSlider(Information informationToUpdate, Consumer<Double> consumer, Consumer<Double> textFieldConsumer){
+        Slider slider = new Slider();
+        slider.setMax(Orchestrator.getSCALE() * Orchestrator.getNumberColumnsAndRows() / 2.0);
+        slider.setMin(-Orchestrator.getSCALE() *  Orchestrator.getNumberColumnsAndRows() / 2.0);
+        slider.setValue(informationToUpdate.getValue());
+        slider.setMajorTickUnit(0.1);
+        slider.setMinorTickCount(0);
+        slider.setSnapToTicks(true);
+
+
+        slider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            informationToUpdate.setValue(newValue.doubleValue());
+            consumer.accept(newValue.doubleValue() - oldValue.doubleValue());
+            textFieldConsumer.accept(newValue.doubleValue());
+        });
+
+        return slider;
     }
 
     @Override
@@ -259,8 +471,6 @@ public class NewCompositionShape implements CustomShape{
 
         HBox.setHgrow(thumbnail, Priority.NEVER);
         thumbnail.getChildren().add(new Label(getShapeName()));
-
-        System.out.println("recebi toPutIntoDragBoard: " + toPutIntoDragbord.get());
 
         thumbnail.setOnDragDetected(event -> {
             Dragboard db = thumbnail.startDragAndDrop(TransferMode.ANY);
@@ -308,9 +518,11 @@ public class NewCompositionShape implements CustomShape{
         }
 
         public void setValue(Double value) {
-            System.out.println("SET VALUE PARA ISTO");
             this.value = value;
         }
     }
+
+
+
 
 }
