@@ -291,7 +291,7 @@ public class App extends Application {
                 transformersBox.getChildren().clear();
 
                 if(isCurrentSimple){
-                    transformersBox.getChildren().addAll(tempBasicShape.getWidthSection(), tempBasicShape.getHeightSection());
+                    transformersBox.getChildren().addAll(tempBasicShape.getWidthSection(), tempBasicShape.getHeightSection(), tempBasicShape.getColorSection());
                 }else{
                     transformersBox.getChildren().addAll(tempBasicShape.getTranslationXSection(), tempBasicShape.getTranslationYSection());
                 }

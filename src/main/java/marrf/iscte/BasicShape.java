@@ -7,6 +7,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
@@ -58,6 +59,7 @@ public class BasicShape implements CustomShape {
 
     private HBox widthSection;
     private HBox heightSection;
+    private HBox colorSection;
 
     private HBox translationXSection;
     private HBox translationYSection;
@@ -65,7 +67,7 @@ public class BasicShape implements CustomShape {
     private double width;
     private double height;
 
-    private final Paint color;
+    private Color color;
     private String shapeName = "defaultName";
 
     private boolean strokeShowing = false;
@@ -80,7 +82,7 @@ public class BasicShape implements CustomShape {
         return shapeName;
     }
 
-    public BasicShape(double width, double height, Paint color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {
+    public BasicShape(double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {
         this.writeTranslateX = writeTranslateX;
         this.writeTranslateY = writeTranslateY;
 
@@ -103,7 +105,7 @@ public class BasicShape implements CustomShape {
         return new Point2D(writeTranslateX.apply(null), writeTranslateY.apply(null));
     }
 
-    public BasicShape(double width, double height, Paint color) {
+    public BasicShape(double width, double height, Color color) {
         this.width = width;
         this.height = height;
 
@@ -121,7 +123,7 @@ public class BasicShape implements CustomShape {
         setUpComponents();
     }
 
-    public Paint getFill() {
+    public Color getFill() {
         return color;
     }
 
@@ -142,6 +144,10 @@ public class BasicShape implements CustomShape {
         return widthSection;
     }
 
+    public HBox getColorSection(){
+        return colorSection;
+    }
+
     public HBox getHeightSection() {
         return heightSection;
     }
@@ -152,6 +158,27 @@ public class BasicShape implements CustomShape {
 
     public HBox getTranslationYSection() {
         return translationYSection;
+    }
+
+    public void setUpColorBox(){
+        Label colorLabel = new Label("Color:");
+        colorLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        colorLabel.setTextFill(Color.web("#BDBDBD"));
+
+        ColorPicker colorPicker = new ColorPicker(color);
+        colorPicker.valueProperty().addListener((observable, oldValue, newValue) -> {
+            BackgroundFill backgroundFill = new BackgroundFill(newValue, new CornerRadii(0), new Insets(0));
+            Background background = new Background(backgroundFill);
+            rectangle.setBackground(background);
+            color = newValue;
+        });
+
+        colorSection = new HBox(colorLabel, horizontalGrower(),colorPicker);
+        colorSection.setPadding(new Insets(10, 10, 10, 15));
+        colorSection.setAlignment(Pos.CENTER_LEFT);
+        colorSection.setMinHeight(30);
+
+        colorSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
 
     public void setUpWidthBox() {
@@ -584,6 +611,7 @@ public class BasicShape implements CustomShape {
     private void setUpComponents() {
         setUpHeightBox();
         setUpWidthBox();
+        setUpColorBox();
 
         setUpTranslationXBox();
         setUpTranslationYBox();
