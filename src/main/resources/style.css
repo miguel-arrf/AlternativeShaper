@@ -9,3 +9,34 @@
 .slider .thumb:hover{
     -fx-background-color: #E7E7E7;
 }
+
+.context-menu {
+    -fx-background-color: white;
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-padding: 5;
+}
+
+.menu-item .label {
+    -fx-text-fill: #636e72;
+    -fx-font-family: "SF Pro Display";
+    -fx-font-weight: bold;
+    -fx-background-color: transparent;
+    -fx-padding: 2;
+}
+
+.menu-item:hover {
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-background-color: #dfe6e9;
+}
+
+
+.menu-item .label:hover {
+    -fx-text-fill: #636e72;
+    -fx-background-color: transparent;
+}
+
+.menu-item{
+    -fx-background-color: transparent;
+}

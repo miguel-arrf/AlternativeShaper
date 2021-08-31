@@ -7,10 +7,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
-import javafx.scene.control.ColorPicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -72,7 +69,7 @@ public class BasicShape implements CustomShape {
 
     private boolean strokeShowing = false;
 
-    private final VBox thumbnail = new VBox();
+    private final HBox thumbnail = new HBox();
 
     public void setShapeName(String shapeName) {
         this.shapeName = shapeName;
@@ -526,7 +523,7 @@ public class BasicShape implements CustomShape {
 
 
             thumbnail.getChildren().clear();
-            thumbnail.getChildren().add(imageView);
+            //thumbnail.getChildren().add(imageView);
         } catch (IOException ignored) {
 
         }
@@ -535,9 +532,10 @@ public class BasicShape implements CustomShape {
 
 
         thumbnail.setPadding(new Insets(10));
-        thumbnail.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
 
-        HBox.setHgrow(thumbnail, Priority.NEVER);
+        thumbnail.setMinWidth(0);
+        thumbnail.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(thumbnail, Priority.ALWAYS);
 
         thumbnail.setOnDragDetected(event -> {
             Dragboard db = thumbnail.startDragAndDrop(TransferMode.ANY);
@@ -556,9 +554,48 @@ public class BasicShape implements CustomShape {
             turnOnStroke();
         }
 
-        thumbnail.getChildren().add(new Label(getShapeName()));
+        Label nameLabel = new Label(getShapeName());
+        nameLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 12));
+        nameLabel.setTextFill(getRelativeLuminance(color));
+
+        thumbnail.setAlignment(Pos.CENTER_LEFT);
+        thumbnail.setSpacing(20);
+
+        String colorString = "rgb(" + color.getRed() * 255 + "," + color.getGreen() * 255 + "," + color.getBlue() * 255+ ")";
+        thumbnail.setStyle("-fx-background-color:" + colorString + "; -fx-background-radius: 10");
+
+        thumbnail.getChildren().add(nameLabel);
+
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem menuItem = new MenuItem("Delete");
+        menuItem.setStyle("-fx-text-fill: red");
+        contextMenu.getItems().add(menuItem);
+
+        thumbnail.setOnContextMenuRequested(contextMenuEvent -> {
+            contextMenu.show(thumbnail, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+        });
 
         return thumbnail;
+    }
+
+    private Color getRelativeLuminance(Color color){
+        double red = getNewValue(color.getRed());
+        double green = getNewValue(color.getGreen());
+        double blue = getNewValue(color.getBlue());
+
+        double luminance = 0.2126*red + 0.7152 * green + 0.0722 * blue;
+
+        if(luminance >= 0.175)
+            return Color.BLACK;
+        else
+            return Color.WHITE;
+    }
+
+    private double getNewValue(double value){
+        if(value <= 0.03928){
+            return value/12.92;
+        }
+        return Math.pow((value+0.055)/1.055, 2.4);
     }
 
     public void toogleOffSelection() {

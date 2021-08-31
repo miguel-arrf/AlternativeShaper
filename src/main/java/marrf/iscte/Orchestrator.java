@@ -15,8 +15,8 @@ public class Orchestrator {
     private static final int SCALE = 40;
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
 
-    //private String path = "C:\\Users\\mferr\\Downloads\\objetos\\test.json";
-    private String path = "/Users/miguelferreira/Downloads/alternativeShaperSaves/test.txt";
+    private String path = "C:\\Users\\mferr\\Downloads\\objetos\\test.json";
+    //private String path = "/Users/miguelferreira/Downloads/alternativeShaperSaves/test.txt";
 
     private ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();

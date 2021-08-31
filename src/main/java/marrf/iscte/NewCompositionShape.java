@@ -109,8 +109,8 @@ public class NewCompositionShape implements CustomShape{
             }
 
             jsonObject.put("id", compositionShape.getID());
-            jsonObject.put("translationX",compositionShapesXTranslation.get(position));
-            jsonObject.put("translationY", compositionShapesYTranslation.get(position));
+            jsonObject.put("translationX",compositionShapesXTranslation.get(position).getValue());
+            jsonObject.put("translationY", compositionShapesYTranslation.get(position).getValue());
 
             array.add(jsonObject);
         });

@@ -12,6 +12,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -44,7 +45,6 @@ public class App extends Application {
     public static final int SCALE = 40;
     public static final int NUMBER_COLUMNS_AND_ROWS = 40;
 
-    private final StackPane centerCustomRectangle = new StackPane();
     private Scene scene;
     private final GridCanvas gridCanvas = new GridCanvas();
     private final Pane sceneStackPane = getGraphSection();
@@ -106,11 +106,35 @@ public class App extends Application {
 
         VBox content = new VBox(/*getBasicShape()*/);
 
+        ObservableList<String> options =
+                FXCollections.observableArrayList(
+                        "Basic Shapes",
+                        "Composition Shapes"
+                );
+        final ComboBox comboBox = new ComboBox(options);
+        comboBox.setMaxWidth(Double.MAX_VALUE);
+
+        comboBox.valueProperty().addListener((observableValue, o, t1) -> {
+            System.out.println("changed to: " + t1.toString());
+            if(t1.toString().equals("Basic Shapes")){
+
+            }else if(t1.toString().equals("Composition Shapes")){
+
+            }else{
+                System.out.println("fuck");
+            }
+        });
+
+        content.getChildren().add(comboBox);
+
+        scrollPane.setFitToWidth(true);
+
         sideBarThumbnails.addListener((ListChangeListener<? super CustomShape>) change -> {
             while (change.next()){
                 if(change.wasAdded()){
 
                     for (CustomShape basicShapeAdded : change.getAddedSubList()) {
+
 
                         Pane checkIfExists = basicShapeAdded.getThumbnail(() -> getStringToPutInDrag(basicShapeAdded), getConsumer(basicShapeAdded));
                         content.getChildren().remove(checkIfExists);//This only removes if it exists
@@ -309,7 +333,7 @@ public class App extends Application {
         mainPanel.setPrefSize(400, 700);
         mainPanel.setStyle("-fx-background-color: #262528;");
         mainPanel.setAlignment(Pos.TOP_CENTER);
-        mainPanel.setPadding(new Insets(10,20,10,20));
+        mainPanel.setPadding(new Insets(0,0,0,20));
         mainPanel.setSpacing(15);
 
         mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),transformersBox, getSaveButtonSection());
@@ -324,10 +348,11 @@ public class App extends Application {
 
         BorderPane borderPane = new BorderPane();
         borderPane.setStyle("-fx-background-color: #262528");
-        borderPane.setPadding(new Insets(10));
+        borderPane.setPadding(new Insets(20));
 
         borderPane.setRight(mainPanel);
         borderPane.setCenter(sceneStackPane);
+
 
         BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"));
         addShape(toAdd);
@@ -546,15 +571,6 @@ public class App extends Application {
         firstCircle.setFill(Color.web("#4F4F4F"));
         Circle secondCircle = new Circle(5);
         secondCircle.setFill(Color.web("#333333"));
-
-        centerCustomRectangle.getChildren().addAll(firstCircle, secondCircle);
-        centerCustomRectangle.setAlignment(Pos.CENTER);
-        centerCustomRectangle.setPrefSize(30,30);
-        centerCustomRectangle.setStyle("-fx-background-color: #737373; -fx-background-radius: 10");
-
-        AnchorPane.setBottomAnchor(centerCustomRectangle, 10.0);
-        AnchorPane.setRightAnchor(centerCustomRectangle, 10.0);
-        anchorPane.getChildren().add(centerCustomRectangle);
 
     }
 
