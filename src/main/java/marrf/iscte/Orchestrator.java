@@ -119,7 +119,7 @@ public class Orchestrator {
             JSONObject jsonObject = new JSONObject();
 
             jsonObject.put("id", newCompositionShape.getID().toString());
-            jsonObject.put("name", newCompositionShape.getName());
+            jsonObject.put("name", newCompositionShape.getShapeName());
             jsonObject.put("basicShapes", newCompositionShape.getBasicShapesJSON());
             jsonObject.put("compositionShapes", newCompositionShape.getCompositionShapesJSON());
 

@@ -25,7 +25,6 @@ import org.json.simple.JSONObject;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,16 +73,12 @@ public class NewCompositionShape implements CustomShape{
         return ID;
     }
 
-    public String getName() {
-        return name;
-    }
-
     public JSONArray getBasicShapesJSON(){
         JSONArray array = new JSONArray();
 
         basicShapesXTranslation.forEach(information -> {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("id", information.getId());
+            jsonObject.put("id", information.getId().toString());
 
             int position = basicShapesXTranslation.indexOf(information);
 
@@ -108,7 +103,7 @@ public class NewCompositionShape implements CustomShape{
                     position = compositionShapesXTranslation.indexOf(information);
             }
 
-            jsonObject.put("id", compositionShape.getID());
+            jsonObject.put("id", compositionShape.getID().toString());
             jsonObject.put("translationX",compositionShapesXTranslation.get(position).getValue());
             jsonObject.put("translationY", compositionShapesYTranslation.get(position).getValue());
 
@@ -190,9 +185,29 @@ public class NewCompositionShape implements CustomShape{
                 rectangle.setX(addTo.getLayoutBounds().getMinX() - 10);
                 rectangle.setY(addTo.getLayoutBounds().getMinY() - 10);
 
-                addTo.setOnMouseEntered(event -> addTo.getChildren().add(rectangle));
 
-                addTo.setOnMouseExited(event -> addTo.getChildren().remove(rectangle));
+                Label shapeName = new Label(compositionShape.getShapeName());
+                shapeName.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+                shapeName.setTextFill(Color.web("#BDBDBD"));
+                shapeName.setPadding(new Insets(4));
+                shapeName.setStyle("-fx-background-color:  rgba(255,255,255,0.3); -fx-background-radius: 15px;");
+
+                addTo.setOnMouseMoved(mouseEvent -> {
+                    shapeName.setLayoutX(mouseEvent.getX() + 15);
+                    shapeName.setLayoutY(mouseEvent.getY() + 15);
+                });
+
+                addTo.setOnMouseEntered(event -> {
+                    addTo.getChildren().add(rectangle);
+                    addTo.getChildren().add(shapeName);
+                });
+
+
+
+                addTo.setOnMouseExited(event -> {
+                    addTo.getChildren().remove(rectangle);
+                    addTo.getChildren().remove(shapeName);
+                });
 
                 addTo.setOnMouseClicked(event -> {
 
