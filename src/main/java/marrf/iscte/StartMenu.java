@@ -10,6 +10,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -36,14 +37,13 @@ public class StartMenu extends Application {
         basicPlusImageView.setFitWidth(12);
 
         Label basicShape = new Label("Basic Shape");
-        basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
         basicShape.setTextFill(Color.web("#56CCF2"));
 
         HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
         basicShapeHBox.setAlignment(Pos.CENTER);
         basicShapeHBox.setSpacing(5);
         basicShapeHBox.setStyle("-fx-background-color: #355765;-fx-background-radius: 20");
-        basicShapeHBox.setMaxHeight(30);
         basicShapeHBox.setPrefHeight(30);
 
         basicShapeHBox.setOnMouseClicked(event -> {
@@ -55,7 +55,8 @@ public class StartMenu extends Application {
             primaryStage.setMaximized(true);
         });
 
-        basicShapeHBox.setMinHeight(50);
+        HBox.setHgrow(basicShapeHBox, Priority.ALWAYS);
+        basicShapeHBox.setMinHeight(45);
 
         return basicShapeHBox;
     }
@@ -68,14 +69,13 @@ public class StartMenu extends Application {
         basicPlusImageView.setFitWidth(18);
 
         Label basicShape = new Label("Load JSON file");
-        basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
         basicShape.setTextFill(Color.web("#56f28f"));
 
         HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
         basicShapeHBox.setAlignment(Pos.CENTER);
         basicShapeHBox.setSpacing(5);
         basicShapeHBox.setStyle("-fx-background-color: #35654f;-fx-background-radius: 20");
-        basicShapeHBox.setMaxHeight(30);
         basicShapeHBox.setPrefHeight(30);
 
         basicShapeHBox.setOnMouseClicked(event -> {
@@ -94,22 +94,72 @@ public class StartMenu extends Application {
 
         });
 
-        basicShapeHBox.setMinHeight(50);
+        HBox.setHgrow(basicShapeHBox, Priority.ALWAYS);
+        basicShapeHBox.setMinHeight(45);
 
         return basicShapeHBox;
+    }
+
+    private Pane getBottomPane(){
+        Label title = new Label("ALTERNATIVE SHAPER");
+        title.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 20));
+        title.setTextFill(Color.WHITE);
+
+        Label subTitle = new Label("Create amazing designs with a simple system!");
+        subTitle.setFont(Font.font("SF Pro Rounded", FontWeight.LIGHT, 15));
+        subTitle.setTextFill(Color.WHITE);
+
+        var horizontalPanel = new HBox(getBasicShape(), getLoadFile());
+        horizontalPanel.setSpacing(20);
+
+        var verticalPanel = new VBox(title, subTitle,verticalGrower(), horizontalPanel);
+        verticalPanel.setSpacing(20);
+        verticalPanel.setPadding(new Insets(30,20,5,20));
+
+        verticalPanel.setMaxHeight(239);
+        verticalPanel.setMinHeight(239);
+
+        return verticalPanel;
+    }
+
+
+    public static VBox verticalGrower(){
+        var verticalGrower = new VBox();
+
+        VBox.setVgrow(verticalGrower, Priority.ALWAYS);
+        verticalGrower.setMaxHeight(Double.MAX_VALUE);
+
+        return verticalGrower;
+    }
+
+    private Pane getTopPane(){
+
+        Image iconImage = new Image(App.class.getResource("/icons/bigIcon.png").toExternalForm());
+        ImageView iconImageView = new ImageView(iconImage);
+        iconImageView.setSmooth(true);
+        iconImageView.setPreserveRatio(true);
+        iconImageView.setFitWidth(208);
+
+        var verticalPanel = new VBox(iconImageView);
+        verticalPanel.setMaxHeight(314);
+        verticalPanel.setMinHeight(314);
+        verticalPanel.setStyle("-fx-background-color: #333234");
+        verticalPanel.setAlignment(Pos.CENTER);
+
+        return verticalPanel;
     }
 
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
+        primaryStage.getIcons().add(new Image(App.class.getResource("/icons/appIcon.png").toExternalForm()));
 
-        var mainPanel = new VBox(getBasicShape(), getLoadFile());
-        mainPanel.setPadding(new Insets(20));
-        mainPanel.setAlignment(Pos.CENTER);
+
+        var mainPanel = new VBox(getTopPane(), getBottomPane());
+        mainPanel.setAlignment(Pos.TOP_CENTER);
         mainPanel.setStyle("-fx-background-color: #262528");
-        mainPanel.setSpacing(20);
 
-        scene = new Scene(mainPanel, 250, 160);
+        scene = new Scene(mainPanel, 377, 553);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
         scene.setFill(Color.BLACK);
 
