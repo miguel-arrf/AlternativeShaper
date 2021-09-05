@@ -4,10 +4,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
@@ -130,7 +127,7 @@ public class NewCompositionShape implements CustomShape{
         basicShapesXTranslation.add(translationX);
         basicShapesYTranslation.add(translationY);
 
-        return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer());
+        return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(basicShapesID));
     }
 
     public BasicShape addBasicShapeWithTranslation(String basicShapesID, double xTranslation, double yTranslation){
@@ -140,7 +137,7 @@ public class NewCompositionShape implements CustomShape{
         basicShapesXTranslation.add(translationX);
         basicShapesYTranslation.add(translationY);
 
-        return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer());
+        return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(basicShapesID));
     }
 
     public ArrayList<BasicShape> getBasicShapes(){
@@ -152,11 +149,21 @@ public class NewCompositionShape implements CustomShape{
             Information translationX = basicShapesXTranslation.get(position);
             Information translationY = basicShapesYTranslation.get(position);
 
-            basicShapes.add(orchestrator.getCopyOfBasicShape(information.id, translationX.getConsumer(), translationY.getConsumer()));
+            basicShapes.add(orchestrator.getCopyOfBasicShape(information.id, translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(translationY.getId())));
         });
 
 
         return basicShapes;
+    }
+
+    private Function<Pane, Double> getProceedWhenDeleting(String basicShapeID){
+        return a -> {
+            Information xTranslationToRemove = basicShapesXTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
+            Information yTranslationToRemove = basicShapesYTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
+            basicShapesXTranslation.remove(xTranslationToRemove);
+            basicShapesYTranslation.remove(yTranslationToRemove);
+            return null;
+        };
     }
 
     public void getTeste(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY){
@@ -224,24 +231,41 @@ public class NewCompositionShape implements CustomShape{
                 });
 
 
-
                 addTo.setOnMouseExited(event -> {
                     addTo.getChildren().remove(rectangle);
                     addTo.getChildren().remove(shapeName);
                 });
 
                 addTo.setOnMouseClicked(event -> {
+                        selected = addTo;
+                        selectedTranslationX = translationX;
+                        selectedTranslationY = translationY;
 
-                    selected = addTo;
-                    selectedTranslationX = translationX;
-                    selectedTranslationY = translationY;
+                        setUpComponents();
+                        System.out.println("I've clicked on here. It should now be true!");
 
-                    setUpComponents();
-                    System.out.println("I've clicked on here. It should now be true!");
-
-                    transformersBox.getChildren().clear();
-                    transformersBox.getChildren().addAll(getTransformers());
+                        transformersBox.getChildren().clear();
+                        transformersBox.getChildren().addAll(getTransformers());
                 });
+
+                ContextMenu contextMenu = new ContextMenu();
+                MenuItem menuItem = new MenuItem("Delete");
+                menuItem.setStyle("-fx-text-fill: red");
+                contextMenu.getItems().add(menuItem);
+
+                menuItem.setOnAction(actionEvent -> {
+                    ((Pane) addTo.getParent()).getChildren().remove(addTo);
+                    compositionShapeMap.remove(newID);
+                    Information xTranslationToRemove = compositionShapesXTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
+                    Information yTranslationToRemove = compositionShapesYTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
+                    compositionShapesXTranslation.remove(xTranslationToRemove);
+                    compositionShapesYTranslation.remove(yTranslationToRemove);
+                });
+
+                addTo.setOnContextMenuRequested(contextMenuEvent -> {
+                    contextMenu.show(addTo, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+                });
+
             }
 
         });

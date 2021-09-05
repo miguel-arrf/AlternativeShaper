@@ -44,7 +44,7 @@ public class Orchestrator {
         saveFile();
     }
 
-    public BasicShape getCopyOfBasicShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY){
+    public BasicShape getCopyOfBasicShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting){
         BasicShape toReturn = null;
 
         Optional<BasicShape> shape = basicShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
@@ -52,7 +52,7 @@ public class Orchestrator {
         if(shape.isPresent()){
             BasicShape toCopyFrom = shape.get();
 
-            toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY);
+            toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY, proceedWhenDeleting);
         }
 
 

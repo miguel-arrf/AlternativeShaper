@@ -54,6 +54,8 @@ public class BasicShape implements CustomShape {
     private final Function<Double, Double> writeTranslateX;
     private final Function<Double, Double> writeTranslateY;
 
+    private Function<Pane, Double> proceedWhenDeleting;
+
     private HBox widthSection;
     private HBox heightSection;
     private HBox colorSection;
@@ -79,8 +81,10 @@ public class BasicShape implements CustomShape {
         return shapeName;
     }
 
-    public BasicShape(double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {
+    public BasicShape(double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting) {
         uuid = UUID.randomUUID();
+
+        this.proceedWhenDeleting = proceedWhenDeleting;
 
         this.writeTranslateX = writeTranslateX;
         this.writeTranslateY = writeTranslateY;
@@ -596,6 +600,11 @@ public class BasicShape implements CustomShape {
         menuItem.setStyle("-fx-text-fill: red");
         contextMenu.getItems().add(menuItem);
 
+        /*menuItem.setOnAction(actionEvent -> {
+            proceedWhenDeleting.apply(getRectangle());
+            ((Pane) getRectangle().getParent()).getChildren().remove(getRectangle());
+        });*/
+
         thumbnail.setOnContextMenuRequested(contextMenuEvent -> {
             contextMenu.show(thumbnail, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
         });
@@ -666,6 +675,19 @@ public class BasicShape implements CustomShape {
     }
 
     public Pane getRectangle() {
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem menuItem = new MenuItem("Delete");
+        menuItem.setStyle("-fx-text-fill: red");
+        contextMenu.getItems().add(menuItem);
+
+        menuItem.setOnAction(actionEvent -> {
+            proceedWhenDeleting.apply(getRectangle());
+            ((Pane) getRectangle().getParent()).getChildren().remove(getRectangle());
+        });
+
+        rectangle.setOnContextMenuRequested(contextMenuEvent -> {
+            contextMenu.show(rectangle, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+        });
 
         return rectangle;
     }
@@ -720,7 +742,7 @@ public class BasicShape implements CustomShape {
     }
 
     public void setTranslateY(double value) {
-        rectangle.setTranslateY(value + xTranslateOffsetProperty.get());
+        rectangle.setTranslateY(value + yTranslateOffsetProperty.get());
     }
 
     public double getWidth() {
