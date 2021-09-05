@@ -41,7 +41,7 @@ public class BasicShape implements CustomShape {
     private static final int SCALE = 40;
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
     private final Point2D translationOffset = new Point2D(0, 0); //-20 -60
-    private final UUID uuid = UUID.randomUUID();
+    private UUID uuid;
     private final Pane rectangle;
     private boolean isSelected = false;
 
@@ -80,6 +80,8 @@ public class BasicShape implements CustomShape {
     }
 
     public BasicShape(double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {
+        uuid = UUID.randomUUID();
+
         this.writeTranslateX = writeTranslateX;
         this.writeTranslateY = writeTranslateY;
 
@@ -103,6 +105,29 @@ public class BasicShape implements CustomShape {
     }
 
     public BasicShape(double width, double height, Color color) {
+        uuid = UUID.randomUUID();
+
+        this.width = width;
+        this.height = height;
+
+        this.color = color;
+
+        rectangle = new Pane();
+        rectangle.setPrefSize(width, height);
+
+        writeTranslateX = a -> 0.0;
+        writeTranslateY = a -> 0.0;
+
+        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+        Background background = new Background(backgroundFill);
+        rectangle.setBackground(background);
+        setUpComponents();
+    }
+
+    public BasicShape(double width, double height, Color color, UUID id, String name){
+        uuid = id;
+        shapeName = name;
+
         this.width = width;
         this.height = height;
 

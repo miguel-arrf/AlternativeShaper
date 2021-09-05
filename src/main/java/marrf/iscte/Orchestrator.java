@@ -1,13 +1,20 @@
 package marrf.iscte;
 
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 public class Orchestrator {
@@ -18,8 +25,8 @@ public class Orchestrator {
     private String path = "C:\\Users\\mferr\\Downloads\\objetos\\test.json";
     //private String path = "/Users/miguelferreira/Downloads/alternativeShaperSaves/test.txt";
 
-    private ArrayList<BasicShape> basicShapes = new ArrayList<>();
-    private ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
+    private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
+    private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
 
     public static int getSCALE() {
         return SCALE;
@@ -29,15 +36,6 @@ public class Orchestrator {
         return NUMBER_COLUMNS_AND_ROWS;
     }
 
-    public void addBasicShape(BasicShape basicShape){
-        basicShapes.add(basicShape);
-        saveFile();
-    }
-
-    public void addNewCompositionShape(NewCompositionShape newCompositionShape){
-        newCompositionShapes.add(newCompositionShape);
-        saveFile();
-    }
 
     public void addAllBasicShapes(ArrayList<BasicShape> basicShapesToAdd){
         basicShapes.clear();
@@ -61,7 +59,7 @@ public class Orchestrator {
         return toReturn;
     }
 
-    public Pane getCopyOfCompositionShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY){
+    /*public Pane getCopyOfCompositionShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY){
         Pane toReturn = new Pane();
 
         Optional<NewCompositionShape> compositionShape = newCompositionShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
@@ -81,6 +79,100 @@ public class Orchestrator {
         }
 
         return toReturn;
+    }*/
+
+    public ArrayList<NewCompositionShape> getNewCompositionShapesFromFile(File file, VBox transformersBox){
+        ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
+
+        JSONParser jsonParser = new JSONParser();
+
+        try{
+            Object object = jsonParser.parse(new FileReader(file));
+            JSONObject jsonObject = (JSONObject) object;
+
+            JSONArray newCompositionShapesList = (JSONArray) jsonObject.get("compositionShapes");
+            Iterator<JSONObject> iterator = newCompositionShapesList.iterator();
+
+            while (iterator.hasNext()){
+                JSONObject newCompositionShapeJSON = iterator.next();
+
+                System.out.println(newCompositionShapeJSON);
+
+                String name = (String) newCompositionShapeJSON.get("name");
+                UUID id = UUID.fromString((String) newCompositionShapeJSON.get("id"));
+
+                System.out.println("name: " + name);
+
+                NewCompositionShape newCompositionShape = new NewCompositionShape(this, transformersBox,name, id);
+                newCompositionShapes.add(newCompositionShape);
+
+                JSONArray basicShapesList = (JSONArray) newCompositionShapeJSON.get("basicShapes");
+
+                basicShapesList.forEach(basicShapeObject -> {
+                    JSONObject basicShapeJSON = (JSONObject) basicShapeObject;
+
+                    String basicShapeID = (String) basicShapeJSON.get("id");
+                    double translationX = (double) basicShapeJSON.get("translationX");
+                    double translationY = (double) basicShapeJSON.get("translationY");
+
+                    newCompositionShape.addBasicShapeWithTranslation(basicShapeID, translationX, translationY);
+                });
+
+                JSONArray newCompositionShapesInnerList = (JSONArray) newCompositionShapeJSON.get("compositionShapes");
+                newCompositionShapesInnerList.forEach(newCompositionShapeObject -> {
+                    JSONObject newCompositionShapeInnerJSON = (JSONObject) newCompositionShapeObject;
+
+                    String newCompositionShapeInnerID = (String) newCompositionShapeInnerJSON.get("id");
+                    double translationX = (double) newCompositionShapeInnerJSON.get("translationX");
+                    double translationY = (double) newCompositionShapeInnerJSON.get("translationY");
+
+                    NewCompositionShape position = newCompositionShapes.stream().filter(p -> p.getID().toString().equals(newCompositionShapeInnerID)).findFirst().get();
+
+                    newCompositionShape.addNewCompositionShapeWithTranslation(position, translationX, translationY, newCompositionShapeInnerID);
+                });
+
+
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return newCompositionShapes;
+    }
+
+    public ArrayList<BasicShape> getBasicShapesFromFile(File file){
+        ArrayList<BasicShape> basicShapes = new ArrayList<>();
+
+        JSONParser jsonParser = new JSONParser();
+        try{
+            Object object = jsonParser.parse(new FileReader(file));
+            JSONObject jsonObject = (JSONObject) object;
+
+            JSONArray basicShapesList = (JSONArray) jsonObject.get("basicShapes");
+
+            Iterator<JSONObject> iterator = basicShapesList.iterator();
+
+            while(iterator.hasNext()){
+                JSONObject basicShapeJSON = iterator.next();
+
+                String color = (String) basicShapeJSON.get("color");
+                double width = (double) basicShapeJSON.get("width");
+                double height = (double) basicShapeJSON.get("height");
+                String name = (String) basicShapeJSON.get("name");
+                UUID id = UUID.fromString((String) basicShapeJSON.get("id"));
+
+                BasicShape basicShape = new BasicShape(width, height, Color.web(color), id, name);
+                basicShapes.add(basicShape);
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        this.basicShapes.addAll(basicShapes);
+
+        return basicShapes;
     }
 
 
@@ -90,6 +182,8 @@ public class Orchestrator {
 
         saveFile();
     }
+
+
 
     private JSONArray getBasicShapesJSON(){
         JSONArray list = new JSONArray();

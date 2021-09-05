@@ -31,6 +31,7 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.json.simple.JSONObject;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -320,6 +321,74 @@ public class App extends Application {
                     transformersBox.getChildren().addAll(tempBasicShape.getTranslationXSection(), tempBasicShape.getTranslationYSection());
                 }
             }
+
+    }
+
+    public Pane getScenePanelWithLoadedFile(Scene scene, File file){
+        finishSetup();
+
+        this.scene = scene;
+
+        mainPanel = new VBox();
+        mainPanel.setMaxWidth(400);
+        mainPanel.setPrefSize(400, 700);
+        mainPanel.setStyle("-fx-background-color: #262528;");
+        mainPanel.setAlignment(Pos.TOP_CENTER);
+        mainPanel.setPadding(new Insets(0,0,0,20));
+        mainPanel.setSpacing(15);
+
+        mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),transformersBox, getSaveButtonSection());
+
+        transformersBox.setSpacing(10);
+
+        var scenePanel = new VBox(mainPanel);
+        scenePanel.setStyle("-fx-background-color: black");
+        scenePanel.setAlignment(Pos.CENTER);
+        scenePanel.setPadding(new Insets(20));
+
+
+        BorderPane borderPane = new BorderPane();
+        borderPane.setStyle("-fx-background-color: #262528");
+        borderPane.setPadding(new Insets(20));
+
+        borderPane.setRight(mainPanel);
+        borderPane.setCenter(sceneStackPane);
+
+
+
+
+        loadBasicShapes(file);
+        loadNewCompositionShapes(file);
+
+        return borderPane;
+    }
+
+    private void loadNewCompositionShapes(File file){
+        ArrayList<NewCompositionShape> newCompositionShapeArrayList = orchestrator.getNewCompositionShapesFromFile(file, transformersBox);
+        newCompositionShapes.addAll(newCompositionShapeArrayList);
+        sideBarThumbnails.addAll(newCompositionShapeArrayList);
+    }
+
+    private void loadBasicShapes(File file){
+        ArrayList<BasicShape> basicShapes = orchestrator.getBasicShapesFromFile(file);
+
+        basicShapesToSave.addAll(basicShapes);
+
+        //If the file is empty, or with a bad format, then we won't have a zero positioned element.
+        //In that case we want to add a new basic shape...
+        //TODO Fix this.
+
+        if(basicShapes.size() > 0){
+            currentName.setText(basicShapes.get(0).getShapeName());
+            addShape(basicShapes.get(0));
+            sideBarThumbnails.addAll(basicShapes);
+            firstBasicShapeWasSaved.setValue(true);
+        }else{
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"));
+            addShape(toAdd);
+            basicShapesToSave.add(toAdd);
+        }
+
 
     }
 
@@ -685,7 +754,6 @@ public class App extends Application {
             }
 
             orchestrator.addAllBasicShapes(basicShapesToSave);
-
 
         }else{
             selectedCompositionShape.setShapeName(currentName.getText());

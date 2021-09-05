@@ -38,7 +38,7 @@ import static marrf.iscte.App.horizontalGrower;
 public class NewCompositionShape implements CustomShape{
 
     private String name;
-    private final UUID ID = UUID.randomUUID();
+    private UUID ID;
 
     private final Map<String, NewCompositionShape> compositionShapeMap = new HashMap<>();
 
@@ -64,6 +64,16 @@ public class NewCompositionShape implements CustomShape{
     private final VBox thumbnail = new VBox();
 
     public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox){
+        ID = UUID.randomUUID();
+        this.orchestrator = orchestrator;
+        this.transformersBox = transformersBox;
+        //setUpComponents();
+    }
+
+    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, String name, UUID id){
+        this.name = name;
+        this.ID = id;
+
         this.orchestrator = orchestrator;
         this.transformersBox = transformersBox;
         //setUpComponents();
@@ -123,6 +133,16 @@ public class NewCompositionShape implements CustomShape{
         return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer());
     }
 
+    public BasicShape addBasicShapeWithTranslation(String basicShapesID, double xTranslation, double yTranslation){
+        Information translationX = new Information(basicShapesID, xTranslation);
+        Information translationY = new Information(basicShapesID, yTranslation);
+
+        basicShapesXTranslation.add(translationX);
+        basicShapesYTranslation.add(translationY);
+
+        return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer());
+    }
+
     public ArrayList<BasicShape> getBasicShapes(){
         ArrayList<BasicShape> basicShapes = new ArrayList<>();
 
@@ -151,6 +171,7 @@ public class NewCompositionShape implements CustomShape{
 
             //Adding basic shapes
             compositionShape.getBasicShapes().forEach(basicShape -> {
+                System.out.println("basicShape: " + basicShape);
                 double translateXBy = basicShape.getInitialTranslation().getX();
                 double translateYBy = basicShape.getHeight() + basicShape.getInitialTranslation().getY() * -1;
 
@@ -305,6 +326,18 @@ public class NewCompositionShape implements CustomShape{
 
         Pane toAdd = new Pane();
         getTeste(toAdd, true, 0,0);
+
+        return toAdd;
+    }
+
+    public Pane addNewCompositionShapeWithTranslation(NewCompositionShape NewCompositionShape, double xTranslation, double  yTranslation, String id){
+        compositionShapeMap.put(id, NewCompositionShape);
+
+        compositionShapesXTranslation.add(new Information(id, xTranslation));
+        compositionShapesYTranslation.add(new Information(id, yTranslation));
+
+        Pane toAdd = new Pane();
+        getTeste(toAdd, true, xTranslation,yTranslation);
 
         return toAdd;
     }

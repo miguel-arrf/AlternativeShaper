@@ -7,15 +7,18 @@ import java.util.function.Supplier;
 
 public interface CustomShape {
 
-    public void setShapeName(String shapeName);
-    public String getShapeName();
+    void setShapeName(String shapeName);
 
-    public UUID getUUID();
+    String getShapeName();
 
-    public Pane getTranslationXSection();
-    public Pane getTranslationYSection();
+    UUID getUUID();
 
-    public void redrawThumbnail();
-    public Pane getThumbnail(Supplier<String> toPutIntoDragbord, Supplier<CustomShape> supplier);
+    Pane getTranslationXSection();
+
+    Pane getTranslationYSection();
+
+    void redrawThumbnail();
+
+    Pane getThumbnail(Supplier<String> toPutIntoDragbord, Supplier<CustomShape> supplier);
 
 }
