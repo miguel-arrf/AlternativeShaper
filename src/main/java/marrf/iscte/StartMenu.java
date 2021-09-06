@@ -50,6 +50,7 @@ public class StartMenu extends Application {
             System.out.println("Add Basic Shape button clicked");
 
             scene.setRoot(app.getScenePanel(scene));
+            primaryStage.setResizable(true);
             primaryStage.setMinWidth(300);
             primaryStage.sizeToScene();
             primaryStage.setMaximized(true);
@@ -87,10 +88,13 @@ public class StartMenu extends Application {
 
             System.out.println("Selected file: " + selectedFile);
 
-            scene.setRoot(app.getScenePanelWithLoadedFile(scene, selectedFile));
-            primaryStage.setMinWidth(300);
-            primaryStage.sizeToScene();
-            primaryStage.setMaximized(true);
+            if(selectedFile != null){
+                scene.setRoot(app.getScenePanelWithLoadedFile(scene, selectedFile));
+                primaryStage.setResizable(true);
+                primaryStage.setMinWidth(300);
+                primaryStage.sizeToScene();
+                primaryStage.setMaximized(true);
+            }
 
         });
 
@@ -114,7 +118,7 @@ public class StartMenu extends Application {
 
         var verticalPanel = new VBox(title, subTitle,verticalGrower(), horizontalPanel);
         verticalPanel.setSpacing(20);
-        verticalPanel.setPadding(new Insets(30,20,5,20));
+        verticalPanel.setPadding(new Insets(30,20,20,20));
 
         verticalPanel.setMaxHeight(239);
         verticalPanel.setMinHeight(239);
@@ -168,6 +172,8 @@ public class StartMenu extends Application {
         primaryStage.show();
 
         primaryStage.sizeToScene();
+
+        primaryStage.setResizable(false);
 
         for(int i = 0; i < Screen.getScreens().size(); i++){
             Screen screen = Screen.getScreens().get(i);

@@ -14,7 +14,6 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import org.apache.commons.lang3.SystemUtils;
@@ -55,6 +54,7 @@ public class BasicShape implements CustomShape {
     private final Function<Double, Double> writeTranslateY;
 
     private Function<Pane, Double> proceedWhenDeleting;
+    private Function<String, Double> proceedWhenDeletingFromThumbnail;
 
     private HBox widthSection;
     private HBox heightSection;
@@ -106,6 +106,27 @@ public class BasicShape implements CustomShape {
 
     public Point2D getInitialTranslation(){
         return new Point2D(writeTranslateX.apply(null), writeTranslateY.apply(null));
+    }
+
+    public BasicShape(double width, double height, Color color, Function<String, Double> proceedWhenDeletingFromThumbnail) {
+        uuid = UUID.randomUUID();
+        this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+
+        this.width = width;
+        this.height = height;
+
+        this.color = color;
+
+        rectangle = new Pane();
+        rectangle.setPrefSize(width, height);
+
+        writeTranslateX = a -> 0.0;
+        writeTranslateY = a -> 0.0;
+
+        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+        Background background = new Background(backgroundFill);
+        rectangle.setBackground(background);
+        setUpComponents();
     }
 
     public BasicShape(double width, double height, Color color) {
@@ -596,14 +617,13 @@ public class BasicShape implements CustomShape {
         thumbnail.getChildren().add(nameLabel);
 
         ContextMenu contextMenu = new ContextMenu();
-        MenuItem menuItem = new MenuItem("Delete");
+        MenuItem menuItem = new MenuItem("Delete Basic Shape Item");
         menuItem.setStyle("-fx-text-fill: red");
         contextMenu.getItems().add(menuItem);
 
-        /*menuItem.setOnAction(actionEvent -> {
-            proceedWhenDeleting.apply(getRectangle());
-            ((Pane) getRectangle().getParent()).getChildren().remove(getRectangle());
-        });*/
+        menuItem.setOnAction(actionEvent -> {
+            proceedWhenDeletingFromThumbnail.apply(getUUID().toString());
+        });
 
         thumbnail.setOnContextMenuRequested(contextMenuEvent -> {
             contextMenu.show(thumbnail, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
@@ -675,19 +695,23 @@ public class BasicShape implements CustomShape {
     }
 
     public Pane getRectangle() {
-        ContextMenu contextMenu = new ContextMenu();
-        MenuItem menuItem = new MenuItem("Delete");
-        menuItem.setStyle("-fx-text-fill: red");
-        contextMenu.getItems().add(menuItem);
 
-        menuItem.setOnAction(actionEvent -> {
-            proceedWhenDeleting.apply(getRectangle());
-            ((Pane) getRectangle().getParent()).getChildren().remove(getRectangle());
-        });
+        if(proceedWhenDeleting != null){
+            ContextMenu contextMenu = new ContextMenu();
+            MenuItem menuItem = new MenuItem("Delete");
+            menuItem.setStyle("-fx-text-fill: red");
+            contextMenu.getItems().add(menuItem);
 
-        rectangle.setOnContextMenuRequested(contextMenuEvent -> {
-            contextMenu.show(rectangle, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
-        });
+            menuItem.setOnAction(actionEvent -> {
+                proceedWhenDeleting.apply(getRectangle());
+                ((Pane) getRectangle().getParent()).getChildren().remove(getRectangle());
+            });
+
+            rectangle.setOnContextMenuRequested(contextMenuEvent -> {
+                contextMenu.show(rectangle, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+            });
+        }
+
 
         return rectangle;
     }

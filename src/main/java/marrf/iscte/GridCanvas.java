@@ -70,7 +70,7 @@ public class GridCanvas {
     public GridCanvas(){
     }
 
-    public void clearEverything(boolean stillBasicShape){
+    public void clearEverything(){
         redraw();
         basicShapes.clear();
         //compositionShapes.clear();

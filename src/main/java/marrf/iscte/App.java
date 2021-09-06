@@ -36,6 +36,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -132,11 +133,16 @@ public class App extends Application {
 
         sideBarThumbnails.addListener((ListChangeListener<? super CustomShape>) change -> {
             while (change.next()){
+
+                if(change.wasRemoved()){
+                    for(CustomShape basicShapeRemoved: change.getRemoved()){
+                        Pane checkIfExists = basicShapeRemoved.getThumbnail(() -> getStringToPutInDrag(basicShapeRemoved), getConsumer(basicShapeRemoved));
+                        content.getChildren().remove(checkIfExists);//This only removes if it exists
+                    }
+                }
+
                 if(change.wasAdded()){
-
                     for (CustomShape basicShapeAdded : change.getAddedSubList()) {
-
-
                         Pane checkIfExists = basicShapeAdded.getThumbnail(() -> getStringToPutInDrag(basicShapeAdded), getConsumer(basicShapeAdded));
                         content.getChildren().remove(checkIfExists);//This only removes if it exists
                         content.getChildren().add(checkIfExists);
@@ -147,7 +153,7 @@ public class App extends Application {
                                 selectedCompositionShape = (NewCompositionShape) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
-                                gridCanvas.clearEverything(false);
+                                gridCanvas.clearEverything();
                                 //TODO aqui está a true, mas em algum momento não será...
                                 isCurrentSimple = false;
                                 currentName.setText(basicShapeAdded.getShapeName());
@@ -162,7 +168,7 @@ public class App extends Application {
                                 selectedBasicShape = (BasicShape) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
-                                gridCanvas.clearEverything(true);
+                                gridCanvas.clearEverything();
                                 //TODO aqui está a true, mas em algum momento não será...
                                 isCurrentSimple = true;
                                 currentName.setText(basicShapeAdded.getShapeName());
@@ -173,9 +179,6 @@ public class App extends Application {
 
                             });
                         }
-
-
-
                     }
                 }
             }
@@ -239,17 +242,15 @@ public class App extends Application {
         basicShapeVBox.setOnMouseClicked(mouseEvent -> {
 
             System.out.println("I want to add a new basic shape!");
-            gridCanvas.clearEverything(true);
+            gridCanvas.clearEverything();
             isCurrentSimple = true;
             currentName.setText("simpleDefault");
 
             transformersBox.getChildren().clear();
 
             BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc5"));
-
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
-
             selectedCompositionShape = null;
         });
 
@@ -269,7 +270,7 @@ public class App extends Application {
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new complex shape!");
-            gridCanvas.clearEverything(false);
+            gridCanvas.clearEverything();
             isCurrentSimple = false;
             currentName.setText("complexDefault");
 
@@ -423,11 +424,34 @@ public class App extends Application {
         borderPane.setCenter(sceneStackPane);
 
 
-        BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"));
+        BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
         addShape(toAdd);
         basicShapesToSave.add(toAdd);
 
         return borderPane;
+    }
+
+    private Function<String, Double> getProceedWhenDeleting(){
+        return uuidToRemove -> {
+            BasicShape temp = basicShapesToSave.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
+            basicShapesToSave.remove(temp);
+            basicShapes.remove(temp);
+            gridCanvas.clearEverything();
+            transformersBox.getChildren().clear();
+            sideBarThumbnails.remove(temp);
+
+            if(basicShapesToSave.size() == 0){
+                BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+                addShape(toAdd);
+                basicShapesToSave.add(toAdd);
+                currentName.setText("default");
+            }else{
+                currentName.setText(basicShapesToSave.get(0).getShapeName());
+                addShape(basicShapesToSave.get(0));
+            }
+
+            return null;
+        };
     }
 
     private void finishSetup(){
