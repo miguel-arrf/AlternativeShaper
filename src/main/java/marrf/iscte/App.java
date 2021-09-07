@@ -23,12 +23,11 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.json.simple.JSONObject;
 
 import java.io.File;
@@ -53,7 +52,6 @@ public class App extends Application {
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private final ArrayList<BasicShape> basicShapesToSave = new ArrayList<>();
-
 
     private BasicShape selectedBasicShape;
     private boolean isCurrentSimple = true;
@@ -248,7 +246,7 @@ public class App extends Application {
 
             transformersBox.getChildren().clear();
 
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc5"));
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc5"), getProceedWhenDeleting());
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
             selectedCompositionShape = null;
@@ -275,7 +273,9 @@ public class App extends Application {
             currentName.setText("complexDefault");
 
             transformersBox.getChildren().clear();
-            selectedCompositionShape = new NewCompositionShape(orchestrator, transformersBox);
+            selectedCompositionShape = new NewCompositionShape(orchestrator, transformersBox, teste1 -> {
+                return null;
+            });
             newCompositionShapes.add(selectedCompositionShape);
         });
 
@@ -431,23 +431,58 @@ public class App extends Application {
         return borderPane;
     }
 
+    private void deleteBasicShape(String uuidToRemove){
+        //We are cleaning everything, but if the user is on a composition shape, we shouldn't... this way is easier tho.
+        BasicShape temp = basicShapesToSave.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
+        basicShapesToSave.remove(temp);
+        basicShapes.remove(temp);
+        gridCanvas.clearEverything();
+        transformersBox.getChildren().clear();
+        sideBarThumbnails.remove(temp);
+
+        if(basicShapesToSave.size() == 0){
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+            addShape(toAdd);
+            basicShapesToSave.add(toAdd);
+            currentName.setText("default");
+        }else{
+            currentName.setText(basicShapesToSave.get(0).getShapeName());
+            addShape(basicShapesToSave.get(0));
+        }
+
+    }
+
+    private void deleteBasicShapeFromCompositionShape(String uuidToRemove){
+        newCompositionShapes.forEach(newCompositionShape -> {
+            newCompositionShape.deleteBasicShape(uuidToRemove);
+        });
+    }
+
     private Function<String, Double> getProceedWhenDeleting(){
         return uuidToRemove -> {
-            BasicShape temp = basicShapesToSave.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
-            basicShapesToSave.remove(temp);
-            basicShapes.remove(temp);
-            gridCanvas.clearEverything();
-            transformersBox.getChildren().clear();
-            sideBarThumbnails.remove(temp);
 
-            if(basicShapesToSave.size() == 0){
-                BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
-                addShape(toAdd);
-                basicShapesToSave.add(toAdd);
-                currentName.setText("default");
+            if(!orchestrator.canBasicShapeBeRemoved(uuidToRemove)){
+                System.err.println("Can't be removed without impacting other composition shapes!");
+
+               PopupWindow popupWindow = new PopupWindow();
+
+               Stage tempStage = popupWindow.getStage();
+
+               Pane acceptButton = PopupWindow.getButton("Accept, and delete this shape from compositions shapes that use this one.", "null",  "#807229", "#E7CE4A", event -> {
+                   deleteBasicShape(uuidToRemove);
+                   deleteBasicShapeFromCompositionShape(uuidToRemove);
+                   tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
+               });
+               Pane refuseButton = PopupWindow.getButton("Keep this shape.", "null",  "#5E2323", "#EB5757", event -> {
+                   tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
+               });
+
+                popupWindow.createPopup("Delete confirmation",scene, acceptButton, refuseButton);
+
             }else{
-                currentName.setText(basicShapesToSave.get(0).getShapeName());
-                addShape(basicShapesToSave.get(0));
+
+               deleteBasicShape(uuidToRemove);
+
             }
 
             return null;

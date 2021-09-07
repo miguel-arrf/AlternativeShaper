@@ -22,8 +22,8 @@ public class Orchestrator {
     private static final int SCALE = 40;
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
 
-    private String path = "C:\\Users\\mferr\\Downloads\\objetos\\test.json";
-    //private String path = "/Users/miguelferreira/Downloads/alternativeShaperSaves/test.txt";
+    //private String path = "C:\\Users\\mferr\\Downloads\\objetos\\test.json";
+    private String path = "/Users/miguelferreira/Downloads/alternativeShaperSaves/test.txt";
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
@@ -35,7 +35,6 @@ public class Orchestrator {
     public static int getNumberColumnsAndRows() {
         return NUMBER_COLUMNS_AND_ROWS;
     }
-
 
     public void addAllBasicShapes(ArrayList<BasicShape> basicShapesToAdd){
         basicShapes.clear();
@@ -57,6 +56,16 @@ public class Orchestrator {
 
 
         return toReturn;
+    }
+
+    public boolean canBasicShapeBeRemoved(String uuid){
+        System.out.println("UUID HERE: " + uuid + ", newCompositionShapes: " + newCompositionShapes.size());
+        for(NewCompositionShape newCompositionShape: newCompositionShapes){
+            if(newCompositionShape.getBasicShapesUUIDList().stream().anyMatch(p -> p.equals(uuid))){
+                return false;
+            }
+        }
+        return true;
     }
 
     /*public Pane getCopyOfCompositionShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY){
@@ -103,6 +112,7 @@ public class Orchestrator {
 
                 System.out.println("name: " + name);
 
+                //TODO There's no function being added to handle the thumbnail deletion nor other deletions...
                 NewCompositionShape newCompositionShape = new NewCompositionShape(this, transformersBox,name, id);
                 newCompositionShapes.add(newCompositionShape);
 
@@ -162,6 +172,7 @@ public class Orchestrator {
                 String name = (String) basicShapeJSON.get("name");
                 UUID id = UUID.fromString((String) basicShapeJSON.get("id"));
 
+                //TODO There's no function being added to handle the thumbnail deletion nor other deletions...
                 BasicShape basicShape = new BasicShape(width, height, Color.web(color), id, name);
                 basicShapes.add(basicShape);
             }

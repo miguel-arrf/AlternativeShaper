@@ -57,10 +57,15 @@ public class NewCompositionShape implements CustomShape{
     private HBox translationXBox;
     private HBox translationYBox;
 
+    //Deletion handlers
+    private Function<String, Double> proceedWhenDeletingFromThumbnail;
+
     //Composition Shape Thumbnail
     private final VBox thumbnail = new VBox();
 
-    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox){
+    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail){
+        this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+
         ID = UUID.randomUUID();
         this.orchestrator = orchestrator;
         this.transformersBox = transformersBox;
@@ -138,6 +143,26 @@ public class NewCompositionShape implements CustomShape{
         basicShapesYTranslation.add(translationY);
 
         return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(basicShapesID));
+    }
+
+    public void deleteBasicShape(String uuidToRemove){
+        if(getBasicShapesUUIDList().stream().anyMatch(p -> p.equals(uuidToRemove))){
+            Information basicShapeXTranslationToRemove = basicShapesXTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
+            Information basicShapeYTranslationToRemove = basicShapesYTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
+
+            basicShapesXTranslation.remove(basicShapeXTranslationToRemove);
+            basicShapesYTranslation.remove(basicShapeYTranslationToRemove);
+        }
+    }
+
+    public ArrayList<String> getBasicShapesUUIDList(){
+        ArrayList<String> toReturn = new ArrayList<>();
+
+        basicShapesXTranslation.forEach(information -> {
+            toReturn.add(information.getId());
+        });
+
+        return toReturn;
     }
 
     public ArrayList<BasicShape> getBasicShapes(){
@@ -486,7 +511,24 @@ public class NewCompositionShape implements CustomShape{
             event.consume();
         });
 
+        setThumbnailDeleting();
+
         return thumbnail;
+    }
+
+    private void setThumbnailDeleting(){
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem menuItem = new MenuItem("Delete Composition Shape Item");
+        menuItem.setStyle("-fx-text-fill: red");
+        contextMenu.getItems().add(menuItem);
+
+        menuItem.setOnAction(actionEvent -> {
+            proceedWhenDeletingFromThumbnail.apply(getUUID().toString());
+        });
+
+        thumbnail.setOnContextMenuRequested(contextMenuEvent -> {
+            contextMenu.show(thumbnail, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+        });
     }
 
     public static class Information{

@@ -1,6 +1,6 @@
 package marrf.iscte;
 
-import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -22,7 +22,13 @@ public class GridCanvas {
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
     //private final ArrayList<NewCompositionShape> compositionShapes = new ArrayList<>();
 
-    private final Pane pane = new Pane();
+    private static double xOriginTranslation = 0.0;
+    private static double yOriginTranslation = 0.0;
+
+    private static double initialTranslationXCircle = 0.0;
+    private static double initialTranslationYCircle = 0.0;
+
+    public static final Pane pane = new Pane();
     private Circle circle;
 
     public ArrayList<BasicShape> getCurrentRectangles(){
@@ -103,6 +109,9 @@ public class GridCanvas {
         circle.setCenterY(width*NUMBER_COLUMNS_AND_ROWS / 2.0);
 
         pane.getChildren().add(circle);
+
+        initialTranslationXCircle = circle.getTranslateX();
+        initialTranslationYCircle = circle.getTranslateY();
     }
 
     public Pane getGrid(Pane parent){
@@ -153,6 +162,34 @@ public class GridCanvas {
 
 
         return pane;
+    }
+
+
+    public static void recenterEverything(){
+        Circle circle = null;
+
+        for (Node children : pane.getChildren()) {
+            if (children instanceof Circle) {
+                circle = (Circle) children;
+            }
+        }
+
+        assert circle != null;
+        xOriginTranslation = initialTranslationXCircle - circle.getTranslateX();
+        yOriginTranslation = initialTranslationYCircle - circle.getTranslateY();
+
+        pane.getChildren().forEach( p -> {
+            p.setTranslateX(p.getTranslateX() + xOriginTranslation);
+            p.setTranslateY(p.getTranslateY() + yOriginTranslation);
+        });
+
+    }
+
+    public static void toOriginalPosition(){
+        pane.getChildren().forEach( p -> {
+            p.setTranslateX(p.getTranslateX() - xOriginTranslation);
+            p.setTranslateY(p.getTranslateY() - yOriginTranslation);
+        });
     }
 
 }

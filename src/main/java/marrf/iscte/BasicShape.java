@@ -8,12 +8,17 @@ import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import org.apache.commons.lang3.SystemUtils;
@@ -536,6 +541,7 @@ public class BasicShape implements CustomShape {
     }
 
     public Pane getThumbnail(Supplier<String> toPutIntoDragbord, Supplier<CustomShape> supplier) {
+        String colorString = "rgb(" + color.getRed() * 255 + "," + color.getGreen() * 255 + "," + color.getBlue() * 255+ ")";
 
         boolean wasSelected = isStrokeOn();
 
@@ -549,11 +555,14 @@ public class BasicShape implements CustomShape {
         }
 
         try {
-            WritableImage writableImage = new WritableImage((int) getWidth(),
-                    (int) getHeight());
-            WritableImage snapshot = rectangle.snapshot(null, writableImage);
+            //TODO AO Tirar o screenshot, deviamos centrar tudo novamente...
+            GridCanvas.recenterEverything();
+            WritableImage writableImage = new WritableImage((int) GridCanvas.pane.getWidth(),
+                    (int) GridCanvas.pane.getHeight());
+            WritableImage snapshot = GridCanvas.pane.snapshot(null, writableImage);
+            //TODO Tirar screenshoot ao gridCanvas e não ao elemento!
             RenderedImage renderedImage = SwingFXUtils.fromFXImage(writableImage, null);
-
+            GridCanvas.toOriginalPosition();
 
             Set<PosixFilePermission> fp = PosixFilePermissions.fromString("rwxrwxrwx");
 
@@ -573,7 +582,26 @@ public class BasicShape implements CustomShape {
 
 
             thumbnail.getChildren().clear();
-            //thumbnail.getChildren().add(imageView);
+            //TODO ALTERAR
+            imageView.setPreserveRatio(true);
+            imageView.setFitWidth(100);
+
+
+            var initialWidth = image.getWidth() / imageView.getFitWidth();
+            var newHeight = image.getHeight()/initialWidth;
+
+            Rectangle rectangle = new Rectangle(0, 0, 100,newHeight);
+            rectangle.setArcWidth(30.0);   // Corner radius
+            rectangle.setArcHeight(30.0);
+
+            ImagePattern pattern = new ImagePattern(
+                    new Image(file.toURL().toExternalForm(), 100,newHeight, false, false) // Resizing
+            );
+
+            rectangle.setFill(pattern);
+
+
+            thumbnail.getChildren().add(rectangle);
         } catch (IOException ignored) {
 
         }
@@ -611,8 +639,9 @@ public class BasicShape implements CustomShape {
         thumbnail.setAlignment(Pos.CENTER_LEFT);
         thumbnail.setSpacing(20);
 
-        String colorString = "rgb(" + color.getRed() * 255 + "," + color.getGreen() * 255 + "," + color.getBlue() * 255+ ")";
         thumbnail.setStyle("-fx-background-color:" + colorString + "; -fx-background-radius: 10");
+        //thumbnail.setStyle("-fx-background-color:" + "white" + "; -fx-background-radius: 10");
+
 
         thumbnail.getChildren().add(nameLabel);
 

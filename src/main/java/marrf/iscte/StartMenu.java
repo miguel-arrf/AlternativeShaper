@@ -27,7 +27,7 @@ public class StartMenu extends Application {
     private App app = new App();
 
     private Scene scene;
-    private Stage primaryStage;
+    public static Stage primaryStage;
 
     private Pane getBasicShape(){
         Image basicPlus = new Image(App.class.getResource("/icons/plus.png").toExternalForm());
@@ -165,7 +165,7 @@ public class StartMenu extends Application {
 
         scene = new Scene(mainPanel, 377, 553);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
-        scene.setFill(Color.BLACK);
+        scene.setFill(Color.web("#262528"));
 
         primaryStage.setTitle("Alternative Shaper");
         primaryStage.setScene(scene);
