@@ -11,6 +11,7 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -56,6 +57,8 @@ public class App extends Application {
     private BasicShape selectedBasicShape;
     private boolean isCurrentSimple = true;
     private TextField currentName;
+    private Pane nameSection;
+    private Pane saveSection;
 
     private final BooleanProperty firstBasicShapeWasSaved = new SimpleBooleanProperty(false);
     private VBox mainPanel;
@@ -74,6 +77,7 @@ public class App extends Application {
         rectangle.setPrefHeight(8);
         rectangle.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
         rectangle.setMaxHeight(Double.MAX_VALUE);
+        rectangle.setId("separator");
 
         return rectangle;
     }
@@ -196,7 +200,7 @@ public class App extends Application {
 
     private void addCompositionShape(NewCompositionShape compositionShape, boolean wasDragged){
         if(wasDragged){
-            gridCanvas.addGroup(selectedCompositionShape.addNewCompositionShape(compositionShape), compositionShape);
+            gridCanvas.addGroup(selectedCompositionShape.addNewCompositionShape(compositionShape));
 
         }else {
             //I've clicked on a thumbnail
@@ -205,7 +209,7 @@ public class App extends Application {
             compositionShape.getTeste(toAdd, true, 0,0);
             System.out.println("tamanho de basic shapes: " + compositionShape.getBasicShapes().size());
 
-            gridCanvas.addGroup(toAdd, compositionShape);
+            gridCanvas.addGroup(toAdd);
         }
     }
 
@@ -240,8 +244,12 @@ public class App extends Application {
         basicShapeVBox.setOnMouseClicked(mouseEvent -> {
 
             System.out.println("I want to add a new basic shape!");
-            gridCanvas.clearEverything();
+            GridCanvas.clearEverything();
             isCurrentSimple = true;
+
+            addNameSectionIfItIsNot();
+            addSaveSectionIfItIsNot();
+
             currentName.setText("simpleDefault");
 
             transformersBox.getChildren().clear();
@@ -275,6 +283,10 @@ public class App extends Application {
             transformersBox.getChildren().clear();
             selectedCompositionShape = new NewCompositionShape(orchestrator, transformersBox, teste1 -> {
                 return null;
+            }, teste -> {
+                System.err.println("oh, here I am!");
+                newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
+                return null;
             });
             newCompositionShapes.add(selectedCompositionShape);
         });
@@ -289,7 +301,14 @@ public class App extends Application {
 
         firstBasicShapeWasSaved.addListener((observableValue, aBoolean, t1) -> {
             if(t1){
-                mainPanel.getChildren().addAll(toAdd, saveHB);
+                for(int i = 0; i < mainPanel.getChildren().size(); i++){
+                    Node node = mainPanel.getChildren().get(i);
+                    if(node.getId() != null && node.getId().equals("saveButton")){
+                        mainPanel.getChildren().add(i, toAdd);
+                        mainPanel.getChildren().add(i+1, saveHB);
+                        break;
+                    }
+                }
             }else{
                 mainPanel.getChildren().remove(toAdd);
                 mainPanel.getChildren().remove(saveHB);
@@ -340,7 +359,7 @@ public class App extends Application {
 
         mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),transformersBox, getSaveButtonSection());
 
-        transformersBox.setSpacing(10);
+        transformersBox.setSpacing(20);
 
         var scenePanel = new VBox(mainPanel);
         scenePanel.setStyle("-fx-background-color: black");
@@ -357,20 +376,19 @@ public class App extends Application {
 
 
 
+        sceneStackPane.layout();
 
-        loadBasicShapes(file);
-        loadNewCompositionShapes(file);
 
         return borderPane;
     }
 
-    private void loadNewCompositionShapes(File file){
+    public void loadNewCompositionShapes(File file){
         ArrayList<NewCompositionShape> newCompositionShapeArrayList = orchestrator.getNewCompositionShapesFromFile(file, transformersBox);
         newCompositionShapes.addAll(newCompositionShapeArrayList);
         sideBarThumbnails.addAll(newCompositionShapeArrayList);
     }
 
-    private void loadBasicShapes(File file){
+    public void loadBasicShapes(File file){
         ArrayList<BasicShape> basicShapes = orchestrator.getBasicShapesFromFile(file);
 
         basicShapesToSave.addAll(basicShapes);
@@ -431,6 +449,25 @@ public class App extends Application {
         return borderPane;
     }
 
+    private void addNameSectionIfItIsNot(){
+        if (!mainPanel.getChildren().contains(nameSection)) {
+            for(int i = 0;i < mainPanel.getChildren().size(); i++ ){
+                Node node = mainPanel.getChildren().get(i);
+                if(node instanceof ScrollPane){
+                    mainPanel.getChildren().add(i+1,nameSection);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void addSaveSectionIfItIsNot(){
+        if (!mainPanel.getChildren().contains(saveSection)) {
+            mainPanel.getChildren().add(mainPanel.getChildren().size(), saveSection);
+
+        }
+    }
+
     private void deleteBasicShape(String uuidToRemove){
         //We are cleaning everything, but if the user is on a composition shape, we shouldn't... this way is easier tho.
         BasicShape temp = basicShapesToSave.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
@@ -441,10 +478,12 @@ public class App extends Application {
         sideBarThumbnails.remove(temp);
 
         if(basicShapesToSave.size() == 0){
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+            mainPanel.getChildren().remove(nameSection);
+            mainPanel.getChildren().remove(saveSection);
+            /*BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
-            currentName.setText("default");
+            currentName.setText("default");*/
         }else{
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
@@ -455,6 +494,8 @@ public class App extends Application {
     private void deleteBasicShapeFromCompositionShape(String uuidToRemove){
         newCompositionShapes.forEach(newCompositionShape -> {
             newCompositionShape.deleteBasicShape(uuidToRemove);
+            //Maybe an uncessary redraw?
+            newCompositionShape.redrawThumbnail();
         });
     }
 
@@ -477,7 +518,7 @@ public class App extends Application {
                    tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
                });
 
-                popupWindow.createPopup("Delete confirmation",scene, acceptButton, refuseButton);
+                popupWindow.createPopup("Delete confirmation",scene,"Deleting this basic shape will also delete compositionShapes that use it. Do you want to proceed?", acceptButton, refuseButton);
 
             }else{
 
@@ -744,6 +785,8 @@ public class App extends Application {
 
         nameHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
 
+        this.nameSection = nameHB;
+
         return nameHB;
     }
 
@@ -779,6 +822,9 @@ public class App extends Application {
         saveHB.setOnMouseExited(event -> saveHB.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 20"));
 
         saveHB.setOnMouseClicked(mouseEvent -> saveCurrentShape());
+
+        this.saveSection = saveHB;
+        saveHB.setId("saveButton");
 
         return saveHB;
     }

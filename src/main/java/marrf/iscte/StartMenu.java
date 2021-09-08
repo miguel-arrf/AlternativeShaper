@@ -94,6 +94,9 @@ public class StartMenu extends Application {
                 primaryStage.setMinWidth(300);
                 primaryStage.sizeToScene();
                 primaryStage.setMaximized(true);
+
+                app.loadBasicShapes(selectedFile);
+                app.loadNewCompositionShapes(selectedFile);
             }
 
         });

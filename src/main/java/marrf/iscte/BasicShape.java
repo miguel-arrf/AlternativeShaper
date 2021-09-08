@@ -8,17 +8,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.ImagePattern;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import org.apache.commons.lang3.SystemUtils;
@@ -55,8 +50,8 @@ public class BasicShape implements CustomShape {
     public DoubleProperty xTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
     public DoubleProperty yTranslateOffsetProperty = new SimpleDoubleProperty(0.0);
 
-    private final Function<Double, Double> writeTranslateX;
-    private final Function<Double, Double> writeTranslateY;
+    public final Function<Double, Double> writeTranslateX;
+    public final Function<Double, Double> writeTranslateY;
 
     private Function<Pane, Double> proceedWhenDeleting;
     private Function<String, Double> proceedWhenDeletingFromThumbnail;
@@ -105,6 +100,7 @@ public class BasicShape implements CustomShape {
         BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
         Background background = new Background(backgroundFill);
         rectangle.setBackground(background);
+
 
         setUpComponents();
     }
@@ -238,19 +234,19 @@ public class BasicShape implements CustomShape {
         widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         widthLabel.setTextFill(Color.web("#BDBDBD"));
 
-
         TextField textField = new TextField("1");
         textField.setPromptText("1");
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
+        textField.setAlignment(Pos.CENTER_LEFT);
 
         Slider widthSectionSlider = new Slider();
         widthSectionSlider.setMax(10);
         widthSectionSlider.setMin(0.1);
         widthSectionSlider.setValue(1);
-
+        widthSectionSlider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(widthSectionSlider, Priority.ALWAYS);
 
         textField.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode().equals(KeyCode.ENTER)) {
@@ -292,10 +288,11 @@ public class BasicShape implements CustomShape {
 
         });
 
-        widthSection = new HBox(widthLabel, horizontalGrower(), widthSectionSlider, horizontalGrower(), textField);
+        widthSection = new HBox(widthLabel, widthSectionSlider, textField);
         widthSection.setPadding(new Insets(10, 10, 10, 15));
         widthSection.setAlignment(Pos.CENTER_LEFT);
         widthSection.setMinHeight(30);
+        widthSection.setSpacing(20);
 
         widthSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
 
@@ -311,12 +308,14 @@ public class BasicShape implements CustomShape {
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
+        textField.setAlignment(Pos.CENTER_LEFT);
 
         Slider heightSectionSlider = new Slider();
         heightSectionSlider.setMax(10);
         heightSectionSlider.setMin(0.1);
         heightSectionSlider.setValue(1);
+        heightSectionSlider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(heightSectionSlider, Priority.ALWAYS);
 
         heightSectionSlider.setMajorTickUnit(0.1);
         heightSectionSlider.setMinorTickCount(0);
@@ -354,31 +353,32 @@ public class BasicShape implements CustomShape {
 
         });
 
-        heightSection = new HBox(heightLabel, horizontalGrower(), heightSectionSlider, horizontalGrower(), textField);
+        heightSection = new HBox(heightLabel, heightSectionSlider, textField);
         heightSection.setPadding(new Insets(10, 10, 10, 15));
         heightSection.setAlignment(Pos.CENTER_LEFT);
         heightSection.setMinHeight(30);
+        heightSection.setSpacing(20);
 
         heightSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
 
     public void setUpTranslationXBox() {
-        Label widthLabel = new Label("Translation X:");
-        widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        widthLabel.setTextFill(Color.web("#BDBDBD"));
+        Label translationLabel = new Label("Translation X:");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
 
-
-        TextField textField = new TextField("0");
-        textField.setPromptText("0");
+        TextField textField = new TextField(String.valueOf(getInitialTranslation().getX()));
+        textField.setPromptText(String.valueOf(getInitialTranslation().getX()));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
+        textField.setPrefWidth(60);
+        textField.setAlignment(Pos.CENTER);
 
         Slider translationXSlider = new Slider();
         translationXSlider.setMax(SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationXSlider.setMin(-SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationXSlider.setValue(0);
+        translationXSlider.setMin(- SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
+        translationXSlider.setValue(getInitialTranslation().getX());
 
         textField.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode().equals(KeyCode.ENTER)) {
@@ -415,34 +415,39 @@ public class BasicShape implements CustomShape {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            this.addTranslationX(newValue.doubleValue() - oldValue.doubleValue());
+            this.addTranslationX((newValue.doubleValue() - oldValue.doubleValue()));
             translateXProperty.setValue(truncatedDouble);
             writeTranslateX.apply(truncatedDouble);
         });
 
-        translationXSection = new HBox(widthLabel, horizontalGrower(), translationXSlider, horizontalGrower(), textField);
+        translationXSlider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(translationXSlider, Priority.ALWAYS);
+
+        translationXSection = new HBox(translationLabel, translationXSlider, textField);
         translationXSection.setPadding(new Insets(10, 10, 10, 15));
         translationXSection.setAlignment(Pos.CENTER_LEFT);
         translationXSection.setMinHeight(30);
         translationXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        translationXSection.setSpacing(20);
 
     }
 
     public void setUpTranslationYBox() {
-        Label heightLabel = new Label("Translation Y:");
-        heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        heightLabel.setTextFill(Color.web("#BDBDBD"));
+        Label translationLabel = new Label("Translation Y:");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
 
         TextField textField = new TextField("0");
         textField.setPromptText("0");
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(50);
-        textField.setAlignment(Pos.CENTER_RIGHT);
+        textField.setPrefWidth(60);
+        textField.setAlignment(Pos.CENTER);
 
         Slider translationYSlider = new Slider();
         translationYSlider.setMax(SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationYSlider.setMin(-SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
+        translationYSlider.setMin(- SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
         translationYSlider.setValue(0);
 
         translationYSlider.setMajorTickUnit(0.1);
@@ -477,16 +482,20 @@ public class BasicShape implements CustomShape {
 
             translateYProperty.setValue(truncatedDouble);
 
-            this.addTranslationY(newValue.doubleValue() - oldValue.doubleValue());
+            this.addTranslationY((newValue.doubleValue() - oldValue.doubleValue()));
 
             writeTranslateY.apply(truncatedDouble);
         });
 
-        translationYSection = new HBox(heightLabel, horizontalGrower(), translationYSlider, horizontalGrower(), textField);
+        translationYSlider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(translationYSlider, Priority.ALWAYS);
+
+        translationYSection = new HBox(translationLabel, translationYSlider, textField);
         translationYSection.setPadding(new Insets(10, 10, 10, 15));
         translationYSection.setAlignment(Pos.CENTER_LEFT);
         translationYSection.setMinHeight(30);
         translationYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        translationYSection.setSpacing(15);
 
     }
 
@@ -540,8 +549,14 @@ public class BasicShape implements CustomShape {
 
     }
 
+    public static String colorToRGBString(Color color){
+        return "rgb(" + color.getRed() * 255 + "," + color.getGreen() * 255 + "," + color.getBlue() * 255+ ")";
+    }
+
     public Pane getThumbnail(Supplier<String> toPutIntoDragbord, Supplier<CustomShape> supplier) {
-        String colorString = "rgb(" + color.getRed() * 255 + "," + color.getGreen() * 255 + "," + color.getBlue() * 255+ ")";
+        String colorString = colorToRGBString(this.color);
+
+
 
         boolean wasSelected = isStrokeOn();
 
@@ -554,57 +569,8 @@ public class BasicShape implements CustomShape {
             temporarilyTurnOffStroke();
         }
 
-        try {
-            //TODO AO Tirar o screenshot, deviamos centrar tudo novamente...
-            GridCanvas.recenterEverything();
-            WritableImage writableImage = new WritableImage((int) GridCanvas.pane.getWidth(),
-                    (int) GridCanvas.pane.getHeight());
-            WritableImage snapshot = GridCanvas.pane.snapshot(null, writableImage);
-            //TODO Tirar screenshoot ao gridCanvas e não ao elemento!
-            RenderedImage renderedImage = SwingFXUtils.fromFXImage(writableImage, null);
-            GridCanvas.toOriginalPosition();
-
-            Set<PosixFilePermission> fp = PosixFilePermissions.fromString("rwxrwxrwx");
-
-            //Write the snapshot to the chosen file
-            File file;
-            if (SystemUtils.IS_OS_WINDOWS) {
-                file = Files.createTempFile("teste", ".png").toFile();
-            } else {
-                file = Files.createTempFile("teste", ".png", PosixFilePermissions.asFileAttribute(fp)).toFile();
-            }
-
-            ImageIO.write(renderedImage, "png", file);
-
-            Image image = new Image(file.toURL().toExternalForm());
-            ImageView imageView = new ImageView(image);
-            imageView.setSmooth(true);
-
-
-            thumbnail.getChildren().clear();
-            //TODO ALTERAR
-            imageView.setPreserveRatio(true);
-            imageView.setFitWidth(100);
-
-
-            var initialWidth = image.getWidth() / imageView.getFitWidth();
-            var newHeight = image.getHeight()/initialWidth;
-
-            Rectangle rectangle = new Rectangle(0, 0, 100,newHeight);
-            rectangle.setArcWidth(30.0);   // Corner radius
-            rectangle.setArcHeight(30.0);
-
-            ImagePattern pattern = new ImagePattern(
-                    new Image(file.toURL().toExternalForm(), 100,newHeight, false, false) // Resizing
-            );
-
-            rectangle.setFill(pattern);
-
-
-            thumbnail.getChildren().add(rectangle);
-        } catch (IOException ignored) {
-
-        }
+        thumbnail.getChildren().clear();
+        thumbnail.getChildren().add(GridCanvas.takeScreenshootWithRoundedCorners());
 
         thumbnail.setMinWidth(0.0);
 
@@ -632,18 +598,27 @@ public class BasicShape implements CustomShape {
             turnOnStroke();
         }
 
+
+        VBox nameAndTagVBox = new VBox(StartMenu.verticalGrower());
+        nameAndTagVBox.setSpacing(5);
+
         Label nameLabel = new Label(getShapeName());
         nameLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 12));
         nameLabel.setTextFill(getRelativeLuminance(color));
 
+        Label tagLabel = new Label("Basic Shape");
+        tagLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 10));
+        tagLabel.setPadding(new Insets(3));
+        tagLabel.setTextFill(getRelativeLuminance(this.color.darker()));
+        tagLabel.setStyle("-fx-background-color: " + colorToRGBString(this.color.darker()) + "; -fx-background-radius: 3");
+
+        nameAndTagVBox.getChildren().addAll(nameLabel, tagLabel);
+
+        thumbnail.getChildren().add(nameAndTagVBox);
+
         thumbnail.setAlignment(Pos.CENTER_LEFT);
-        thumbnail.setSpacing(20);
-
+        thumbnail.setSpacing(10);
         thumbnail.setStyle("-fx-background-color:" + colorString + "; -fx-background-radius: 10");
-        //thumbnail.setStyle("-fx-background-color:" + "white" + "; -fx-background-radius: 10");
-
-
-        thumbnail.getChildren().add(nameLabel);
 
         ContextMenu contextMenu = new ContextMenu();
         MenuItem menuItem = new MenuItem("Delete Basic Shape Item");
@@ -661,7 +636,7 @@ public class BasicShape implements CustomShape {
         return thumbnail;
     }
 
-    private Color getRelativeLuminance(Color color){
+    public static Color getRelativeLuminance(Color color){
         double red = getNewValue(color.getRed());
         double green = getNewValue(color.getGreen());
         double blue = getNewValue(color.getBlue());
@@ -674,7 +649,7 @@ public class BasicShape implements CustomShape {
             return Color.WHITE;
     }
 
-    private double getNewValue(double value){
+    private static double getNewValue(double value){
         if(value <= 0.03928){
             return value/12.92;
         }
@@ -732,6 +707,8 @@ public class BasicShape implements CustomShape {
             contextMenu.getItems().add(menuItem);
 
             menuItem.setOnAction(actionEvent -> {
+                System.err.println("VOU APAGAR AQUI!");
+
                 proceedWhenDeleting.apply(getRectangle());
                 ((Pane) getRectangle().getParent()).getChildren().remove(getRectangle());
             });

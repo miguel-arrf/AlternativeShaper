@@ -4,6 +4,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.NamedArg;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.EventHandler;
@@ -37,7 +38,7 @@ public class PopupWindow {
         return stage;
     }
 
-    public void createPopup(String windowTitle, Scene scene, Pane ... panes){
+    public void createPopup(String windowTitle, Scene scene, @NamedArg("labelContent")String labelContent, Pane ... panes){
 
         scene.getRoot().setCache(true);
         scene.getRoot().setCacheHint(CacheHint.SPEED);
@@ -51,16 +52,20 @@ public class PopupWindow {
         dialogVbox.setPadding(new Insets(20));
         dialogVbox.setStyle("-fx-background-color: #262528");
 
-        Label label = new Label("Deleting this basic shape will also delete compositionShapes that use it. Do you want to proceed?");
+        Label label = new Label(labelContent);
         label.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         label.setTextFill(Color.web("#BDBDBD"));
         label.setWrapText(true);
         label.setMaxHeight(Double.MAX_VALUE);
+        label.setPadding(new Insets(10));
+        label.setStyle("-fx-background-color: #333234; -fx-background-radius: 10");
+        VBox.setVgrow(label, Priority.ALWAYS);
 
         dialogVbox.getChildren().add(label);
 
+
         VBox content = new VBox();
-        dialogVbox.getChildren().addAll(StartMenu.verticalGrower(), content);
+        dialogVbox.getChildren().addAll(content);
 
         content.setSpacing(20);
         content.setPadding(new Insets(0));
@@ -68,7 +73,7 @@ public class PopupWindow {
 
         dialogVbox.setMaxHeight(Double.MAX_VALUE);
 
-        Scene dialogScene = new Scene(dialogVbox, 400, 250);
+        Scene dialogScene = new Scene(dialogVbox, 400, 300);
         stage.setScene(dialogScene);
         stage.show();
 
@@ -137,7 +142,7 @@ public class PopupWindow {
 
         basicShapeHBox.setAlignment(Pos.CENTER);
         basicShapeHBox.setSpacing(5);
-        basicShapeHBox.setStyle("-fx-background-color: " + backgroundColor + " ;-fx-background-radius: 20");
+        basicShapeHBox.setStyle("-fx-background-color: " + backgroundColor + " ;-fx-background-radius: 10");
 
         basicShapeHBox.setPadding(new Insets(10));
 

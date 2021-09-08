@@ -30,41 +30,35 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static marrf.iscte.App.horizontalGrower;
+import static marrf.iscte.BasicShape.colorToRGBString;
+import static marrf.iscte.BasicShape.getRelativeLuminance;
 
-public class NewCompositionShape implements CustomShape{
-
-    private String name;
-    private UUID ID;
+public class NewCompositionShape implements CustomShape {
 
     private final Map<String, NewCompositionShape> compositionShapeMap = new HashMap<>();
-
     private final ArrayList<Information> compositionShapesXTranslation = new ArrayList<>();
     private final ArrayList<Information> compositionShapesYTranslation = new ArrayList<>();
-
     private final ArrayList<Information> basicShapesXTranslation = new ArrayList<>();
     private final ArrayList<Information> basicShapesYTranslation = new ArrayList<>();
-
     private final Orchestrator orchestrator;
-
+    //Composition Shape Thumbnail
+    private final HBox thumbnail = new HBox();
+    private String name;
+    private final UUID ID;
     private Node selected;
     private Information selectedTranslationX;
     private Information selectedTranslationY;
-
-    private Pane transformersBox;
-
+    private final Pane transformersBox;
     //Modifiers boxes
     private HBox translationXBox;
     private HBox translationYBox;
-
     //Deletion handlers
     private Function<String, Double> proceedWhenDeletingFromThumbnail;
+    private Function<String, Double> proceedToRedrawWhenDeleting;
 
-    //Composition Shape Thumbnail
-    private final VBox thumbnail = new VBox();
-
-    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail){
+    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+        this.proceedToRedrawWhenDeleting = proceedToRedrawWhenDeleting;
 
         ID = UUID.randomUUID();
         this.orchestrator = orchestrator;
@@ -72,7 +66,7 @@ public class NewCompositionShape implements CustomShape{
         //setUpComponents();
     }
 
-    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, String name, UUID id){
+    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, String name, UUID id) {
         this.name = name;
         this.ID = id;
 
@@ -85,12 +79,12 @@ public class NewCompositionShape implements CustomShape{
         return ID;
     }
 
-    public JSONArray getBasicShapesJSON(){
+    public JSONArray getBasicShapesJSON() {
         JSONArray array = new JSONArray();
 
         basicShapesXTranslation.forEach(information -> {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("id", information.getId().toString());
+            jsonObject.put("id", information.getId());
 
             int position = basicShapesXTranslation.indexOf(information);
 
@@ -103,7 +97,7 @@ public class NewCompositionShape implements CustomShape{
         return array;
     }
 
-    public JSONArray getCompositionShapesJSON(){
+    public JSONArray getCompositionShapesJSON() {
         JSONArray array = new JSONArray();
 
         compositionShapeMap.forEach((id, compositionShape) -> {
@@ -111,12 +105,12 @@ public class NewCompositionShape implements CustomShape{
 
             int position = 0;
             for (Information information : compositionShapesXTranslation) {
-                if(information.getId().equals(id))
+                if (information.getId().equals(id))
                     position = compositionShapesXTranslation.indexOf(information);
             }
 
             jsonObject.put("id", compositionShape.getID().toString());
-            jsonObject.put("translationX",compositionShapesXTranslation.get(position).getValue());
+            jsonObject.put("translationX", compositionShapesXTranslation.get(position).getValue());
             jsonObject.put("translationY", compositionShapesYTranslation.get(position).getValue());
 
             array.add(jsonObject);
@@ -125,7 +119,7 @@ public class NewCompositionShape implements CustomShape{
         return array;
     }
 
-    public BasicShape addBasicShape(String basicShapesID){
+    public BasicShape addBasicShape(String basicShapesID) {
         Information translationX = new Information(basicShapesID, 0.0);
         Information translationY = new Information(basicShapesID, 0.0);
 
@@ -135,7 +129,7 @@ public class NewCompositionShape implements CustomShape{
         return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(basicShapesID));
     }
 
-    public BasicShape addBasicShapeWithTranslation(String basicShapesID, double xTranslation, double yTranslation){
+    public BasicShape addBasicShapeWithTranslation(String basicShapesID, double xTranslation, double yTranslation) {
         Information translationX = new Information(basicShapesID, xTranslation);
         Information translationY = new Information(basicShapesID, yTranslation);
 
@@ -145,17 +139,24 @@ public class NewCompositionShape implements CustomShape{
         return orchestrator.getCopyOfBasicShape(basicShapesID, translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(basicShapesID));
     }
 
-    public void deleteBasicShape(String uuidToRemove){
-        if(getBasicShapesUUIDList().stream().anyMatch(p -> p.equals(uuidToRemove))){
+    public void deleteBasicShape(String uuidToRemove) {
+        if (getBasicShapesUUIDList().stream().anyMatch(p -> p.equals(uuidToRemove))) {
             Information basicShapeXTranslationToRemove = basicShapesXTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
             Information basicShapeYTranslationToRemove = basicShapesYTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
 
             basicShapesXTranslation.remove(basicShapeXTranslationToRemove);
             basicShapesYTranslation.remove(basicShapeYTranslationToRemove);
         }
+
     }
 
-    public ArrayList<String> getBasicShapesUUIDList(){
+    public void deleteCompositionShape(String uuidToRemove){
+        //TODO If we delete a basic shape from a composition shape that
+        // only had it, and that composition shape is here, we should delete
+        // the parameters that were defined.
+    }
+
+    public ArrayList<String> getBasicShapesUUIDList() {
         ArrayList<String> toReturn = new ArrayList<>();
 
         basicShapesXTranslation.forEach(information -> {
@@ -165,7 +166,7 @@ public class NewCompositionShape implements CustomShape{
         return toReturn;
     }
 
-    public ArrayList<BasicShape> getBasicShapes(){
+    public ArrayList<BasicShape> getBasicShapes() {
         ArrayList<BasicShape> basicShapes = new ArrayList<>();
 
         basicShapesXTranslation.forEach(information -> {
@@ -174,6 +175,8 @@ public class NewCompositionShape implements CustomShape{
             Information translationX = basicShapesXTranslation.get(position);
             Information translationY = basicShapesYTranslation.get(position);
 
+            System.out.println("no get: " + "translationX: " + translationX.getValue() + ", translationY: " + translationY.getValue());
+
             basicShapes.add(orchestrator.getCopyOfBasicShape(information.id, translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(translationY.getId())));
         });
 
@@ -181,17 +184,19 @@ public class NewCompositionShape implements CustomShape{
         return basicShapes;
     }
 
-    private Function<Pane, Double> getProceedWhenDeleting(String basicShapeID){
+    private Function<Pane, Double> getProceedWhenDeleting(String basicShapeID) {
         return a -> {
             Information xTranslationToRemove = basicShapesXTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
             Information yTranslationToRemove = basicShapesYTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
             basicShapesXTranslation.remove(xTranslationToRemove);
             basicShapesYTranslation.remove(yTranslationToRemove);
+            System.err.println("VIM AQUI PARA APAGAR!");
+            proceedToRedrawWhenDeleting.apply(null);
             return null;
         };
     }
 
-    public void getTeste(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY){
+    public void getTeste(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY) {
 
         compositionShapeMap.forEach((newID, compositionShape) -> {
             Group addTo = new Group();
@@ -203,7 +208,6 @@ public class NewCompositionShape implements CustomShape{
 
             //Adding basic shapes
             compositionShape.getBasicShapes().forEach(basicShape -> {
-                System.out.println("basicShape: " + basicShape);
                 double translateXBy = basicShape.getInitialTranslation().getX();
                 double translateYBy = basicShape.getHeight() + basicShape.getInitialTranslation().getY() * -1;
 
@@ -216,21 +220,21 @@ public class NewCompositionShape implements CustomShape{
                 addTo.getChildren().add(rectangle);
             });
 
-            if(toAdd instanceof Pane){
+            if (toAdd instanceof Pane) {
                 Pane toAddTemp = (Pane) toAdd;
                 toAddTemp.getChildren().add(addTo);
-            }else if(toAdd instanceof Group){
+            } else if (toAdd instanceof Group) {
                 Group toAddTemp = (Group) toAdd;
                 toAddTemp.getChildren().add(addTo);
             }
             //toAdd.getChildren().add(addTo);
 
-            if(addHover)
+            if (addHover)
                 System.out.println("first translation X: " + translationX);
 
             compositionShape.getTeste(addTo, false, translationX.getValue() + upperTranslationX, translationY.getValue() + upperTranslationY);
 
-            if(addHover){
+            if (addHover) {
                 Rectangle rectangle = new Rectangle(addTo.getLayoutBounds().getWidth() + 20, addTo.getLayoutBounds().getHeight() + 20);
                 rectangle.setArcWidth(10);
                 rectangle.setArcHeight(10);
@@ -262,15 +266,15 @@ public class NewCompositionShape implements CustomShape{
                 });
 
                 addTo.setOnMouseClicked(event -> {
-                        selected = addTo;
-                        selectedTranslationX = translationX;
-                        selectedTranslationY = translationY;
+                    selected = addTo;
+                    selectedTranslationX = translationX;
+                    selectedTranslationY = translationY;
 
-                        setUpComponents();
-                        System.out.println("I've clicked on here. It should now be true!");
+                    setUpComponents();
+                    System.out.println("I've clicked on here. It should now be true!");
 
-                        transformersBox.getChildren().clear();
-                        transformersBox.getChildren().addAll(getTransformers());
+                    transformersBox.getChildren().clear();
+                    transformersBox.getChildren().addAll(getTransformers());
                 });
 
                 ContextMenu contextMenu = new ContextMenu();
@@ -297,7 +301,7 @@ public class NewCompositionShape implements CustomShape{
 
     }
 
-    public Pane addNewCompositionShape(NewCompositionShape NewCompositionShape){
+    public Pane addNewCompositionShape(NewCompositionShape NewCompositionShape) {
         String id = UUID.randomUUID().toString();
 
         compositionShapeMap.put(id, NewCompositionShape);
@@ -306,29 +310,29 @@ public class NewCompositionShape implements CustomShape{
         compositionShapesYTranslation.add(new Information(id, 0.0));
 
         Pane toAdd = new Pane();
-        getTeste(toAdd, true, 0,0);
+        getTeste(toAdd, true, 0, 0);
 
         return toAdd;
     }
 
-    public Pane addNewCompositionShapeWithTranslation(NewCompositionShape NewCompositionShape, double xTranslation, double  yTranslation, String id){
+    public Pane addNewCompositionShapeWithTranslation(NewCompositionShape NewCompositionShape, double xTranslation, double yTranslation, String id) {
         compositionShapeMap.put(id, NewCompositionShape);
 
         compositionShapesXTranslation.add(new Information(id, xTranslation));
         compositionShapesYTranslation.add(new Information(id, yTranslation));
 
         Pane toAdd = new Pane();
-        getTeste(toAdd, true, xTranslation,yTranslation);
+        getTeste(toAdd, true, xTranslation, yTranslation);
 
         return toAdd;
     }
 
-    private void setUpComponents(){
+    private void setUpComponents() {
         setUpTranslationXBox();
         setUpTranslationYBox();
     }
 
-    public ArrayList<Node> getTransformers(){
+    public ArrayList<Node> getTransformers() {
         ArrayList<Node> toReturn = new ArrayList<>();
         toReturn.add(translationXBox);
         toReturn.add(translationYBox);
@@ -336,7 +340,7 @@ public class NewCompositionShape implements CustomShape{
         return toReturn;
     }
 
-    private void setUpTranslationXBox(){
+    private void setUpTranslationXBox() {
         Label translationLabel = new Label("Translation X:");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
@@ -354,10 +358,12 @@ public class NewCompositionShape implements CustomShape{
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setMinWidth(90);
         textField.setPrefWidth(90);
-        textField.setAlignment(Pos.CENTER);
+        textField.setMaxWidth(Double.MAX_VALUE);
+        textField.setAlignment(Pos.CENTER_LEFT);
 
+        Information tempTranslationX = selectedTranslationX;
 
-        Slider slider = getSlider(selectedTranslationX, aDouble -> {
+        Slider slider = getSlider(tempTranslationX, aDouble -> {
             selected.setTranslateX(selected.getTranslateX() + aDouble);
         }, aDouble -> {
             Double truncatedDouble = BigDecimal.valueOf(aDouble).setScale(2, RoundingMode.HALF_UP).doubleValue();
@@ -365,11 +371,11 @@ public class NewCompositionShape implements CustomShape{
         });
 
         textField.setOnKeyPressed(event -> {
-            if(event.getCode().equals(KeyCode.ENTER)){
+            if (event.getCode().equals(KeyCode.ENTER)) {
                 try {
                     if (Double.parseDouble(textField.getText()) < slider.getMin()) {
                         textField.setText(String.valueOf(slider.getMin()));
-                    }else if(Double.parseDouble(textField.getText()) > slider.getMax()){
+                    } else if (Double.parseDouble(textField.getText()) > slider.getMax()) {
                         textField.setText(String.valueOf(slider.getMax()));
                     }
 
@@ -382,14 +388,24 @@ public class NewCompositionShape implements CustomShape{
             }
         });
 
-        translationXBox = new HBox(translationLabel, slider,horizontalGrower(), textField);
+        slider.setValue(tempTranslationX.getValue());
+        slider.setMajorTickUnit(0.1);
+        slider.setMinorTickCount(0);
+        slider.setSnapToTicks(true);
+
+
+        slider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(slider, Priority.ALWAYS);
+
+        translationXBox = new HBox(translationLabel, slider, textField);
         translationXBox.setPadding(new Insets(10, 10, 10, 15));
         translationXBox.setAlignment(Pos.CENTER_LEFT);
-        translationXBox.setSpacing(10);
+        translationXBox.setSpacing(20);
         translationXBox.setMinHeight(30);
         translationXBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
-    private void setUpTranslationYBox(){
+
+    private void setUpTranslationYBox() {
         Label translationLabel = new Label("Translation Y:");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
@@ -407,21 +423,23 @@ public class NewCompositionShape implements CustomShape{
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setMinWidth(90);
         textField.setPrefWidth(90);
-        textField.setAlignment(Pos.CENTER);
+        textField.setAlignment(Pos.CENTER_LEFT);
 
-        Slider slider = getSlider(selectedTranslationY, aDouble -> {
-            selected.setTranslateY(selected.getTranslateY() + aDouble);
+        Information tempTranslationY = selectedTranslationY;
+
+        Slider slider = getSlider(tempTranslationY, aDouble -> {
+            selected.setTranslateY((selected.getTranslateY() + aDouble));
         }, aDouble -> {
             Double truncatedDouble = BigDecimal.valueOf(aDouble).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
         });
 
         textField.setOnKeyPressed(event -> {
-            if(event.getCode().equals(KeyCode.ENTER)){
+            if (event.getCode().equals(KeyCode.ENTER)) {
                 try {
                     if (Double.parseDouble(textField.getText()) < slider.getMin()) {
                         textField.setText(String.valueOf(slider.getMin()));
-                    }else if(Double.parseDouble(textField.getText()) > slider.getMax()){
+                    } else if (Double.parseDouble(textField.getText()) > slider.getMax()) {
                         textField.setText(String.valueOf(slider.getMax()));
                     }
 
@@ -434,22 +452,29 @@ public class NewCompositionShape implements CustomShape{
             }
         });
 
-        translationYBox = new HBox(translationLabel, slider,horizontalGrower(), textField);
+        slider.setValue(tempTranslationY.getValue());
+        slider.setMajorTickUnit(0.1);
+        slider.setMinorTickCount(0);
+        slider.setSnapToTicks(true);
+
+        slider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(slider, Priority.ALWAYS);
+
+        translationYBox = new HBox(translationLabel, slider, textField);
         translationYBox.setPadding(new Insets(10, 10, 10, 15));
         translationYBox.setAlignment(Pos.CENTER_LEFT);
         translationYBox.setMinHeight(40);
         translationYBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
 
-    private Slider getSlider(Information informationToUpdate, Consumer<Double> consumer, Consumer<Double> textFieldConsumer){
+    private Slider getSlider(Information informationToUpdate, Consumer<Double> consumer, Consumer<Double> textFieldConsumer) {
         Slider slider = new Slider();
         slider.setMax(Orchestrator.getSCALE() * Orchestrator.getNumberColumnsAndRows() / 2.0);
-        slider.setMin(-Orchestrator.getSCALE() *  Orchestrator.getNumberColumnsAndRows() / 2.0);
+        slider.setMin(-Orchestrator.getSCALE() * Orchestrator.getNumberColumnsAndRows() / 2.0);
         slider.setValue(informationToUpdate.getValue());
         slider.setMajorTickUnit(0.1);
         slider.setMinorTickCount(0);
         slider.setSnapToTicks(true);
-
 
         slider.valueProperty().addListener((observable, oldValue, newValue) -> {
             informationToUpdate.setValue(newValue.doubleValue());
@@ -461,13 +486,13 @@ public class NewCompositionShape implements CustomShape{
     }
 
     @Override
-    public void setShapeName(String shapeName) {
-        this.name = shapeName;
+    public String getShapeName() {
+        return name;
     }
 
     @Override
-    public String getShapeName() {
-        return name;
+    public void setShapeName(String shapeName) {
+        this.name = shapeName;
     }
 
     @Override
@@ -488,7 +513,46 @@ public class NewCompositionShape implements CustomShape{
     @Override
     public void redrawThumbnail() {
         thumbnail.getChildren().clear();
-        thumbnail.getChildren().add(new Label(getShapeName()));
+
+        addScreenshootAndTags();
+    }
+
+    private void addScreenshootAndTags() {
+        thumbnail.getChildren().add(GridCanvas.takeScreenshootWithRoundedCornersAndLoadTemporarily(this));
+
+        //label tags
+        VBox nameAndTagVBox = new VBox(StartMenu.verticalGrower());
+        nameAndTagVBox.setSpacing(5);
+
+        Label nameLabel = new Label(getShapeName());
+        nameLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 12));
+        nameLabel.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)")));
+
+
+        Label tagLabel = new Label("Composition Shape");
+        tagLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 10));
+        tagLabel.setPadding(new Insets(3));
+        tagLabel.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)").darker()));
+        tagLabel.setStyle("-fx-background-color: " + colorToRGBString(Color.web("rgb(79,79,79)").darker()) + "; -fx-background-radius: 3");
+
+        Label numberOfBasicShapes = new Label(basicShapesXTranslation.size() + "x");
+        numberOfBasicShapes.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 10));
+        numberOfBasicShapes.setPadding(new Insets(3));
+        numberOfBasicShapes.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)").darker()));
+        numberOfBasicShapes.setStyle("-fx-background-color: " + colorToRGBString(Color.web("rgb(79,79,79)").darker()) + "; -fx-background-radius: 3");
+
+        Label numberOfCompositionShapes = new Label(compositionShapeMap.size() + "x");
+        numberOfCompositionShapes.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 10));
+        numberOfCompositionShapes.setPadding(new Insets(3));
+        numberOfCompositionShapes.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)").darker()));
+        numberOfCompositionShapes.setStyle("-fx-background-color: " + colorToRGBString(Color.web("rgb(79,79,79)").darker()) + "; -fx-background-radius: 3");
+
+        HBox detailsHB = new HBox(tagLabel, numberOfBasicShapes, numberOfCompositionShapes);
+        detailsHB.setSpacing(10);
+
+        nameAndTagVBox.getChildren().addAll(nameLabel, detailsHB);
+
+        thumbnail.getChildren().add(nameAndTagVBox);
     }
 
     @Override
@@ -497,9 +561,16 @@ public class NewCompositionShape implements CustomShape{
         thumbnail.setMinWidth(0.0);
         thumbnail.setPadding(new Insets(10));
         thumbnail.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
+        thumbnail.setSpacing(10);
+        thumbnail.setAlignment(Pos.CENTER_LEFT);
 
         HBox.setHgrow(thumbnail, Priority.NEVER);
-        thumbnail.getChildren().add(new Label(getShapeName()));
+
+        thumbnail.getChildren().clear();
+
+        //label tags
+        addScreenshootAndTags();
+        //end label tags
 
         thumbnail.setOnDragDetected(event -> {
             Dragboard db = thumbnail.startDragAndDrop(TransferMode.ANY);
@@ -516,7 +587,7 @@ public class NewCompositionShape implements CustomShape{
         return thumbnail;
     }
 
-    private void setThumbnailDeleting(){
+    private void setThumbnailDeleting() {
         ContextMenu contextMenu = new ContextMenu();
         MenuItem menuItem = new MenuItem("Delete Composition Shape Item");
         menuItem.setStyle("-fx-text-fill: red");
@@ -531,11 +602,11 @@ public class NewCompositionShape implements CustomShape{
         });
     }
 
-    public static class Information{
+    public static class Information {
         private String id;
         private Double value;
 
-        public Information(String id, Double value){
+        public Information(String id, Double value) {
             this.id = id;
             this.value = value;
         }
@@ -544,11 +615,15 @@ public class NewCompositionShape implements CustomShape{
             return value;
         }
 
-        public Function<Double, Double> getConsumer(){
+        public void setValue(Double value) {
+            this.value = value;
+        }
+
+        public Function<Double, Double> getConsumer() {
             return a -> {
-                if(a == null){
+                if (a == null) {
                     return getValue();
-                }else{
+                } else {
                     setValue(a);
                     return a;
                 }
@@ -562,13 +637,7 @@ public class NewCompositionShape implements CustomShape{
         public void setId(String id) {
             this.id = id;
         }
-
-        public void setValue(Double value) {
-            this.value = value;
-        }
     }
-
-
 
 
 }
