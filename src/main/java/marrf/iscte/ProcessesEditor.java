@@ -3,21 +3,28 @@ package marrf.iscte;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static marrf.iscte.App.getAnchorPaneClip;
 import static marrf.iscte.GridCanvas.NUMBER_COLUMNS_AND_ROWS;
@@ -47,6 +54,8 @@ public class ProcessesEditor {
     private HBox translationXSection;
     private HBox translationYSection;
 
+    private Arrow arrow = new Arrow();
+
 
     public ProcessesEditor(Scene scene, ArrayList<NewCompositionShape> newCompositionShapes, ArrayList<BasicShape> basicShapes, Orchestrator orchestrator){
         this.scene = scene;
@@ -70,6 +79,8 @@ public class ProcessesEditor {
     }
 
     private ComboBox<String> getComboBox(){
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
+
         ComboBox<String> comboBox = new ComboBox<>();
         comboBox.getItems().addAll(getCompositionShapesStringArray());
         comboBox.getItems().addAll(getBasicShapesStringArray());
@@ -81,6 +92,8 @@ public class ProcessesEditor {
             rightGrid.clearEverything();
             resetSliders();
             String value = comboBox.getValue();
+
+
 
             if(getCompositionShapesStringArray().contains(value)){
 
@@ -109,6 +122,9 @@ public class ProcessesEditor {
 
                 rightGrid.addShape(rightBasicShapeCopy);
             }
+
+            rightGrid.addArrow(arrow);
+
 
         });
 
@@ -169,6 +185,7 @@ public class ProcessesEditor {
             textField.setText(String.valueOf(truncatedDouble));
 
             rightGrid.addTranslation( (newValue.doubleValue() - oldValue.doubleValue()), 0);
+            arrow.setEndX(arrow.getEndX() + (newValue.doubleValue() - oldValue.doubleValue()) );
         });
 
         translationXSlider.setMaxWidth(Double.MAX_VALUE);
@@ -230,7 +247,10 @@ public class ProcessesEditor {
 
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
+
             rightGrid.addTranslation(0, (newValue.doubleValue() - oldValue.doubleValue()));
+            arrow.setEndY(arrow.getEndY() + (newValue.doubleValue() - oldValue.doubleValue()) );
+
         });
 
         translationYSlider.setMaxWidth(Double.MAX_VALUE);
@@ -331,12 +351,59 @@ public class ProcessesEditor {
     }
 
 
+    private Pane getButton(){
+
+        Label complexShape = new Label("Bool");
+        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        complexShape.setTextFill(Color.web("#EB5757"));
+
+        HBox complexShapeHBox = new HBox(complexShape);
+        complexShapeHBox.setAlignment(Pos.CENTER);
+        complexShapeHBox.setSpacing(5);
+        complexShapeHBox.setStyle("-fx-background-color: #5E2323;-fx-background-radius: 20");
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
+        complexShapeHBox.setMaxHeight(50);
+        complexShapeHBox.setPrefHeight(50);
+
+        complexShapeHBox.setOnMouseClicked(event -> {
+            System.out.println("yey");
+
+            WebView webView = new WebView();
+            WebEngine webEngine = webView.getEngine();
+
+            File file = new File("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/novoHtml.html");
+            webEngine.load(file.toURI().toString());
+
+            Stage newStage = new Stage();
+            newStage.initModality(Modality.APPLICATION_MODAL);
+            newStage.initOwner(stage);
+
+            Scene dialogScene = new Scene(webView, 1280, 720);
+            dialogScene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
+
+            newStage.setScene(dialogScene);
+            newStage.show();
+
+
+            newStage.sizeToScene();
+            newStage.setTitle("Web View");
+
+            newStage.setResizable(true);
+
+        });
+
+        complexShapeHBox.setMinWidth(60);
+
+        return complexShapeHBox;
+    }
+
     private void setUpPanes(){
         translationYSection = new HBox();
         translationXSection = new HBox();
 
         processGrid.setSpacing(20);
-        processGrid.getChildren().addAll(getLeftPane(), App.horizontalGrower(), getRightPane());
+        processGrid.getChildren().addAll(getLeftPane(), getButton(), getRightPane());
         processGrid.setAlignment(Pos.CENTER);
         processGrid.setPadding(new Insets(20));
         processGrid.setMaxWidth(Double.MAX_VALUE);
@@ -364,7 +431,6 @@ public class ProcessesEditor {
 
     public Pane getEditor(){
         setUpPanes();
-
 
         return mainPanel;
     }

@@ -40,3 +40,88 @@
 .menu-item{
     -fx-background-color: transparent;
 }
+
+
+
+
+
+
+
+.combo-box-base {
+    -fx-background-color: rgb(79,79,79);
+    -fx-background-radius: 10px;
+    -fx-text-fill: white;
+}
+
+.combo-box-base:pressed {
+    -fx-background-color: rgb(90,90,90);
+}
+
+.combo-box-base:hover {
+    -fx-background-color: rgb(90,90,90);
+}
+
+
+/*.combo-box:focused {
+    -fx-border-color: blue;
+}*/
+
+.combo-box .arrow, .combo-box .arrow-button{
+    -fx-background-color: transparent;
+}
+
+.combo-box .cell:selected {
+    -fx-text-fill: white;
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-text-fill: rgb(220, 220, 220);
+}
+
+.combo-box .list-cell
+{
+    -fx-background: rgb(166,166,166);
+    -fx-background-color: transparent;
+    -fx-text-fill: rgb(150, 150, 150);
+    -fx-padding: 3 0 2 7;
+    -fx-cell-size: 1.66667em;
+    -fx-background-radius: 10px;
+    -fx-pref-height: 30;
+}
+
+.combo-box-popup .list-view
+{
+    -fx-background-color: rgb(79,79,79);
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 10px;
+    -fx-padding: 3px;
+
+}
+
+.combo-box-popup .list-view .list-cell
+{
+    -fx-padding: 4 0 4 5;
+    -fx-background-color: rgb(79, 79,79);
+}
+
+.combo-box-popup .list-view .list-cell:filled:selected, .combo-box-popup .list-view .list-cell:filled:selected
+{
+    -fx-background: blue;
+    -fx-background-color: rgb(53, 101, 79);
+    -fx-text-fill: rgb(86, 242, 143);
+
+}
+
+.combo-box-popup .list-view .list-cell:filled:selected:hover
+{
+    -fx-background: blue;
+    -fx-background-color: rgb(86, 242, 143);
+    -fx-text-fill: white;
+
+}
+
+.combo-box-popup .list-view .list-cell:filled:hover
+{
+    -fx-background-color: rgb(105,105,105);
+    -fx-text-fill: white;
+}

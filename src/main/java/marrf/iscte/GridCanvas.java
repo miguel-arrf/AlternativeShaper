@@ -261,8 +261,11 @@ public class GridCanvas {
         try {
             //TODO AO Tirar o screenshot, deviamos centrar tudo novamente...
             GridCanvas.recenterEverything();
+
             WritableImage writableImage = new WritableImage((int) GridCanvas.pane.getWidth(),
                     (int) GridCanvas.pane.getHeight());
+
+
             WritableImage snapshot = GridCanvas.pane.snapshot(null, writableImage);
             //TODO Tirar screenshoot ao gridCanvas e não ao elemento!
             RenderedImage renderedImage = SwingFXUtils.fromFXImage(writableImage, null);

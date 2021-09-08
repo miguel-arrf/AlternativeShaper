@@ -139,6 +139,17 @@ public class SmallGridCanvas {
 
     }
 
+    public void addArrow(Arrow arrow){
+
+        arrow.setStartX(circle.getCenterX());
+        arrow.setStartY(circle.getCenterY());
+
+        arrow.setEndX(circle.getCenterX());
+        arrow.setEndY(circle.getCenterY());
+
+        pane.getChildren().add(arrow);
+    }
+
     public void clearEverything(){
         redraw();
         basicShapes.clear();

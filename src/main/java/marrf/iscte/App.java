@@ -1,6 +1,7 @@
 package marrf.iscte;
 
 import javafx.application.Application;
+import javafx.beans.NamedArg;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
@@ -113,21 +114,43 @@ public class App extends Application {
         ObservableList<String> options =
                 FXCollections.observableArrayList(
                         "Basic Shapes",
-                        "Composition Shapes"
+                        "Composition Shapes",
+                        "All Shapes"
                 );
-        final ComboBox comboBox = new ComboBox(options);
+        final ComboBox<String> comboBox = new ComboBox<>(options);
+        comboBox.setPrefHeight(40);
+        comboBox.setFocusTraversable(false);
+
         comboBox.setMaxWidth(Double.MAX_VALUE);
 
         comboBox.valueProperty().addListener((observableValue, o, t1) -> {
-            System.out.println("changed to: " + t1.toString());
+
             if(t1.toString().equals("Basic Shapes")){
+                addBasicShapesToSideBarIfTheyArent();
 
+                sideBarThumbnails.removeIf(p -> {
+                    if(p instanceof BasicShape){
+                        return false;
+                    }
+                    return true;
+                });
             }else if(t1.toString().equals("Composition Shapes")){
+                addCompositionShapesToSideBarIfTheyArent();
 
+                sideBarThumbnails.removeIf(p -> {
+                    if(p instanceof NewCompositionShape){
+                        return false;
+                    }
+                    return true;
+                });
             }else{
-                System.out.println("fuck");
+                System.out.println("No basic or composition");
+                addBasicShapesToSideBarIfTheyArent();
+                addCompositionShapesToSideBarIfTheyArent();
             }
         });
+
+        comboBox.getSelectionModel().selectLast();
 
         content.getChildren().add(comboBox);
 
@@ -155,7 +178,7 @@ public class App extends Application {
                                 selectedCompositionShape = (NewCompositionShape) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
-                                gridCanvas.clearEverything();
+                                GridCanvas.clearEverything();
                                 //TODO aqui está a true, mas em algum momento não será...
                                 isCurrentSimple = false;
                                 currentName.setText(basicShapeAdded.getShapeName());
@@ -170,7 +193,7 @@ public class App extends Application {
                                 selectedBasicShape = (BasicShape) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
-                                gridCanvas.clearEverything();
+                                GridCanvas.clearEverything();
                                 //TODO aqui está a true, mas em algum momento não será...
                                 isCurrentSimple = true;
                                 currentName.setText(basicShapeAdded.getShapeName());
@@ -197,6 +220,24 @@ public class App extends Application {
 
         return scrollPane;
     }
+
+    private void addBasicShapesToSideBarIfTheyArent(){
+        basicShapesToSave.forEach(p -> {
+            if(sideBarThumbnails.stream().noneMatch(s -> s.getUUID().equals(p.getUUID()))){
+                sideBarThumbnails.add(p);
+            }
+        });
+    }
+
+
+    private void addCompositionShapesToSideBarIfTheyArent(){
+        newCompositionShapes.forEach(p -> {
+            if(sideBarThumbnails.stream().noneMatch(s -> s.getUUID().equals(p.getUUID()))){
+                sideBarThumbnails.add(p);
+            }
+        });
+    }
+
 
     private void addCompositionShape(NewCompositionShape compositionShape, boolean wasDragged){
         if(wasDragged){
@@ -351,7 +392,6 @@ public class App extends Application {
 
         return complexShapeHBox;
     }
-
 
     private void addShape(CustomShape basicShapeToAdd){
             if(basicShapeToAdd instanceof BasicShape){
@@ -823,8 +863,6 @@ public class App extends Application {
         return nameHB;
     }
 
-
-
     public static HBox horizontalGrower(){
         var horizontalGrower = new HBox();
 
@@ -833,9 +871,6 @@ public class App extends Application {
 
         return horizontalGrower;
     }
-
-
-
 
     private Pane getSaveButtonSection(){
         Label saveLabel = new Label("Save");
