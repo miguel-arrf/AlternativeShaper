@@ -438,8 +438,8 @@ public class BasicShape implements CustomShape {
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
 
-        TextField textField = new TextField("0");
-        textField.setPromptText("0");
+        TextField textField = new TextField((String.valueOf(getInitialTranslation().getY())));
+        textField.setPromptText((String.valueOf(getInitialTranslation().getY())));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(60);
@@ -448,7 +448,7 @@ public class BasicShape implements CustomShape {
         Slider translationYSlider = new Slider();
         translationYSlider.setMax(SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
         translationYSlider.setMin(- SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationYSlider.setValue(0);
+        translationYSlider.setValue(getInitialTranslation().getY());
 
         translationYSlider.setMajorTickUnit(0.1);
         translationYSlider.setMinorTickCount(0);

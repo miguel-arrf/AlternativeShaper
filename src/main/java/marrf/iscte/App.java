@@ -297,6 +297,10 @@ public class App extends Application {
         saveHB.setMaxHeight(50);
         saveHB.setPrefHeight(50);
 
+        VBox buttons = new VBox(saveHB, getProcessButton());
+        buttons.setSpacing(10);
+        buttons.setAlignment(Pos.CENTER);
+
         Pane toAdd = getSeparator();
 
         firstBasicShapeWasSaved.addListener((observableValue, aBoolean, t1) -> {
@@ -305,7 +309,7 @@ public class App extends Application {
                     Node node = mainPanel.getChildren().get(i);
                     if(node.getId() != null && node.getId().equals("saveButton")){
                         mainPanel.getChildren().add(i, toAdd);
-                        mainPanel.getChildren().add(i+1, saveHB);
+                        mainPanel.getChildren().add(i+1, buttons);
                         break;
                     }
                 }
@@ -318,13 +322,42 @@ public class App extends Application {
 
     }
 
+    private Pane getProcessButton(){
+        Image complexPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/process.png")).toExternalForm());
+        ImageView complexPlusImageView = new ImageView(complexPlus);
+        complexPlusImageView.setSmooth(true);
+        complexPlusImageView.setPreserveRatio(true);
+        complexPlusImageView.setFitWidth(12);
+
+        Label complexShape = new Label("Process");
+        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        complexShape.setTextFill(Color.web("#ff8ad8"));
+
+        HBox complexShapeHBox = new HBox(complexPlusImageView, complexShape);
+        complexShapeHBox.setAlignment(Pos.CENTER);
+        complexShapeHBox.setSpacing(5);
+        complexShapeHBox.setStyle("-fx-background-color: #472953;-fx-background-radius: 20");
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
+        complexShapeHBox.setMaxHeight(50);
+        complexShapeHBox.setPrefHeight(50);
+
+        complexShapeHBox.setOnMouseClicked(event -> {
+            ProcessesEditor processesEditor = new ProcessesEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
+            processesEditor.openPopup();
+
+
+        });
+
+        return complexShapeHBox;
+    }
 
 
     private void addShape(CustomShape basicShapeToAdd){
             if(basicShapeToAdd instanceof BasicShape){
                 BasicShape tempBasicShape = (BasicShape) basicShapeToAdd;
 
-                gridCanvas.addShape(tempBasicShape);
+                GridCanvas.addShape(tempBasicShape);
                 if(!basicShapes.contains(tempBasicShape)){
                         basicShapes.add(tempBasicShape);
                 }
@@ -582,7 +615,7 @@ public class App extends Application {
         anchorPane.setPickOnBounds(false);
 
         pane.getChildren().add(anchorPane);
-        getAnchorPaneClip(anchorPane);
+        getAnchorPaneClip(anchorPane, "#262528");
 
         pane.setOnMouseEntered(event -> scene.setCursor(Cursor.CLOSED_HAND));
 
@@ -686,7 +719,7 @@ public class App extends Application {
         return pane;
     }
 
-    public Shape getTopLeftArc(){
+    public static Shape getTopLeftArc(){
         Rectangle rectangle = new Rectangle(20,20);
         rectangle.setTranslateX(20);
         rectangle.setFill(Color.YELLOW);
@@ -706,24 +739,24 @@ public class App extends Application {
         return Shape.subtract(rectangle, arc);
     }
 
-    public void getAnchorPaneClip(AnchorPane anchorPane){
+    public static void getAnchorPaneClip(AnchorPane anchorPane, String color){
         Shape topLeft = getTopLeftArc();
-        topLeft.setFill(Color.web("#262528"));
+        topLeft.setFill(Color.web(color));
         topLeft.setTranslateX(-20);
         topLeft.setTranslateY(0);
 
         Shape bottomLeft = getTopLeftArc();
         bottomLeft.setRotate(-90);
         bottomLeft.setTranslateX(-20);
-        bottomLeft.setFill(Color.web("#262528"));
+        bottomLeft.setFill(Color.web(color));
 
         Shape topRight = getTopLeftArc();
         topRight.setRotate(90);
-        topRight.setFill(Color.web("#262528"));
+        topRight.setFill(Color.web(color));
 
         Shape bottomRight = getTopLeftArc();
         bottomRight.setRotate(180);
-        bottomRight.setFill(Color.web("#262528"));
+        bottomRight.setFill(Color.web(color));
 
         AnchorPane.setBottomAnchor(bottomRight, 0.0);
         AnchorPane.setRightAnchor(bottomRight, 0.0);
@@ -743,7 +776,7 @@ public class App extends Application {
 
     }
 
-    public Shape getCustomRectangleClip(Pane parent){
+    public static Shape getCustomRectangleClip(Pane parent){
         Rectangle clip = new Rectangle(300,300);
 
         clip.setTranslateX(SCALE);

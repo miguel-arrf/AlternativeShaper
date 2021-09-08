@@ -94,7 +94,7 @@ public class PopupWindow {
 
     }
 
-    private void startBlurAnimation(Parent on, Double from, Double to, Duration duration, Boolean removeOnEnd){
+    public static void startBlurAnimation(Parent on, Double from, Double to, Duration duration, Boolean removeOnEnd){
 
         // START BLUR ANIMATION
         GaussianBlur blur = new GaussianBlur(0);
