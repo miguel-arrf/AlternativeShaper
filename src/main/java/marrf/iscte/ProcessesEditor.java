@@ -3,11 +3,8 @@ package marrf.iscte;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -27,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 import static marrf.iscte.App.getAnchorPaneClip;
+import static marrf.iscte.App.horizontalGrower;
 import static marrf.iscte.GridCanvas.NUMBER_COLUMNS_AND_ROWS;
 import static marrf.iscte.GridCanvas.SCALE;
 import static marrf.iscte.PopupWindow.startBlurAnimation;
@@ -191,6 +189,7 @@ public class ProcessesEditor {
         translationXSlider.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(translationXSlider, Priority.ALWAYS);
 
+        translationXSection.getChildren().clear();
         translationXSection.getChildren().addAll(translationLabel, translationXSlider, textField);
         translationXSection.setPadding(new Insets(10, 10, 10, 15));
         translationXSection.setAlignment(Pos.CENTER_LEFT);
@@ -256,7 +255,7 @@ public class ProcessesEditor {
         translationYSlider.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(translationYSlider, Priority.ALWAYS);
 
-
+        translationYSection.getChildren().clear();
         translationYSection.getChildren().addAll(translationLabel, translationYSlider, textField);
         translationYSection.setPadding(new Insets(10, 10, 10, 15));
         translationYSection.setAlignment(Pos.CENTER_LEFT);
@@ -350,21 +349,22 @@ public class ProcessesEditor {
         translationYPanel();
     }
 
+    private Pane getButton(boolean isItBool){
 
-    private Pane getButton(){
+        Label complexShape = new Label(isItBool ? "Bool" : "Process");
 
-        Label complexShape = new Label("Bool");
         complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        complexShape.setTextFill(Color.web("#EB5757"));
+        complexShape.setTextFill( isItBool ? Color.web("#EB5757") : Color.web("#5778EB"));
 
         HBox complexShapeHBox = new HBox(complexShape);
         complexShapeHBox.setAlignment(Pos.CENTER);
         complexShapeHBox.setSpacing(5);
-        complexShapeHBox.setStyle("-fx-background-color: #5E2323;-fx-background-radius: 20");
+        complexShapeHBox.setStyle("-fx-background-color: " + (isItBool ? "#5E2323" : "#233B5E") +";-fx-background-radius: 10");
+
         HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
 
         complexShapeHBox.setMaxHeight(50);
-        complexShapeHBox.setPrefHeight(50);
+        complexShapeHBox.setPrefHeight(20);
 
         complexShapeHBox.setOnMouseClicked(event -> {
             System.out.println("yey");
@@ -398,12 +398,32 @@ public class ProcessesEditor {
         return complexShapeHBox;
     }
 
+    private void setUpProcessPanelWith_Shape_Shape(){
+        processGrid.getChildren().clear();
+        processGrid.getChildren().addAll(getLeftPane(), getRightPane());
+    }
+
+    private void setUpProcessPanelWith_Shape_Shape_Proc(){
+        processGrid.getChildren().clear();
+        processGrid.getChildren().addAll(getLeftPane(), getRightPane(), getButton(false));
+    }
+
+    private void setUpProcessPanelWith_Bool_Shape_Shape(){
+        processGrid.getChildren().clear();
+        processGrid.getChildren().addAll(getButton(true), getLeftPane(), getRightPane());
+    }
+
+    private void setUpProcessPanelWith_Bool_Shape_Shape_Proc(){
+        processGrid.getChildren().clear();
+        processGrid.getChildren().addAll(getButton(true), getLeftPane(), getRightPane(), getButton(false));
+    }
+
     private void setUpPanes(){
         translationYSection = new HBox();
         translationXSection = new HBox();
 
         processGrid.setSpacing(20);
-        processGrid.getChildren().addAll(getLeftPane(), getButton(), getRightPane());
+        processGrid.getChildren().addAll(getLeftPane(), getButton(true), getRightPane());
         processGrid.setAlignment(Pos.CENTER);
         processGrid.setPadding(new Insets(20));
         processGrid.setMaxWidth(Double.MAX_VALUE);
@@ -417,7 +437,9 @@ public class ProcessesEditor {
         horizontalScrollPane.setStyle("-fx-background-color: #333234");
         horizontalScrollPane.setContent(processes);
 
-        mainPanel.getChildren().addAll(processPanel, horizontalScrollPane);
+        //mainPanel.getChildren().addAll(processPanel, horizontalScrollPane);
+        mainPanel.getChildren().addAll(getTemplate());
+
 
         processPanel.setMaxHeight(Double.MAX_VALUE);
         processPanel.setStyle("-fx-background-color: #333234; -fx-background-radius: 20");
@@ -435,6 +457,64 @@ public class ProcessesEditor {
         return mainPanel;
     }
 
+    public Pane getTemplate(){
+        HBox toReturn = new HBox();
+/*
+        toReturn.getChildren().addAll(ProcTemplate.get_Shape_Shape(event -> {
+            scene.setRoot(getEditor());
+
+            stage.sizeToScene();
+        }) , horizontalGrower(), ProcTemplate.get_Shape_Shape_Proc(),horizontalGrower(), ProcTemplate.get_Bool_Shape_Shape(), horizontalGrower(), ProcTemplate.get_Bool_Shape_Shape_Proc());
+*/
+        toReturn.getChildren().addAll(ProcTemplate.get_Shape_Shape(event -> {
+            setUpProcessPanelWith_Shape_Shape();
+
+            if(mainPanel.getChildren().size() == 1){
+               mainPanel.getChildren().add(0,processPanel);
+           }else if(mainPanel.getChildren().size() == 2){
+               mainPanel.getChildren().remove(0);
+               mainPanel.getChildren().add(0, processPanel);
+           }
+        }) , ProcTemplate.get_Shape_Shape_Proc(event -> {
+            setUpProcessPanelWith_Shape_Shape_Proc();
+
+            if(mainPanel.getChildren().size() == 1){
+                mainPanel.getChildren().add(0,processPanel);
+            }else if(mainPanel.getChildren().size() == 2){
+                mainPanel.getChildren().remove(0);
+                mainPanel.getChildren().add(0, processPanel);
+            }
+        }), ProcTemplate.get_Bool_Shape_Shape(event -> {
+            setUpProcessPanelWith_Bool_Shape_Shape();
+
+            if(mainPanel.getChildren().size() == 1){
+                mainPanel.getChildren().add(0,processPanel);
+            }else if(mainPanel.getChildren().size() == 2){
+                mainPanel.getChildren().remove(0);
+                mainPanel.getChildren().add(0, processPanel);
+            }
+        }), ProcTemplate.get_Bool_Shape_Shape_Proc(event -> {
+            setUpProcessPanelWith_Bool_Shape_Shape_Proc();
+
+            if(mainPanel.getChildren().size() == 1){
+                mainPanel.getChildren().add(0,processPanel);
+            }else if(mainPanel.getChildren().size() == 2){
+                mainPanel.getChildren().remove(0);
+                mainPanel.getChildren().add(0, processPanel);
+            }
+        }));
+
+
+        toReturn.setSpacing(20);
+        //toReturn.setPadding(new Insets(10));
+
+        //toReturn.setStyle("-fx-background-color: #262528");
+        //toReturn.setStyle("-fx-background-color: #333234; -fx-background-radius: 20");
+        toReturn.setAlignment(Pos.CENTER);
+
+        return toReturn;
+    }
+
     public void openPopup(){
         scene.getRoot().setCache(true);
         scene.getRoot().setCacheHint(CacheHint.SPEED);
@@ -446,6 +526,8 @@ public class ProcessesEditor {
         stage.initOwner(StartMenu.primaryStage);
 
         Scene dialogScene = new Scene(getEditor(), 1280, 720);
+        //Scene dialogScene = new Scene(getTemplate(), 230, 240);
+
         stage.setScene(dialogScene);
         stage.show();
 
