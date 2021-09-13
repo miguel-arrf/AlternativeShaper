@@ -338,8 +338,11 @@ public class App extends Application {
         saveHB.setMaxHeight(50);
         saveHB.setPrefHeight(50);
 
-        VBox buttons = new VBox(saveHB, getProcessButton());
-        buttons.setSpacing(10);
+        HBox shapeAndProcessBox = new HBox(getShapeRuleButton(), getProcessButton());
+        shapeAndProcessBox.setSpacing(20);
+
+        VBox buttons = new VBox(saveHB, shapeAndProcessBox);
+        buttons.setSpacing(15);
         buttons.setAlignment(Pos.CENTER);
 
         Pane toAdd = getSeparator();
@@ -363,22 +366,29 @@ public class App extends Application {
 
     }
 
-    private Pane getProcessButton(){
-        Image complexPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/process.png")).toExternalForm());
+    private HBox getButtonWith_Label_Color_Image(@NamedArg("label") String label, @NamedArg("background color") String backgroundColor,@NamedArg("label color") String labelColor, @NamedArg("image name") String imageLocation){
+        Image complexPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/" + imageLocation)).toExternalForm());
         ImageView complexPlusImageView = new ImageView(complexPlus);
         complexPlusImageView.setSmooth(true);
         complexPlusImageView.setPreserveRatio(true);
         complexPlusImageView.setFitWidth(12);
 
-        Label complexShape = new Label("Process");
+        Label complexShape = new Label(label);
         complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        complexShape.setTextFill(Color.web("#ff8ad8"));
+        complexShape.setTextFill(Color.web(labelColor));
 
         HBox complexShapeHBox = new HBox(complexPlusImageView, complexShape);
         complexShapeHBox.setAlignment(Pos.CENTER);
         complexShapeHBox.setSpacing(5);
-        complexShapeHBox.setStyle("-fx-background-color: #472953;-fx-background-radius: 20");
+        complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: 20");
         HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
+        return complexShapeHBox;
+    }
+
+
+    private Pane getProcessButton(){
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Add Process", "#355C65", "#56CDF2", "process.png");
 
         complexShapeHBox.setMaxHeight(50);
         complexShapeHBox.setPrefHeight(50);
@@ -386,8 +396,20 @@ public class App extends Application {
         complexShapeHBox.setOnMouseClicked(event -> {
             ProcessesEditor processesEditor = new ProcessesEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
             processesEditor.openPopup();
+        });
 
+        return complexShapeHBox;
+    }
 
+    private Pane getShapeRuleButton(){
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Add Shape Rules", "#472953", "#ff8ad8", "icons8-rules-96.png");
+
+        complexShapeHBox.setMaxHeight(50);
+        complexShapeHBox.setPrefHeight(50);
+
+        complexShapeHBox.setOnMouseClicked(event -> {
+            ProcessesEditor processesEditor = new ProcessesEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
+            processesEditor.openPopup();
         });
 
         return complexShapeHBox;

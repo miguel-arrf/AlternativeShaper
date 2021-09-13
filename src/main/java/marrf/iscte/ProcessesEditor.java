@@ -321,6 +321,26 @@ public class ProcessesEditor {
         return pane;
     }
 
+
+    private Pane getArrowPane(){
+        VBox vBox = new VBox();
+        vBox.setAlignment(Pos.CENTER);
+
+        Arrow arrow = new Arrow();
+
+        arrow.setStartY(0);
+        arrow.setStartX(0);
+
+        arrow.setEndY(0);
+        arrow.setEndX(100);
+
+        vBox.getChildren().add(arrow);
+
+        VBox.setVgrow(vBox, Priority.ALWAYS);
+
+        return vBox;
+    }
+
     private Pane getLeftPane(){
         VBox vBox = new VBox();
         vBox.setSpacing(10);
@@ -400,22 +420,22 @@ public class ProcessesEditor {
 
     private void setUpProcessPanelWith_Shape_Shape(){
         processGrid.getChildren().clear();
-        processGrid.getChildren().addAll(getLeftPane(), getRightPane());
+        processGrid.getChildren().addAll(getLeftPane(),getArrowPane(), getRightPane());
     }
 
     private void setUpProcessPanelWith_Shape_Shape_Proc(){
         processGrid.getChildren().clear();
-        processGrid.getChildren().addAll(getLeftPane(), getRightPane(), getButton(false));
+        processGrid.getChildren().addAll(getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
     }
 
     private void setUpProcessPanelWith_Bool_Shape_Shape(){
         processGrid.getChildren().clear();
-        processGrid.getChildren().addAll(getButton(true), getLeftPane(), getRightPane());
+        processGrid.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane());
     }
 
     private void setUpProcessPanelWith_Bool_Shape_Shape_Proc(){
         processGrid.getChildren().clear();
-        processGrid.getChildren().addAll(getButton(true), getLeftPane(), getRightPane(), getButton(false));
+        processGrid.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
     }
 
     private void setUpPanes(){
