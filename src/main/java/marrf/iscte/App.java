@@ -574,12 +574,14 @@ public class App extends Application {
         sideBarThumbnails.remove(temp);
 
         if(basicShapesToSave.size() == 0){
-            mainPanel.getChildren().remove(nameSection);
-            mainPanel.getChildren().remove(saveSection);
-            /*BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+            //mainPanel.getChildren().remove(nameSection);
+            //mainPanel.getChildren().remove(saveSection);
+            //Ads a basic shape when we delete the last one!
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
-            currentName.setText("default");*/
+            currentName.setText("defaultName");
+            sideBarThumbnails.add(toAdd);
         }else{
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
@@ -633,6 +635,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) {
+
         Pane borderPane = getScenePanel(scene);
 
         scene = new Scene(borderPane, 1920, 1080);

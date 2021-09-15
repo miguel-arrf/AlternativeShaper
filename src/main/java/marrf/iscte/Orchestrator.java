@@ -239,6 +239,26 @@ public class Orchestrator {
         return list;
     }
 
+    public void processesToString(){
+        StringBuilder toReturn = new StringBuilder();
+
+        processes.forEach(process -> {
+
+
+            if(!Process.hasDependencies(process)){
+                toReturn.append(process.getProcessCode()).append("\n");
+            }else{
+                toReturn.append(Process.solveDependency(processes, process)).append("\n");
+
+            }
+
+        });
+
+        System.out.println("final:\n" + toReturn);
+    }
+
+
+
     private void saveFile(){
         System.out.println("Orchestrator saveFile()");
 

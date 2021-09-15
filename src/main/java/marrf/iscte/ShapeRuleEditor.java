@@ -262,7 +262,7 @@ public class ShapeRuleEditor {
         return vBox;
     }
 
-    private String getShapesJSON(){
+    public static String getShapesJSON(ArrayList<BasicShape> basicShapes, ArrayList<NewCompositionShape> newCompositionShapes){
         StringBuilder toReturn = new StringBuilder();
 
         basicShapes.forEach(basicShape -> {
@@ -289,6 +289,63 @@ public class ShapeRuleEditor {
         return toReturn.toString();
     }
 
+    private File setUpFiles(String fileName){
+        Path htmlOriginal = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/" + fileName + ".html");
+
+        File directory = new File("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/");
+        for (File childrenFile : directory.listFiles()){
+            if(childrenFile.getName().contains("Copied_")){
+                childrenFile.delete();
+            }
+        }
+
+        int randomNum = ThreadLocalRandom.current().nextInt(0, 100 + 1);
+
+        Path htmlCopied = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/" + fileName + "Copied"+ "_" + randomNum + ".html");
+
+        try{
+            Files.copy(htmlOriginal, htmlCopied, StandardCopyOption.REPLACE_EXISTING);
+
+            String fileContentJS = new String(Files.readAllBytes(htmlCopied));
+            fileContentJS = fileContentJS.replace("myBlocksCopied.js","myBlocksCopied.js?c=r_" + randomNum);
+            Files.write(htmlCopied, fileContentJS.getBytes());
+
+
+            Path original = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/scripts/myBlocks.js" );
+            Path copied = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/scripts/myBlocksCopied.js" );
+
+            Files.copy(original, copied, StandardCopyOption.REPLACE_EXISTING);
+
+
+            String fileContent = new String(Files.readAllBytes(copied));
+            fileContent = fileContent.replace("//CHANGE_HERE", "{\n" +
+                    "  \"type\": \"availableshapes\",\n" +
+                    "  \"message0\": \"%1\",\n" +
+                    "  \"args0\": [\n" +
+                    "    {\n" +
+                    "      \"type\": \"field_dropdown\",\n" +
+                    "      \"name\": \"NAME\",\n" +
+                    "      \"options\": [\n" +
+                    "       " + getShapesJSON(basicShapes, newCompositionShapes) +
+                    "      ]\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"output\": \"shape\",\n" +
+                    "  \"colour\": 180,\n" +
+                    "  \"tooltip\": \"\",\n" +
+                    "  \"helpUrl\": \"\"\n" +
+                    "},");
+            Files.write(copied, fileContent.getBytes());
+
+
+        }catch (Exception e){
+
+        }
+
+        return htmlCopied.toFile();
+    }
+
+
     private Pane getButton(boolean isItBool){
 
         Label complexShape = new Label(isItBool ? "Bool" : "Proc1");
@@ -312,74 +369,10 @@ public class ShapeRuleEditor {
             WebView webView = new WebView();
             WebEngine webEngine = webView.getEngine();
 
-            File file = new File(isItBool ? "/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/bool.html" : "/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/proc1.html");
+            File boolFile = setUpFiles(isItBool ? "bool" : "proc1");
 
-
-            Path htmlOriginal = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/bool.html");
-
-
-            File directory = new File("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/");
-            for (File childrenFile : directory.listFiles()){
-                if(childrenFile.getName().contains("Copied_")){
-                    childrenFile.delete();
-                }
-            }
-
-            int randomNum = ThreadLocalRandom.current().nextInt(0, 100 + 1);
-
-            Path htmlCopied = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/boolCopied"+ "_" + randomNum + ".html");
-
-
-            try{
-                Files.copy(htmlOriginal, htmlCopied, StandardCopyOption.REPLACE_EXISTING);
-
-                String fileContent = new String(Files.readAllBytes(htmlCopied));
-                fileContent = fileContent.replace("myBlocksCopied.js","myBlocksCopied.js?c=r_" + randomNum);
-                Files.write(htmlCopied, fileContent.getBytes());
-
-
-
-
-            }catch (Exception e){
-
-            }
-
-            try{
-                Path original = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/scripts/myBlocks.js" );
-                Path copied = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/scripts/myBlocksCopied.js" );
-
-                Files.copy(original, copied, StandardCopyOption.REPLACE_EXISTING);
-
-                System.out.println("get: " + getShapesJSON());
-
-                String fileContent = new String(Files.readAllBytes(copied));
-                fileContent = fileContent.replace("//CHANGE_HERE", "{\n" +
-                        "  \"type\": \"availableshapes\",\n" +
-                        "  \"message0\": \"%1\",\n" +
-                        "  \"args0\": [\n" +
-                        "    {\n" +
-                        "      \"type\": \"field_dropdown\",\n" +
-                        "      \"name\": \"NAME\",\n" +
-                        "      \"options\": [\n" +
-                        "       " + getShapesJSON() +
-                        "      ]\n" +
-                        "    }\n" +
-                        "  ],\n" +
-                        "  \"output\": \"shape\",\n" +
-                        "  \"colour\": 180,\n" +
-                        "  \"tooltip\": \"\",\n" +
-                        "  \"helpUrl\": \"\"\n" +
-                        "},");
-                Files.write(copied, fileContent.getBytes());
-
-            }catch (Exception e ){
-                e.printStackTrace();
-            }
-
-
-
-            webEngine.load(htmlCopied.toFile().toURI().toString());
-            System.out.println("a carregar: " + htmlCopied.toFile().toURI().toString());
+            webEngine.load(boolFile.toURI().toString());
+            System.out.println("a carregar: " + boolFile.toURI().toString());
             webEngine.reload();
 
 

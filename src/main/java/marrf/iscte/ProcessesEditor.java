@@ -5,7 +5,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Worker;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
 import javafx.scene.Node;
@@ -26,12 +25,18 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 import static marrf.iscte.PopupWindow.startBlurAnimation;
+import static marrf.iscte.ShapeRuleEditor.getShapesJSON;
 
 public class ProcessesEditor {
 
@@ -65,11 +70,69 @@ public class ProcessesEditor {
         this.processes = orchestrator.getProcesses();
     }
 
+    private File setUpFiles(String fileName){
+        Path htmlOriginal = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/" + fileName + ".html");
+
+        File directory = new File("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/");
+        for (File childrenFile : directory.listFiles()){
+            if(childrenFile.getName().contains("Copied_")){
+                childrenFile.delete();
+            }
+        }
+
+        int randomNum = ThreadLocalRandom.current().nextInt(0, 100 + 1);
+
+        Path htmlCopied = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/" + fileName + "Copied"+ "_" + randomNum + ".html");
+
+        try{
+            Files.copy(htmlOriginal, htmlCopied, StandardCopyOption.REPLACE_EXISTING);
+
+            String fileContentJS = new String(Files.readAllBytes(htmlCopied));
+            fileContentJS = fileContentJS.replace("myBlocksCopied.js","myBlocksCopied.js?c=r_" + randomNum);
+            Files.write(htmlCopied, fileContentJS.getBytes());
+
+
+            Path original = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/scripts/myBlocks.js" );
+            Path copied = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/scripts/myBlocksCopied.js" );
+
+            Files.copy(original, copied, StandardCopyOption.REPLACE_EXISTING);
+
+
+            String fileContent = new String(Files.readAllBytes(copied));
+            fileContent = fileContent.replace("//CHANGE_HERE", "{\n" +
+                    "  \"type\": \"availableshapes\",\n" +
+                    "  \"message0\": \"%1\",\n" +
+                    "  \"args0\": [\n" +
+                    "    {\n" +
+                    "      \"type\": \"field_dropdown\",\n" +
+                    "      \"name\": \"NAME\",\n" +
+                    "      \"options\": [\n" +
+                    "       " + getShapesJSON(basicShapes, newCompositionShapes) +
+                    "      ]\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"output\": \"shape\",\n" +
+                    "  \"colour\": 180,\n" +
+                    "  \"tooltip\": \"\",\n" +
+                    "  \"helpUrl\": \"\"\n" +
+                    "},");
+            Files.write(copied, fileContent.getBytes());
+
+
+
+        }catch (Exception e){
+
+        }
+
+        return htmlCopied.toFile();
+    }
+
+
     private Node getWebView(){
         WebEngine webEngine = webView.getEngine();
         //webEngine.setUserAgent("AppleWebKit/537.44");
 
-        File file = new File("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/proc.html");
+        File file = setUpFiles("proc");
 
         webEngine.load(file.toURI().toString());
 
@@ -182,14 +245,29 @@ public class ProcessesEditor {
 
         saveHB.setOnMouseClicked(mouseEvent -> {
 
-            String workspaceXML = (String) webView.getEngine().executeScript("teste()");
+            int canSave = (int) webView.getEngine().executeScript("numberOfNonConnectedBlocks()");
 
-            currentProcess.setBlocklyXML(workspaceXML);
-            currentProcess.setProcessName(nameTextfield.getText());
 
-            scrollBarThumbnails.add(currentProcess);
+            if(canSave == 1){
 
-            Process.updateOrAdd(processes, currentProcess);
+                String workspaceXML = (String) webView.getEngine().executeScript("teste()");
+                String code = webView.getEngine().executeScript("getCode()").toString();
+
+
+
+                currentProcess.setProcessCode(code);
+                currentProcess.setBlocklyXML(workspaceXML);
+                currentProcess.setProcessName(nameTextfield.getText());
+
+                scrollBarThumbnails.add(currentProcess);
+
+                Process.updateOrAdd(processes, currentProcess);
+
+                orchestrator.processesToString();
+            }
+
+
+
 
         });
 

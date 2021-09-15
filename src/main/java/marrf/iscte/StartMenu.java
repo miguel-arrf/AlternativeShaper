@@ -158,6 +158,15 @@ public class StartMenu extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        /*String toReplace = "existingproc(miguel)";
+        String from = "pickone((existingproc(miguel)));";
+        String with = "initialShape((shape( default )));";
+        System.out.println(from.replaceAll(Pattern.quote(toReplace), with));
+        Process teste = new Process("miguel", "istoFoiUmTeste", "oi");
+        ArrayList<Process> arrayList = new ArrayList<>();
+        arrayList.add(teste);
+        Process.solveDependency(arrayList, new Process("pickone((existingProc(miguel)))"));*/
+
         this.primaryStage = primaryStage;
         primaryStage.getIcons().add(new Image(App.class.getResource("/icons/appIcon.png").toExternalForm()));
 
