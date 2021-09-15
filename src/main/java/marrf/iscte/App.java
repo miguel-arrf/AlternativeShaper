@@ -107,7 +107,8 @@ public class App extends Application {
 
     private ScrollPane getScrollPane(){
         ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setStyle("-fx-background: rgb(51,50,52); -fx-border-radius: 10");
+        scrollPane.setStyle("-fx-background: rgb(51,50,52); -fx-background-radius: 10");
+        scrollPane.setStyle("-fx-background-color: rgb(51,50,52); -fx-background-radius: 10; -fx-background: transparent");
 
         VBox content = new VBox(/*getBasicShape()*/);
 
@@ -269,7 +270,7 @@ public class App extends Application {
         complexPlusImageView.setFitWidth(12);
 
 
-        Label basicShape = new Label("Basic Shape");
+        Label basicShape = new Label("Add Basic Shape");
         basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         basicShape.setTextFill(Color.web("#56CCF2"));
 
@@ -302,7 +303,7 @@ public class App extends Application {
         });
 
 
-        Label complexShape = new Label("Complex Shape");
+        Label complexShape = new Label("Add Complex Shape");
         complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         complexShape.setTextFill(Color.web("#F2C94C"));
 
@@ -333,7 +334,7 @@ public class App extends Application {
         });
 
         HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
-        saveHB.setSpacing(10);
+        saveHB.setSpacing(20);
         saveHB.setAlignment(Pos.CENTER);
         saveHB.setMaxHeight(50);
         saveHB.setPrefHeight(50);
@@ -388,7 +389,7 @@ public class App extends Application {
 
 
     private Pane getProcessButton(){
-        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Add Process", "#355C65", "#56CDF2", "process.png");
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Processes editor", "#355C65", "#56CDF2", "process.png");
 
         complexShapeHBox.setMaxHeight(50);
         complexShapeHBox.setPrefHeight(50);
@@ -402,14 +403,14 @@ public class App extends Application {
     }
 
     private Pane getShapeRuleButton(){
-        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Add Shape Rules", "#472953", "#ff8ad8", "icons8-rules-96.png");
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Shape rules editor", "#472953", "#ff8ad8", "icons8-rules-96.png");
 
         complexShapeHBox.setMaxHeight(50);
         complexShapeHBox.setPrefHeight(50);
 
         complexShapeHBox.setOnMouseClicked(event -> {
-            ProcessesEditor processesEditor = new ProcessesEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
-            processesEditor.openPopup();
+            ShapeRuleEditor shapeRuleEditor = new ShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
+            shapeRuleEditor.openPopup();
         });
 
         return complexShapeHBox;
@@ -521,7 +522,7 @@ public class App extends Application {
 
         mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),transformersBox, getSaveButtonSection());
 
-        transformersBox.setSpacing(10);
+        transformersBox.setSpacing(20);
 
         var scenePanel = new VBox(mainPanel);
         scenePanel.setStyle("-fx-background-color: black");
@@ -568,7 +569,7 @@ public class App extends Application {
         BasicShape temp = basicShapesToSave.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
         basicShapesToSave.remove(temp);
         basicShapes.remove(temp);
-        gridCanvas.clearEverything();
+        GridCanvas.clearEverything();
         transformersBox.getChildren().clear();
         sideBarThumbnails.remove(temp);
 

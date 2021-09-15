@@ -55,6 +55,7 @@ public class NewCompositionShape implements CustomShape {
     //Deletion handlers
     private Function<String, Double> proceedWhenDeletingFromThumbnail;
     private Function<String, Double> proceedToRedrawWhenDeleting;
+    private Function<Pane, Double> proceedWhenDeleting;
 
     public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
@@ -196,6 +197,20 @@ public class NewCompositionShape implements CustomShape {
         };
     }
 
+    public NewCompositionShape getPaneWithBasicAndCompositionShapes(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY, Pane transformersBox){
+
+        NewCompositionShape teste = new NewCompositionShape(orchestrator, transformersBox, a -> 0.0, a -> 0.0);
+
+        teste.addNewCompositionShape(this);
+        teste.getTeste(toAdd, true, 0,0);
+
+        return teste;
+    }
+
+    public void setProceedWhenDeleting(Function<Pane, Double> proceedWhenDeleting) {
+        this.proceedWhenDeleting = proceedWhenDeleting;
+    }
+
     public void getTeste(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY) {
 
         compositionShapeMap.forEach((newID, compositionShape) -> {
@@ -289,6 +304,8 @@ public class NewCompositionShape implements CustomShape {
                     Information yTranslationToRemove = compositionShapesYTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
                     compositionShapesXTranslation.remove(xTranslationToRemove);
                     compositionShapesYTranslation.remove(yTranslationToRemove);
+
+                    proceedWhenDeleting.apply(null);
                 });
 
                 addTo.setOnContextMenuRequested(contextMenuEvent -> {

@@ -7,13 +7,17 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import org.apache.commons.lang3.SystemUtils;
@@ -557,7 +561,6 @@ public class BasicShape implements CustomShape {
         String colorString = colorToRGBString(this.color);
 
 
-
         boolean wasSelected = isStrokeOn();
 
         if (wasSelected) {
@@ -633,6 +636,12 @@ public class BasicShape implements CustomShape {
             contextMenu.show(thumbnail, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
         });
 
+        DropShadow dropShadow = new DropShadow();
+        dropShadow.setRadius(10.0);
+        dropShadow.setColor(color.darker());
+
+        thumbnail.setEffect(dropShadow);
+
         return thumbnail;
     }
 
@@ -696,6 +705,62 @@ public class BasicShape implements CustomShape {
             rectangle.setStyle("");
             strokeShowing = false;
         }
+    }
+
+    public Node getExtendedRectangle(){
+        Group addTo = new Group();
+
+        Rectangle extendedRectangle = new Rectangle(getWidth() + 20, getHeight() + 20);
+        extendedRectangle.setArcWidth(10);
+        extendedRectangle.setArcHeight(10);
+        extendedRectangle.setFill(Color.web("rgba(255,255,255,0.2)"));
+        extendedRectangle.setX(rectangle.getLayoutBounds().getMinX() - 10 + rectangle.getTranslateX());
+        extendedRectangle.setY(rectangle.getLayoutBounds().getMinY() - 10 + rectangle.getTranslateY());
+
+        rectangle.translateXProperty().addListener((observableValue, number, t1) -> {
+            extendedRectangle.setX(rectangle.getLayoutBounds().getMinX() - 10 + rectangle.getTranslateX());
+        });
+
+        rectangle.translateYProperty().addListener((observableValue, number, t1) -> {
+            extendedRectangle.setY(rectangle.getLayoutBounds().getMinY() - 10 + rectangle.getTranslateY());
+        });
+
+        addTo.getChildren().add(rectangle);
+
+        addTo.setOnMouseEntered(event -> {
+            addTo.getChildren().add(0,extendedRectangle);
+        });
+
+
+        addTo.setOnMouseExited(event -> {
+            addTo.getChildren().remove(extendedRectangle);
+        });
+
+        if(proceedWhenDeleting != null){
+            ContextMenu contextMenu = new ContextMenu();
+            MenuItem menuItem = new MenuItem("Delete");
+            menuItem.setStyle("-fx-text-fill: red");
+            contextMenu.getItems().add(menuItem);
+
+            menuItem.setOnAction(actionEvent -> {
+                proceedWhenDeleting.apply(rectangle);
+                Pane parent = (Pane) addTo.getParent();
+                parent.getChildren().remove(addTo);
+            });
+
+            addTo.setOnContextMenuRequested(contextMenuEvent -> {
+                contextMenu.show(addTo, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+            });
+
+        }
+
+
+
+        return addTo;
+    }
+
+    public void setProceedWhenDeleting(Function<Pane, Double> proceedWhenDeleting) {
+        this.proceedWhenDeleting = proceedWhenDeleting;
     }
 
     public Pane getRectangle() {

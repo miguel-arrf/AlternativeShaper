@@ -1,12 +1,21 @@
 package marrf.iscte;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.concurrent.Worker;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
-import javafx.scene.layout.*;
+import javafx.scene.effect.GaussianBlur;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -17,522 +26,249 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.UUID;
+import java.util.function.Function;
 
-import static marrf.iscte.App.getAnchorPaneClip;
-import static marrf.iscte.App.horizontalGrower;
-import static marrf.iscte.GridCanvas.NUMBER_COLUMNS_AND_ROWS;
-import static marrf.iscte.GridCanvas.SCALE;
 import static marrf.iscte.PopupWindow.startBlurAnimation;
 
 public class ProcessesEditor {
 
-    private Stage stage = new Stage();
-    private Scene scene;
+    private final Stage stage = new Stage();
+    private final Scene scene;
 
     private final VBox mainPanel = new VBox();
-    private final HBox processPanel = new HBox();
-
-    private final ScrollPane horizontalScrollPane = new ScrollPane();
-    private final HBox processes = new HBox();
-    private final HBox processGrid = new HBox();
+    private final ScrollPane processesScrollPanel = new ScrollPane();
+    private final HBox processesPanel = new HBox();
+    private final HBox utilitiesButtons = new HBox();
+    private final HBox addButton_ProcessesScrollPanel = new HBox();
 
     private final ArrayList<NewCompositionShape> newCompositionShapes;
     private final ArrayList<BasicShape> basicShapes;
 
-    private SmallGridCanvas leftGrid;
-    private SmallGridCanvas rightGrid;
+    private final ArrayList<Process> processes;
+    private Process currentProcess;
+    private final ObservableList<Process> scrollBarThumbnails = FXCollections.observableList(new ArrayList<>());
 
-    private Orchestrator orchestrator;
+    private final Orchestrator orchestrator;
 
-    private HBox translationXSection;
-    private HBox translationYSection;
+    private final WebView webView = new WebView();
 
-    private Arrow arrow = new Arrow();
-
+    private TextField nameTextfield;
 
     public ProcessesEditor(Scene scene, ArrayList<NewCompositionShape> newCompositionShapes, ArrayList<BasicShape> basicShapes, Orchestrator orchestrator){
         this.scene = scene;
         this.newCompositionShapes = newCompositionShapes;
         this.basicShapes = basicShapes;
         this.orchestrator = orchestrator;
+        this.processes = orchestrator.getProcesses();
     }
 
-    private ArrayList<String> getCompositionShapesStringArray(){
-        ArrayList<String> toReturn = new ArrayList<>();
-        newCompositionShapes.forEach( p -> toReturn.add(p.getShapeName()));
+    private Node getWebView(){
+        WebEngine webEngine = webView.getEngine();
+        //webEngine.setUserAgent("AppleWebKit/537.44");
 
-        return toReturn;
+        File file = new File("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/proc.html");
+
+        webEngine.load(file.toURI().toString());
+
+        return webView;
     }
 
-    private ArrayList<String> getBasicShapesStringArray(){
-        ArrayList<String> toReturn = new ArrayList<>();
-        basicShapes.forEach( p -> toReturn.add(p.getShapeName()));
+    private Function<UUID, Double> getProceedWhenDeleting(){
+        return idToRemove -> {
+            Process temp = processes.stream().filter( process -> process.getId().equals(idToRemove)).findFirst().get();
+            scrollBarThumbnails.remove(temp);
+            processes.remove(temp);
 
-        return toReturn;
-    }
-
-    private ComboBox<String> getComboBox(){
-        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
-
-        ComboBox<String> comboBox = new ComboBox<>();
-        comboBox.getItems().addAll(getCompositionShapesStringArray());
-        comboBox.getItems().addAll(getBasicShapesStringArray());
-
-        comboBox.setMaxWidth(Double.MAX_VALUE);
-
-        comboBox.setOnAction(event -> {
-            leftGrid.clearEverything();
-            rightGrid.clearEverything();
-            resetSliders();
-            String value = comboBox.getValue();
+            if(processes.size() == 0){
+                System.out.println("no processes left!");
+                //There's no processes left
+                webView.getEngine().executeScript("clear();");
+                currentProcess = new Process();
+                currentProcess.setProcessName("NO_NAME");
 
 
-
-            if(getCompositionShapesStringArray().contains(value)){
-
-                NewCompositionShape originalCompositionShape = newCompositionShapes.stream().filter( p -> p.getShapeName().equals(value)).findFirst().get();
-
-                originalCompositionShape.getBasicShapes().forEach(p -> rightGrid.addShape(p));
-                originalCompositionShape.getBasicShapes().forEach(p -> leftGrid.addShape(p));
-
-                Pane toAdd = new Pane();
-                originalCompositionShape.getTeste(toAdd, true, 0,0);
-
-                rightGrid.addGroup(toAdd);
-
-                Pane toAddLeft = new Pane();
-                originalCompositionShape.getTeste(toAddLeft, true, 0,0);
-
-                leftGrid.addGroup(toAddLeft);
-
-            }else if(getBasicShapesStringArray().contains(value)){
-                BasicShape originalBasicShape = basicShapes.stream().filter(p -> p.getShapeName().equals(value)).findFirst().get();
-
-                BasicShape leftBasicShapeCopy = orchestrator.getCopyOfBasicShape(originalBasicShape.getUUID().toString(), a -> 0.0, a -> 0.0, a -> 0.0);
-                BasicShape rightBasicShapeCopy = orchestrator.getCopyOfBasicShape(originalBasicShape.getUUID().toString(), a -> 0.0, a -> 0.0, a -> 0.0);
-
-                leftGrid.addShape(leftBasicShapeCopy);
-
-                rightGrid.addShape(rightBasicShapeCopy);
+            }else{
+                //Let's select the first one...
+                selectTheFirstProcess();
             }
 
-            rightGrid.addArrow(arrow);
-
-
-        });
-
-        return comboBox;
+            return null;
+        };
     }
 
-    private void translationXPanel(){
-        Label translationLabel = new Label("Translation X:");
-        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        translationLabel.setTextFill(Color.web("#BDBDBD"));
-        translationLabel.setWrapText(false);
 
-        TextField textField = new TextField("0");
-        textField.setPromptText(String.valueOf("0"));
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(60);
-        textField.setAlignment(Pos.CENTER);
-
-        Slider translationXSlider = new Slider();
-        translationXSlider.setMax(SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationXSlider.setMin(- SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationXSlider.setValue(0);
-
-        textField.setOnKeyPressed(keyEvent -> {
-            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-
-                try {
-                    if (Double.parseDouble(textField.getText()) < translationXSlider.getMin()) {
-                        textField.setText(String.valueOf(translationXSlider.getMin()));
+    private void setUpScrollbarThumbnails(){
+        scrollBarThumbnails.addListener((ListChangeListener<? super Process>) change -> {
+            while (change.next()){
+                if (change.wasRemoved()){
+                    for(Process processRemoved : change.getRemoved()){
+                        Node toRemove = processRemoved.getThumbnail();
+                        processesPanel.getChildren().remove(toRemove);
                     }
-
-                    translationXSlider.setValue(Double.parseDouble(textField.getText()));
-
-                } catch (NumberFormatException e) {
-                    textField.setText(String.valueOf(translationXSlider.getMin()));
-                    translationXSlider.setValue(translationXSlider.getMin());
                 }
 
-            }
-        });
+                if (change.wasAdded()){
 
-        //TODO: TextField should allow for 0.##, and slider only for 0.#.
-        //TODO: Height pane
+                    for(Process processAdded : change.getAddedSubList()){
+                        Node checkIfExists = processAdded.getThumbnail();
+                        processesPanel.getChildren().remove(checkIfExists);
+                        processesPanel.getChildren().add(checkIfExists);
 
-        translationXSlider.setMajorTickUnit(0.1);
-        translationXSlider.setMinorTickCount(0);
-        translationXSlider.setSnapToTicks(true);
+                        checkIfExists.setOnMouseClicked(mouseEvent -> {
+                            webView.getEngine().executeScript("clear();");
+                            currentProcess = processAdded;
+                            nameTextfield.setText(processAdded.getProcessName());
+                            webView.getEngine().executeScript("novoTeste('"+ processAdded.getBlocklyXML() +"')");
+                        });
 
-        translationXSlider.valueProperty().addListener(((observableValue, number, t1) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-            translationXSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
-        }));
+                        ContextMenu contextMenu = new ContextMenu();
+                        MenuItem menuItem = new MenuItem("Delete Process");
+                        menuItem.setStyle("-fx-text-fill: red");
+                        contextMenu.getItems().add(menuItem);
 
-        translationXSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
+                        menuItem.setOnAction(actionEvent -> {
+                            getProceedWhenDeleting().apply(processAdded.getId());
+                        });
 
-            rightGrid.addTranslation( (newValue.doubleValue() - oldValue.doubleValue()), 0);
-            arrow.setEndX(arrow.getEndX() + (newValue.doubleValue() - oldValue.doubleValue()) );
-        });
+                        checkIfExists.setOnContextMenuRequested(contextMenuEvent -> {
+                            contextMenu.show(checkIfExists, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+                        });
 
-        translationXSlider.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(translationXSlider, Priority.ALWAYS);
-
-        translationXSection.getChildren().clear();
-        translationXSection.getChildren().addAll(translationLabel, translationXSlider, textField);
-        translationXSection.setPadding(new Insets(10, 10, 10, 15));
-        translationXSection.setAlignment(Pos.CENTER_LEFT);
-        translationXSection.setMinHeight(30);
-        translationXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-        translationXSection.setSpacing(20);
-
-    }
-
-    private void translationYPanel(){
-        Label translationLabel = new Label("Translation Y:");
-        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        translationLabel.setTextFill(Color.web("#BDBDBD"));
-        translationLabel.setWrapText(false);
-
-        TextField textField = new TextField("0");
-        textField.setPromptText("0");
-        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
-        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setPrefWidth(60);
-        textField.setAlignment(Pos.CENTER);
-
-        Slider translationYSlider = new Slider();
-        translationYSlider.setMax(SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationYSlider.setMin(- SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationYSlider.setValue(0);
-
-        translationYSlider.setMajorTickUnit(0.1);
-        translationYSlider.setMinorTickCount(0);
-        translationYSlider.setSnapToTicks(true);
-
-        textField.setOnKeyPressed(keyEvent -> {
-            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-
-                try {
-                    if (Double.parseDouble(textField.getText()) < translationYSlider.getMin()) {
-                        textField.setText(String.valueOf(translationYSlider.getMin()));
                     }
 
-                    translationYSlider.setValue(Double.parseDouble(textField.getText()));
-
-                } catch (NumberFormatException e) {
-                    textField.setText(String.valueOf(translationYSlider.getMin()));
-                    translationYSlider.setValue(translationYSlider.getMin());
                 }
-
             }
-        });
 
-
-        translationYSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-
-            rightGrid.addTranslation(0, (newValue.doubleValue() - oldValue.doubleValue()));
-            arrow.setEndY(arrow.getEndY() + (newValue.doubleValue() - oldValue.doubleValue()) );
+            if(scrollBarThumbnails.size() == 0 ){
+                Node toRetain = addButton_ProcessesScrollPanel.getChildren().get(0);
+                addButton_ProcessesScrollPanel.getChildren().clear();
+                addButton_ProcessesScrollPanel.getChildren().add(toRetain);
+            }else{
+                if(addButton_ProcessesScrollPanel.getChildren().size() != 3){
+                    addButton_ProcessesScrollPanel.getChildren().addAll(getSeparator(), processesScrollPanel);
+                }
+            }
 
         });
-
-        translationYSlider.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(translationYSlider, Priority.ALWAYS);
-
-        translationYSection.getChildren().clear();
-        translationYSection.getChildren().addAll(translationLabel, translationYSlider, textField);
-        translationYSection.setPadding(new Insets(10, 10, 10, 15));
-        translationYSection.setAlignment(Pos.CENTER_LEFT);
-        translationYSection.setMinHeight(30);
-        translationYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
-        translationYSection.setSpacing(15);
-
     }
 
-    private Pane getLeftGridPane(){
-        leftGrid = new SmallGridCanvas();
-        Pane pane = new Pane();
-        Pane grid = leftGrid.getGrid(pane);
-        grid.setClip(App.getCustomRectangleClip(pane));
+    private void setUpNameTextfieldAndSaveButton(){
+        utilitiesButtons.setSpacing(20);
 
-        pane.getChildren().add(grid);
-        VBox.setVgrow(pane, Priority.ALWAYS);
+        nameTextfield = new TextField("NO_NAME");
+        nameTextfield.setMaxHeight(50);
+        nameTextfield.setPrefHeight(50);
+        nameTextfield.setStyle("-fx-background-color: #333234; -fx-text-fill: #5D5C5E; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97; -fx-background-radius: 10");
+        nameTextfield.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
 
-        AnchorPane anchorPane = new AnchorPane();
-        anchorPane.setPickOnBounds(false);
-        pane.getChildren().add(anchorPane);
-        getAnchorPaneClip(anchorPane, "#333234");
+        HBox.setHgrow(nameTextfield, Priority.ALWAYS);
 
-        pane.widthProperty().addListener((observable, oldValue, newValue) -> {
-            anchorPane.setPrefWidth(newValue.doubleValue());
-        });
+        Label saveLabel = new Label("Save");
+        saveLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 20));
+        saveLabel.setTextFill(Color.web("#6FCF97"));
 
-        pane.heightProperty().addListener((observable, oldValue, newValue) -> {
-            anchorPane.setPrefHeight(newValue.doubleValue());
-        });
+        HBox saveHB = new HBox(saveLabel);
+        HBox.setHgrow(saveHB, Priority.ALWAYS);
+        saveHB.setPadding(new Insets(10));
+        saveHB.setAlignment(Pos.CENTER);
+        saveHB.setMaxHeight(50);
+        saveHB.setPrefHeight(50);
 
-        pane.setStyle("-fx-background-radius: 20; -fx-border-color: #4F4F4F; -fx-border-radius: 20;");
-
-
-        return pane;
-    }
-
-    private Pane getRightGridPane(){
-        rightGrid = new SmallGridCanvas();
-        Pane pane = new Pane();
-        Pane grid = rightGrid.getGrid(pane);
-        grid.setClip(App.getCustomRectangleClip(pane));
-
-        pane.getChildren().add(grid);
-        VBox.setVgrow(pane, Priority.ALWAYS);
-
-        AnchorPane anchorPane = new AnchorPane();
-        anchorPane.setPickOnBounds(false);
-        pane.getChildren().add(anchorPane);
-        getAnchorPaneClip(anchorPane, "#333234");
-
-        pane.widthProperty().addListener((observable, oldValue, newValue) -> {
-            anchorPane.setPrefWidth(newValue.doubleValue());
-        });
-
-        pane.heightProperty().addListener((observable, oldValue, newValue) -> {
-            anchorPane.setPrefHeight(newValue.doubleValue());
-        });
-
-        pane.setStyle("-fx-background-radius: 20; -fx-border-color: #4F4F4F; -fx-border-radius: 20;");
+        saveHB.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 10");
 
 
-        return pane;
-    }
+        saveHB.setOnMouseClicked(mouseEvent -> {
 
+            String workspaceXML = (String) webView.getEngine().executeScript("teste()");
 
-    private Pane getArrowPane(){
-        VBox vBox = new VBox();
-        vBox.setAlignment(Pos.CENTER);
+            currentProcess.setBlocklyXML(workspaceXML);
+            currentProcess.setProcessName(nameTextfield.getText());
 
-        Arrow arrow = new Arrow();
+            scrollBarThumbnails.add(currentProcess);
 
-        arrow.setStartY(0);
-        arrow.setStartX(0);
-
-        arrow.setEndY(0);
-        arrow.setEndX(100);
-
-        vBox.getChildren().add(arrow);
-
-        VBox.setVgrow(vBox, Priority.ALWAYS);
-
-        return vBox;
-    }
-
-    private Pane getLeftPane(){
-        VBox vBox = new VBox();
-        vBox.setSpacing(10);
-
-        vBox.getChildren().addAll(getLeftGridPane(), getComboBox());
-
-        return vBox;
-    }
-
-    private Pane getRightPane(){
-        VBox vBox = new VBox();
-        vBox.setSpacing(10);
-
-        translationYPanel();
-        translationXPanel();
-
-        vBox.getChildren().addAll(getRightGridPane(), translationXSection, translationYSection);
-
-        return vBox;
-    }
-
-    private void resetSliders(){
-        translationXSection.getChildren().clear();
-        translationYSection.getChildren().clear();
-        translationXPanel();
-        translationYPanel();
-    }
-
-    private Pane getButton(boolean isItBool){
-
-        Label complexShape = new Label(isItBool ? "Bool" : "Process");
-
-        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        complexShape.setTextFill( isItBool ? Color.web("#EB5757") : Color.web("#5778EB"));
-
-        HBox complexShapeHBox = new HBox(complexShape);
-        complexShapeHBox.setAlignment(Pos.CENTER);
-        complexShapeHBox.setSpacing(5);
-        complexShapeHBox.setStyle("-fx-background-color: " + (isItBool ? "#5E2323" : "#233B5E") +";-fx-background-radius: 10");
-
-        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
-
-        complexShapeHBox.setMaxHeight(50);
-        complexShapeHBox.setPrefHeight(20);
-
-        complexShapeHBox.setOnMouseClicked(event -> {
-            System.out.println("yey");
-
-            WebView webView = new WebView();
-            WebEngine webEngine = webView.getEngine();
-
-            File file = new File("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/novoHtml.html");
-            webEngine.load(file.toURI().toString());
-
-            Stage newStage = new Stage();
-            newStage.initModality(Modality.APPLICATION_MODAL);
-            newStage.initOwner(stage);
-
-            Scene dialogScene = new Scene(webView, 1280, 720);
-            dialogScene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
-
-            newStage.setScene(dialogScene);
-            newStage.show();
-
-
-            newStage.sizeToScene();
-            newStage.setTitle("Web View");
-
-            newStage.setResizable(true);
+            Process.updateOrAdd(processes, currentProcess);
 
         });
 
-        complexShapeHBox.setMinWidth(60);
+        utilitiesButtons.getChildren().addAll(nameTextfield, saveHB);
+        HBox.setHgrow(utilitiesButtons, Priority.ALWAYS);
 
-        return complexShapeHBox;
+
     }
 
-    private void setUpProcessPanelWith_Shape_Shape(){
-        processGrid.getChildren().clear();
-        processGrid.getChildren().addAll(getLeftPane(),getArrowPane(), getRightPane());
+    private void setUpProcessesScrollPane(){
+        processesScrollPanel.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        processesScrollPanel.setFitToHeight(true);
+        processesScrollPanel.setStyle("-fx-background-color: transparent; -fx-background: transparent");
+
+        processesScrollPanel.setContent(processesPanel);
+
+        processesPanel.setAlignment(Pos.CENTER_LEFT);
+        processesPanel.setSpacing(20);
     }
 
-    private void setUpProcessPanelWith_Shape_Shape_Proc(){
-        processGrid.getChildren().clear();
-        processGrid.getChildren().addAll(getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
+    private Pane getSeparator(){
+        Pane rectangle = new Pane();
+        rectangle.setPrefWidth(4);
+        rectangle.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
+        rectangle.setMaxHeight(Double.MAX_VALUE);
+        rectangle.setId("separator");
+
+        return rectangle;
     }
 
-    private void setUpProcessPanelWith_Bool_Shape_Shape(){
-        processGrid.getChildren().clear();
-        processGrid.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane());
-    }
+    private Pane setUpAddAndProcessesScrolPane(){
+        setUpScrollbarThumbnails();
+        setUpProcessesScrollPane();
 
-    private void setUpProcessPanelWith_Bool_Shape_Shape_Proc(){
-        processGrid.getChildren().clear();
-        processGrid.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
+        Label saveLabel = new Label("New Process");
+        saveLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 20));
+        saveLabel.setTextFill(Color.web("#E69C59"));
+
+        HBox addHBox = new HBox(saveLabel);
+        HBox.setHgrow(addHBox, Priority.ALWAYS);
+        VBox.setVgrow(addHBox, Priority.ALWAYS);
+        addHBox.setPadding(new Insets(10));
+        addHBox.setAlignment(Pos.CENTER);
+        addHBox.setStyle("-fx-background-color: #7A532F;-fx-background-radius: 10");
+
+        addHBox.setMinWidth(230);
+
+        addHBox.setOnMouseClicked(mouseEvent -> {
+
+            currentProcess = new Process();
+            nameTextfield.setText("NO_NAME");
+            webView.getEngine().executeScript("clear()");
+        });
+
+        addButton_ProcessesScrollPanel.setSpacing(20);
+
+        addButton_ProcessesScrollPanel.getChildren().addAll(addHBox/*, getSeparator(), processesScrollPanel*/);
+
+        return addButton_ProcessesScrollPanel;
     }
 
     private void setUpPanes(){
-        translationYSection = new HBox();
-        translationXSection = new HBox();
-
-        processGrid.setSpacing(20);
-        processGrid.getChildren().addAll(getLeftPane(), getButton(true), getRightPane());
-        processGrid.setAlignment(Pos.CENTER);
-        processGrid.setPadding(new Insets(20));
-        processGrid.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(processGrid, Priority.ALWAYS);
-
         mainPanel.setPadding(new Insets(20));
         mainPanel.setSpacing(20);
         mainPanel.setStyle("-fx-background-color: #262528;");
 
-        horizontalScrollPane.setPrefHeight(250);
-        horizontalScrollPane.setStyle("-fx-background-color: #333234");
-        horizontalScrollPane.setContent(processes);
+        mainPanel.getChildren().add(getWebView());
 
-        //mainPanel.getChildren().addAll(processPanel, horizontalScrollPane);
-        mainPanel.getChildren().addAll(getTemplate());
+        setUpNameTextfieldAndSaveButton();
+        mainPanel.getChildren().add(utilitiesButtons);
 
-
-        processPanel.setMaxHeight(Double.MAX_VALUE);
-        processPanel.setStyle("-fx-background-color: #333234; -fx-background-radius: 20");
-        VBox.setVgrow(processPanel, Priority.ALWAYS);
-        processPanel.getChildren().add(processGrid);
-
-        HBox.setHgrow(processPanel, Priority.ALWAYS);
-        processPanel.setMaxWidth(Double.MAX_VALUE);
+        mainPanel.getChildren().add(setUpAddAndProcessesScrolPane());
 
     }
 
-    public Pane getEditor(){
+    private Pane getEditor(){
         setUpPanes();
 
         return mainPanel;
-    }
-
-    public Pane getTemplate(){
-        HBox toReturn = new HBox();
-/*
-        toReturn.getChildren().addAll(ProcTemplate.get_Shape_Shape(event -> {
-            scene.setRoot(getEditor());
-
-            stage.sizeToScene();
-        }) , horizontalGrower(), ProcTemplate.get_Shape_Shape_Proc(),horizontalGrower(), ProcTemplate.get_Bool_Shape_Shape(), horizontalGrower(), ProcTemplate.get_Bool_Shape_Shape_Proc());
-*/
-        toReturn.getChildren().addAll(ProcTemplate.get_Shape_Shape(event -> {
-            setUpProcessPanelWith_Shape_Shape();
-
-            if(mainPanel.getChildren().size() == 1){
-               mainPanel.getChildren().add(0,processPanel);
-           }else if(mainPanel.getChildren().size() == 2){
-               mainPanel.getChildren().remove(0);
-               mainPanel.getChildren().add(0, processPanel);
-           }
-        }) , ProcTemplate.get_Shape_Shape_Proc(event -> {
-            setUpProcessPanelWith_Shape_Shape_Proc();
-
-            if(mainPanel.getChildren().size() == 1){
-                mainPanel.getChildren().add(0,processPanel);
-            }else if(mainPanel.getChildren().size() == 2){
-                mainPanel.getChildren().remove(0);
-                mainPanel.getChildren().add(0, processPanel);
-            }
-        }), ProcTemplate.get_Bool_Shape_Shape(event -> {
-            setUpProcessPanelWith_Bool_Shape_Shape();
-
-            if(mainPanel.getChildren().size() == 1){
-                mainPanel.getChildren().add(0,processPanel);
-            }else if(mainPanel.getChildren().size() == 2){
-                mainPanel.getChildren().remove(0);
-                mainPanel.getChildren().add(0, processPanel);
-            }
-        }), ProcTemplate.get_Bool_Shape_Shape_Proc(event -> {
-            setUpProcessPanelWith_Bool_Shape_Shape_Proc();
-
-            if(mainPanel.getChildren().size() == 1){
-                mainPanel.getChildren().add(0,processPanel);
-            }else if(mainPanel.getChildren().size() == 2){
-                mainPanel.getChildren().remove(0);
-                mainPanel.getChildren().add(0, processPanel);
-            }
-        }));
-
-
-        toReturn.setSpacing(20);
-        //toReturn.setPadding(new Insets(10));
-
-        //toReturn.setStyle("-fx-background-color: #262528");
-        //toReturn.setStyle("-fx-background-color: #333234; -fx-background-radius: 20");
-        toReturn.setAlignment(Pos.CENTER);
-
-        return toReturn;
     }
 
     public void openPopup(){
@@ -546,7 +282,17 @@ public class ProcessesEditor {
         stage.initOwner(StartMenu.primaryStage);
 
         Scene dialogScene = new Scene(getEditor(), 1280, 720);
+        dialogScene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
         //Scene dialogScene = new Scene(getTemplate(), 230, 240);
+
+        webView.getEngine().getLoadWorker().stateProperty().addListener((observableValue, state, t1) -> {
+            if(t1 == Worker.State.SUCCEEDED){
+                System.out.println("PAGE HAS LOADED!");
+                loadProcesses();
+                startBlurAnimation(dialogScene.getRoot(), 30.0, 0.0, Duration.millis(100), true);
+
+            }
+        });
 
         stage.setScene(dialogScene);
         stage.show();
@@ -563,6 +309,34 @@ public class ProcessesEditor {
             scene.getRoot().setCache(false);
             scene.getRoot().setCacheHint(CacheHint.DEFAULT);
         });
+
+        GaussianBlur blur = new GaussianBlur(30.0);
+        dialogScene.getRoot().setEffect(blur);
+
+
+    }
+
+    private void loadProcesses(){
+        if(processes.size() >= 1){
+            scrollBarThumbnails.addAll(processes);
+            selectTheFirstProcess();
+
+            //addButton_ProcessesScrollPanel.getChildren().addAll(getSeparator(), processesScrollPanel);
+        }else{
+            currentProcess = new Process();
+            currentProcess.setProcessName(nameTextfield.getText());
+            //We have no processes.
+            /*Node lastChild = mainPanel.getChildren().get(mainPanel.getChildren().size() - 1);
+            mainPanel.getChildren().clear();
+            mainPanel.getChildren().add(lastChild);*/
+        }
+    }
+
+    private void selectTheFirstProcess(){
+        currentProcess = processes.get(0);
+        webView.getEngine().executeScript("clear();");
+        nameTextfield.setText(currentProcess.getProcessName());
+        webView.getEngine().executeScript("novoTeste('"+ currentProcess.getBlocklyXML() +"')");
     }
 
 

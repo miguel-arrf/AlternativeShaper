@@ -27,6 +27,7 @@ public class Orchestrator {
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
+    private final ArrayList<Process> processes = new ArrayList<>();
 
     public static int getSCALE() {
         return SCALE;
@@ -34,6 +35,10 @@ public class Orchestrator {
 
     public static int getNumberColumnsAndRows() {
         return NUMBER_COLUMNS_AND_ROWS;
+    }
+
+    public ArrayList<Process> getProcesses() {
+        return processes;
     }
 
     public void addAllBasicShapes(ArrayList<BasicShape> basicShapesToAdd){

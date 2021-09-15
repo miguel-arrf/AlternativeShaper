@@ -1,11 +1,13 @@
 package marrf.iscte;
 
+import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class SmallGridCanvas {
 
@@ -109,7 +111,7 @@ public class SmallGridCanvas {
         return pane;
     }
 
-    public void addShape(BasicShape basicShape){
+    public void addShape(BasicShape basicShape, UUID uuid){
 
         double translateXBy = basicShape.getInitialTranslation().getX() * -1;
         double translateYBy = basicShape.getHeight() * basicShape.scaleYProperty().get() + basicShape.getInitialTranslation().getY() * -1;
@@ -120,8 +122,7 @@ public class SmallGridCanvas {
         basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() - translateXBy);
         basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() - translateYBy);
 
-        Pane toAdd = basicShape.getRectangle();
-        toAdd.setId("shape");
+        Node toAdd = basicShape.getExtendedRectangle();
 
         //basicShape.addTranslationX(basicShape.getInitialTranslation().getX());
         //basicShape.translateXProperty.setValue(basicShape.getInitialTranslation().getX());
@@ -129,6 +130,19 @@ public class SmallGridCanvas {
 
         pane.getChildren().add(toAdd);
         basicShapes.add(basicShape);
+
+        toAdd.setId("shape:" + uuid.toString());
+    }
+
+    public void removeShapeWithID(UUID id){
+        pane.getChildren().removeIf( p -> {
+            if(p.getId().contains(id.toString())){
+                return true;
+            }else{
+                return false;
+            }
+        });
+
     }
 
     public void addGroup(Pane basicShape) {
@@ -158,7 +172,7 @@ public class SmallGridCanvas {
 
     public void addTranslation(double x, double y){
         pane.getChildren().forEach( children -> {
-            if(children.getId() != null && children.getId().equals("shape")){
+            if(children.getId() != null && children.getId().contains("shape")){
                 children.setTranslateX(children.getTranslateX() + x);
                 children.setTranslateY(children.getTranslateY() + y);
 

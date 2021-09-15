@@ -31,7 +31,7 @@ public class ProcTemplate {
     }
 
     private static Node getProcPane(){
-        Label pane = new Label("Proc");
+        Label pane = new Label("Proc 1");
         pane.setPadding(new Insets(3));
         pane.setStyle("-fx-background-color: rgb(45,107,128); -fx-background-radius: 5px");
         pane.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
