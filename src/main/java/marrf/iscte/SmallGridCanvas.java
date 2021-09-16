@@ -22,10 +22,6 @@ public class SmallGridCanvas {
     private final ArrayList<Double> initialVerticalDrag = new ArrayList<>();
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
-    private double xOriginTranslation = 0.0;
-    private double yOriginTranslation = 0.0;
-    private double initialTranslationXCircle = 0.0;
-    private double initialTranslationYCircle = 0.0;
     private Circle circle;
 
 
@@ -57,8 +53,6 @@ public class SmallGridCanvas {
 
         pane.getChildren().add(circle);
 
-        initialTranslationXCircle = circle.getTranslateX();
-        initialTranslationYCircle = circle.getTranslateY();
     }
 
     public Pane getGrid(Pane parent){

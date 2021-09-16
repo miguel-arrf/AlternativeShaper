@@ -19,8 +19,8 @@ public class ProcTemplate {
     private static Node getShapePane(){
         Label pane = new Label("Shape");
         pane.setPadding(new Insets(3));
-        pane.setStyle("-fx-background-color: rgb(3,128,87); -fx-background-radius: 5px");
-        pane.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        pane.setStyle("-fx-background-color: rgb(3,128,87); -fx-background-radius: 5px; -fx-text-fill:rgb(0, 226, 153)");
+        pane.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
         pane.setTextFill(Color.web("rgb(0,226,153)"));
         pane.setAlignment(Pos.CENTER);
 
@@ -33,8 +33,8 @@ public class ProcTemplate {
     private static Node getProcPane(){
         Label pane = new Label("Proc 1");
         pane.setPadding(new Insets(3));
-        pane.setStyle("-fx-background-color: rgb(45,107,128); -fx-background-radius: 5px");
-        pane.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        pane.setStyle("-fx-background-color: rgb(45,107,128); -fx-background-radius: 5px; -fx-text-fill:rgb(86, 204, 242);");
+        pane.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
         pane.setTextFill(Color.web("rgb(86,204,242)"));
         pane.setAlignment(Pos.CENTER);
 
@@ -45,17 +45,17 @@ public class ProcTemplate {
     }
 
     private static Node getBoolPane(){
-        Label pane = new Label("Bool");
-        pane.setPadding(new Insets(3));
-        pane.setStyle("-fx-background-color: rgb(128,114,40); -fx-background-radius: 5px");
-        pane.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        pane.setTextFill(Color.web("rgb(231,206,73)"));
-        pane.setAlignment(Pos.CENTER);
+        Label label = new Label("Bool");
+        label.setPadding(new Insets(3));
+        label.setStyle("-fx-background-color: rgb(128,114,40); -fx-background-radius: 5px; -fx-text-fill:rgb(231,206,73)");
+        label.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
+        label.setTextFill(Color.web("rgb(231,206,73)"));
+        label.setAlignment(Pos.CENTER);
 
-        pane.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(pane, Priority.ALWAYS);
+        label.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(label, Priority.ALWAYS);
 
-        return pane;
+        return label;
     }
 
     private static void setPaneStyle(Node node){

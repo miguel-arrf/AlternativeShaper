@@ -30,6 +30,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import marrf.iscte.ShapeRules.ShapeRule;
 import org.json.simple.JSONObject;
 
 import java.io.File;
@@ -70,6 +71,8 @@ public class App extends Application {
 
     private NewCompositionShape selectedCompositionShape;
     private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
+
+    private ArrayList<ShapeRule> shapeRuleArrayList = new ArrayList<>();
 
     private final Orchestrator orchestrator = new Orchestrator();
 
@@ -409,8 +412,12 @@ public class App extends Application {
         complexShapeHBox.setPrefHeight(50);
 
         complexShapeHBox.setOnMouseClicked(event -> {
-            ShapeRuleEditor shapeRuleEditor = new ShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
-            shapeRuleEditor.openPopup();
+            /*ShapeRuleEditor shapeRuleEditor = new ShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
+            shapeRuleEditor.openPopup();*/
+
+            NewShapeRuleEditor newShapeRuleEditor = new NewShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator, shapeRuleArrayList);
+            newShapeRuleEditor.openPopup();
+
         });
 
         return complexShapeHBox;

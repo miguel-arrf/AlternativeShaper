@@ -17,9 +17,28 @@ public abstract class ShapeRule {
     private final ArrayList<BasicShape> rightBasicShapes = new ArrayList<>();
     private final ArrayList<NewCompositionShape> rightCompositionShapes = new ArrayList<>();
 
+    private boolean hasBool;
+    private boolean hasProc;
 
-    public ShapeRule(){
+    public ShapeRule(boolean hasBool, boolean hasProc){
+        this.hasBool = hasBool;
+        this.hasProc = hasProc;
+    }
 
+    public boolean isHasBool() {
+        return hasBool;
+    }
+
+    public boolean isHasProc() {
+        return hasProc;
+    }
+
+    public void setShapeRuleName(String shapeRuleName) {
+        this.shapeRuleName = shapeRuleName;
+    }
+
+    public String getShapeRuleName() {
+        return shapeRuleName;
     }
 
     public ArrayList<BasicShape> getLeftBasicShapes() {

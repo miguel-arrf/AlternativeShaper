@@ -293,6 +293,8 @@ public class NewCompositionShape implements CustomShape {
                 });
 
                 ContextMenu contextMenu = new ContextMenu();
+                contextMenu.setId("betterMenuItem");
+
                 MenuItem menuItem = new MenuItem("Delete");
                 menuItem.setStyle("-fx-text-fill: red");
                 contextMenu.getItems().add(menuItem);
@@ -606,6 +608,8 @@ public class NewCompositionShape implements CustomShape {
 
     private void setThumbnailDeleting() {
         ContextMenu contextMenu = new ContextMenu();
+        contextMenu.setId("betterMenuItem");
+
         MenuItem menuItem = new MenuItem("Delete Composition Shape Item");
         menuItem.setStyle("-fx-text-fill: red");
         contextMenu.getItems().add(menuItem);

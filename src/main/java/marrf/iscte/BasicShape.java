@@ -624,6 +624,8 @@ public class BasicShape implements CustomShape {
         thumbnail.setStyle("-fx-background-color:" + colorString + "; -fx-background-radius: 10");
 
         ContextMenu contextMenu = new ContextMenu();
+        contextMenu.setId("betterMenuItem");
+
         MenuItem menuItem = new MenuItem("Delete Basic Shape Item");
         menuItem.setStyle("-fx-text-fill: red");
         contextMenu.getItems().add(menuItem);
@@ -738,6 +740,8 @@ public class BasicShape implements CustomShape {
 
         if(proceedWhenDeleting != null){
             ContextMenu contextMenu = new ContextMenu();
+            contextMenu.setId("betterMenuItem");
+
             MenuItem menuItem = new MenuItem("Delete");
             menuItem.setStyle("-fx-text-fill: red");
             contextMenu.getItems().add(menuItem);
@@ -767,6 +771,8 @@ public class BasicShape implements CustomShape {
 
         if(proceedWhenDeleting != null){
             ContextMenu contextMenu = new ContextMenu();
+            contextMenu.setId("betterMenuItem");
+
             MenuItem menuItem = new MenuItem("Delete");
             menuItem.setStyle("-fx-text-fill: red");
             contextMenu.getItems().add(menuItem);
