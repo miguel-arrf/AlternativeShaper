@@ -155,6 +155,39 @@ public class NewCompositionShape implements CustomShape {
         //TODO If we delete a basic shape from a composition shape that
         // only had it, and that composition shape is here, we should delete
         // the parameters that were defined.
+        if (getCompositionShapesUUIDList().stream().anyMatch(p -> p.equals(uuidToRemove))) {
+
+            ArrayList<String> toRemove = new ArrayList<>();
+
+            compositionShapeMap.forEach((id, compositionShape) -> {
+                if(compositionShape.getID().toString().equals(uuidToRemove)){
+                    toRemove.add(id);
+                }
+            });
+
+            toRemove.forEach(compositionShapeMap::remove);
+
+            compositionShapesXTranslation.removeIf(p -> {
+               if(toRemove.stream().anyMatch(a -> a.equals(p.getId()))){
+                   return true;
+               }
+               return false;
+            });
+
+            compositionShapesYTranslation.removeIf(p -> {
+                if(toRemove.stream().anyMatch(a -> a.equals(p.getId()))){
+                    return true;
+                }
+                return false;
+            });
+
+            //Information compositionShapesXTranslationToRemove = compositionShapesXTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
+            //Information compositionShapesYTranslationToRemove = compositionShapesYTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
+
+            //compositionShapesXTranslation.remove(compositionShapesXTranslationToRemove);
+            //compositionShapesYTranslation.remove(compositionShapesYTranslationToRemove);
+
+        }
     }
 
     public ArrayList<String> getBasicShapesUUIDList() {
@@ -162,6 +195,16 @@ public class NewCompositionShape implements CustomShape {
 
         basicShapesXTranslation.forEach(information -> {
             toReturn.add(information.getId());
+        });
+
+        return toReturn;
+    }
+
+    public ArrayList<String> getCompositionShapesUUIDList() {
+        ArrayList<String> toReturn = new ArrayList<>();
+
+        compositionShapeMap.forEach((a,b) -> {
+            toReturn.add(b.getID().toString());
         });
 
         return toReturn;

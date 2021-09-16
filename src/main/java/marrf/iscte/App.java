@@ -326,9 +326,7 @@ public class App extends Application {
             currentName.setText("complexDefault");
 
             transformersBox.getChildren().clear();
-            selectedCompositionShape = new NewCompositionShape(orchestrator, transformersBox, teste1 -> {
-                return null;
-            }, teste -> {
+            selectedCompositionShape = new NewCompositionShape(orchestrator, transformersBox, getProceedWhenDeletingCompositionShape(), teste -> {
                 System.err.println("oh, here I am!");
                 newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
                 return null;
@@ -596,6 +594,35 @@ public class App extends Application {
 
     }
 
+    private void deleteCompositionShape(String uuidToRemove){
+        //We are cleaning everything, but if the user is on a composition shape, we shouldn't... this way is easier tho.
+        NewCompositionShape temp = newCompositionShapes.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
+        newCompositionShapes.remove(temp);
+        GridCanvas.clearEverything();
+        transformersBox.getChildren().clear();
+        sideBarThumbnails.remove(temp);
+
+        if(basicShapes.size() == 0){
+            //Ads a basic shape when we delete the last one!
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+            addShape(toAdd);
+            basicShapesToSave.add(toAdd);
+            currentName.setText("defaultName");
+            sideBarThumbnails.add(toAdd);
+        }else{
+            currentName.setText(basicShapesToSave.get(0).getShapeName());
+            addShape(basicShapesToSave.get(0));
+        }
+    }
+
+    private void deleteCompositionShapeFromCompositionShape(String uuidToRemove){
+        newCompositionShapes.forEach(newCompositionShape -> {
+            newCompositionShape.deleteCompositionShape(uuidToRemove);
+            //Maybe an uncessary redraw?
+            newCompositionShape.redrawThumbnail();
+        });
+    }
+
     private void deleteBasicShapeFromCompositionShape(String uuidToRemove){
         newCompositionShapes.forEach(newCompositionShape -> {
             newCompositionShape.deleteBasicShape(uuidToRemove);
@@ -634,6 +661,38 @@ public class App extends Application {
             return null;
         };
     }
+
+    private Function<String, Double> getProceedWhenDeletingCompositionShape(){
+        return uuidToRemove -> {
+
+            if(!orchestrator.canCompositionShapeBeRemoved(uuidToRemove)){
+                System.err.println("Can't be removed without impacting other composition shapes!");
+
+                PopupWindow popupWindow = new PopupWindow();
+
+                Stage tempStage = popupWindow.getStage();
+
+                Pane acceptButton = PopupWindow.getButton("Accept, and delete this shape from compositions shapes that use this one.", "null",  "#807229", "#E7CE4A", event -> {
+                    deleteCompositionShape(uuidToRemove);
+                    deleteCompositionShapeFromCompositionShape(uuidToRemove);
+                    tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
+                });
+                Pane refuseButton = PopupWindow.getButton("Keep this shape.", "null",  "#5E2323", "#EB5757", event -> {
+                    tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
+                });
+
+                popupWindow.createPopup("Delete confirmation",scene,"Deleting this basic shape will also delete compositionShapes that use it. Do you want to proceed?", acceptButton, refuseButton);
+
+            }else{
+
+                deleteCompositionShape(uuidToRemove);
+
+            }
+
+            return null;
+        };
+    }
+
 
     private void finishSetup(){
         addBasicAndComplexButtons();

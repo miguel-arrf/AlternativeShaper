@@ -12,11 +12,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Orchestrator {
 
@@ -76,6 +74,20 @@ public class Orchestrator {
                 return false;
             }
         }
+        return true;
+    }
+
+    public boolean canCompositionShapeBeRemoved(String uuid){
+
+        // Create an ArrayList of the List
+        ArrayList<NewCompositionShape> arrayList = newCompositionShapes.stream().filter(p -> !p.getID().toString().equals(uuid)).collect(Collectors.toCollection(ArrayList::new));
+
+        for(NewCompositionShape newCompositionShape : arrayList){
+            if(newCompositionShape.getCompositionShapesUUIDList().stream().anyMatch(p -> p.equals(uuid))){
+                return false;
+            }
+        }
+
         return true;
     }
 
