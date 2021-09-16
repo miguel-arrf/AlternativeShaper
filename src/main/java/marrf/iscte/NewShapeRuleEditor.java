@@ -1,7 +1,9 @@
 package marrf.iscte;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Worker;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
@@ -17,8 +19,7 @@ import javafx.scene.web.WebView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import marrf.iscte.ShapeRules.ShapeRule;
-import marrf.iscte.ShapeRules.ShapeShape;
+import marrf.iscte.ShapeRules.*;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 
 import static marrf.iscte.App.getAnchorPaneClip;
 import static marrf.iscte.PopupWindow.startBlurAnimation;
@@ -65,26 +67,116 @@ public class NewShapeRuleEditor {
     private ScrollPane horizontalScrollPane;
     private HBox shapeRulesPanel;
 
-    public NewShapeRuleEditor(Scene scene, ArrayList<NewCompositionShape> newCompositionShapes, ArrayList<BasicShape> basicShapes, Orchestrator orchestrator, ArrayList<ShapeRule> shapeRules){
+
+    public NewShapeRuleEditor(Scene scene, ArrayList<NewCompositionShape> newCompositionShapes, ArrayList<BasicShape> basicShapes, Orchestrator orchestrator){
         this.scene = scene;
         this.newCompositionShapes = newCompositionShapes;
         this.basicShapes = basicShapes;
         this.orchestrator = orchestrator;
-        this.shapeRules = shapeRules;
+        this.shapeRules = orchestrator.getShapeRules();
     }
 
     private void setUpHorizontalScrollPaneAndShapeRulesPanel(){
         shapeRulesPanel = new HBox();
         horizontalScrollPane = new ScrollPane();
+        horizontalScrollPane.setFitToHeight(true);
 
         horizontalScrollPane.setVbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);
-        horizontalScrollPane.setFitToHeight(true);
+
         horizontalScrollPane.setStyle("-fx-background-color: #232225; -fx-background-radius: 10; -fx-background: transparent");
 
+        shapeRulesPanel.setPadding(new Insets(10));
         horizontalScrollPane.setContent(shapeRulesPanel);
+
+
+        horizontalScrollPane.setMinHeight(60);
+        shapeRulesPanel.setMinHeight(60);
 
         shapeRulesPanel.setAlignment(Pos.CENTER_LEFT);
         shapeRulesPanel.setSpacing(20);
+
+        scrollBarThumbnails.addListener((ListChangeListener<? super ShapeRule>) change -> {
+            while (change.next()){
+                if (change.wasRemoved()){
+                    for(ShapeRule removedShapeRule : change.getRemoved()){
+                        Node toRemove = removedShapeRule.getThumbnail();
+                        shapeRulesPanel.getChildren().remove(toRemove);
+                    }
+                }
+
+                if (change.wasAdded()){
+
+                    for(ShapeRule shapeAdded : change.getAddedSubList()){
+                        Node checkIfExists = shapeAdded.getThumbnail();
+                        shapeRulesPanel.getChildren().remove(checkIfExists);
+                        shapeRulesPanel.getChildren().add(checkIfExists);
+
+                        checkIfExists.setOnMouseClicked(mouseEvent -> {
+                            currentShapeRule = shapeAdded;
+                            nameTextField.setText(shapeAdded.getShapeRuleName());
+
+                            if( currentShapeRule instanceof ShapeShape){
+                                setUpShapeShape((ShapeShape) currentShapeRule);
+
+                            }else if(currentShapeRule instanceof BoolShapeShape){
+                                setUpBoolShapeShape((BoolShapeShape) currentShapeRule);
+
+                            }else if(currentShapeRule instanceof ShapeShapeProc){
+                                setUpShapeShapeProc((ShapeShapeProc) currentShapeRule);
+
+                            }else if(currentShapeRule instanceof BoolShapeShapeProc){
+                                setUpBoolShapeShapeProc((BoolShapeShapeProc) currentShapeRule);
+
+                            }
+
+                        });
+
+                        ContextMenu contextMenu = new ContextMenu();
+                        MenuItem menuItem = new MenuItem("Delete Process");
+                        menuItem.setStyle("-fx-text-fill: red");
+                        contextMenu.getItems().add(menuItem);
+
+                        menuItem.setOnAction(actionEvent -> {
+                            getProceedWhenDeleting().apply(shapeAdded.getId());
+                        });
+
+                        checkIfExists.setOnContextMenuRequested(contextMenuEvent -> contextMenu.show(checkIfExists, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY()));
+
+                    }
+
+                }
+            }
+
+            if(scrollBarThumbnails.size() == 0 ){
+                mainPanel.getChildren().removeAll(nameAndSaveHBox, editorPanel, horizontalScrollPane);
+            }else{
+                if(!mainPanel.getChildren().contains(horizontalScrollPane)){
+                    mainPanel.getChildren().add(horizontalScrollPane);
+                }
+            }
+
+
+        });
+    }
+
+    private Function<UUID, Double> getProceedWhenDeleting(){
+        return idToRemove -> {
+
+            ShapeRule temp = shapeRules.stream().filter(shapeRule -> shapeRule.getId().equals(idToRemove)).findFirst().get();
+            scrollBarThumbnails.remove(temp);
+            shapeRules.remove(temp);
+
+            if(shapeRules.size() == 0){
+                System.out.println("No shape rules left!");
+                System.err.println("what to do now?");
+                clearTranslationSections();
+                editorPanel.getChildren().clear();
+            }else{
+                selectTheFirstProcess();
+            }
+
+            return null;
+        };
     }
 
     private Pane getRightGridPane(){
@@ -101,13 +193,9 @@ public class NewShapeRuleEditor {
         pane.getChildren().add(anchorPane);
         getAnchorPaneClip(anchorPane, "#232225");
 
-        pane.widthProperty().addListener((observable, oldValue, newValue) -> {
-            anchorPane.setPrefWidth(newValue.doubleValue());
-        });
+        pane.widthProperty().addListener((observable, oldValue, newValue) -> anchorPane.setPrefWidth(newValue.doubleValue()));
 
-        pane.heightProperty().addListener((observable, oldValue, newValue) -> {
-            anchorPane.setPrefHeight(newValue.doubleValue());
-        });
+        pane.heightProperty().addListener((observable, oldValue, newValue) -> anchorPane.setPrefHeight(newValue.doubleValue()));
 
         pane.setStyle("-fx-background-radius: 20; -fx-border-color: #4F4F4F; -fx-border-radius: 20;");
 
@@ -133,23 +221,16 @@ public class NewShapeRuleEditor {
             basicShapeLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
             basicShapeLabel.setTextFill(Color.WHITE);
 
-            basicShapeLabel.setOnMouseEntered(mouseEvent -> {
-                basicShapeLabel.setStyle("-fx-background-color: rgb(176,154,20); -fx-background-radius: 10");
+            basicShapeLabel.setOnMouseEntered(mouseEvent -> basicShapeLabel.setStyle("-fx-background-color: rgb(176,154,20); -fx-background-radius: 10"));
 
-            });
-
-            basicShapeLabel.setOnMouseExited(mouseEvent -> {
-                basicShapeLabel.setStyle("-fx-background-color: rgb(130,114,17); -fx-background-radius: 10");
-            });
+            basicShapeLabel.setOnMouseExited(mouseEvent -> basicShapeLabel.setStyle("-fx-background-color: rgb(130,114,17); -fx-background-radius: 10"));
 
             basicShapeLabel.setOnMouseClicked(mouseEvent -> {
                 BasicShape originalBasicShape = basicShapes.stream().filter(a -> a.getShapeName().equals(p)).findFirst().get();
 
                 UUID toPut = UUID.randomUUID();
 
-                BasicShape leftBasicShapeCopy = orchestrator.getCopyOfBasicShape(originalBasicShape.getUUID().toString(), a -> 0.0, a -> 0.0, a -> {
-                    return 0.0;
-                });
+                BasicShape leftBasicShapeCopy = orchestrator.getCopyOfBasicShape(originalBasicShape.getUUID().toString(), a -> 0.0, a -> 0.0, a -> 0.0);
 
                 leftBasicShapeCopy.setOnMouseClicked(mouseEvent1 -> {
                     toAddTo.getChildren().clear();
@@ -160,10 +241,16 @@ public class NewShapeRuleEditor {
                     if(toAddTo.getChildren().contains(leftBasicShapeCopy.getTranslationXSection())){
                         toAddTo.getChildren().removeAll(leftBasicShapeCopy.getTranslationXSection(), leftBasicShapeCopy.getTranslationYSection());
                     }
+                        smallGridCanvas.removeBasicShapeFromList(leftBasicShapeCopy);
+                        rightGrid.removeBasicShapeFromList(leftBasicShapeCopy);
+
                     return 0.0;
                 });
 
                 smallGridCanvas.addShape(leftBasicShapeCopy, toPut);
+
+
+
 
             });
 
@@ -177,14 +264,9 @@ public class NewShapeRuleEditor {
             compositionShapeLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
             compositionShapeLabel.setTextFill(Color.WHITE);
 
-            compositionShapeLabel.setOnMouseEntered(mouseEvent -> {
-                compositionShapeLabel.setStyle("-fx-background-color: rgb(0,149,181); -fx-background-radius: 10");
+            compositionShapeLabel.setOnMouseEntered(mouseEvent -> compositionShapeLabel.setStyle("-fx-background-color: rgb(0,149,181); -fx-background-radius: 10"));
 
-            });
-
-            compositionShapeLabel.setOnMouseExited(mouseEvent -> {
-                compositionShapeLabel.setStyle("-fx-background-color: rgb(3,108,130); -fx-background-radius: 10");
-            });
+            compositionShapeLabel.setOnMouseExited(mouseEvent -> compositionShapeLabel.setStyle("-fx-background-color: rgb(3,108,130); -fx-background-radius: 10"));
 
             compositionShapeLabel.setOnMouseClicked(mouseEvent -> {
                 NewCompositionShape originalCompositionShape = newCompositionShapes.stream().filter( a -> a.getShapeName().equals(p)).findFirst().get();
@@ -196,10 +278,15 @@ public class NewShapeRuleEditor {
                     if(toAddTo.getChildren().contains(toPut.getTranslationXSection())){
                         toAddTo.getChildren().removeAll(toPut.getTranslationXSection(), toPut.getTranslationYSection());
                     }
+
+                    smallGridCanvas.removeCompositionShapeFromList(originalCompositionShape);
+
                     return 0.0;}
                 );
 
-                smallGridCanvas.addGroup(toAddLeft);
+                smallGridCanvas.addGroup(toAddLeft, originalCompositionShape);
+
+
 
             });
 
@@ -226,13 +313,9 @@ public class NewShapeRuleEditor {
         pane.getChildren().add(anchorPane);
         getAnchorPaneClip(anchorPane, "#232225");
 
-        pane.widthProperty().addListener((observable, oldValue, newValue) -> {
-            anchorPane.setPrefWidth(newValue.doubleValue());
-        });
+        pane.widthProperty().addListener((observable, oldValue, newValue) -> anchorPane.setPrefWidth(newValue.doubleValue()));
 
-        pane.heightProperty().addListener((observable, oldValue, newValue) -> {
-            anchorPane.setPrefHeight(newValue.doubleValue());
-        });
+        pane.heightProperty().addListener((observable, oldValue, newValue) -> anchorPane.setPrefHeight(newValue.doubleValue()));
 
         pane.setStyle("-fx-background-radius: 20; -fx-border-color: #4F4F4F; -fx-border-radius: 20;");
 
@@ -374,6 +457,27 @@ public class NewShapeRuleEditor {
         return htmlCopied.toFile();
     }
 
+    private Pane getWebViewSaveButton(){
+        Label saveLabel = new Label("Save");
+        saveLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 20));
+        saveLabel.setTextFill(Color.web("#6FCF97"));
+
+        HBox saveButton = new HBox(saveLabel);
+        HBox.setHgrow(saveButton, Priority.ALWAYS);
+        saveButton.setPadding(new Insets(10));
+        saveButton.setAlignment(Pos.CENTER);
+        saveButton.setMaxHeight(50);
+        saveButton.setPrefHeight(50);
+
+        saveButton.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 10");
+
+        saveButton.setOnMouseEntered(event -> saveButton.setStyle("-fx-background-color: #078D55;-fx-background-radius: 10"));
+
+        saveButton.setOnMouseExited(event -> saveButton.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 10"));
+
+        return saveButton;
+    }
+
     private Pane getButton(boolean isItBool){
 
         Label complexShape = new Label(isItBool ? "Bool" : "Proc1");
@@ -392,7 +496,16 @@ public class NewShapeRuleEditor {
         complexShapeHBox.setPrefHeight(20);
 
         complexShapeHBox.setOnMouseClicked(event -> {
-            System.out.println("yey");
+
+            Stage newStage = new Stage();
+            newStage.initModality(Modality.APPLICATION_MODAL);
+            newStage.initOwner(stage);
+
+            VBox vBox = new VBox();
+            vBox.setSpacing(20);
+            vBox.setStyle("-fx-background-color: #191919");
+            vBox.setPadding(new Insets(20));
+
 
             WebView webView = new WebView();
             WebEngine webEngine = webView.getEngine();
@@ -404,11 +517,68 @@ public class NewShapeRuleEditor {
             webEngine.reload();
 
 
-            Stage newStage = new Stage();
-            newStage.initModality(Modality.APPLICATION_MODAL);
-            newStage.initOwner(stage);
+            System.out.println("loading current saved");
+            if(isItBool){
+                if(currentShapeRule.getBoolXML() != null){
+                    startBlurAnimation(vBox, 0.0, 30.0, Duration.millis(100), false);
 
-            Scene dialogScene = new Scene(webView, 1280, 720);
+                    System.out.println(currentShapeRule.getBoolXML());
+
+                    webView.getEngine().getLoadWorker().stateProperty().addListener((observableValue, state, t1) -> {
+                        if(t1 == Worker.State.SUCCEEDED){
+                            webView.getEngine().executeScript("novoTeste('"+ currentShapeRule.getBoolXML() +"')");
+                            startBlurAnimation(vBox, 30.0, 0.0, Duration.millis(100), false);
+
+                        }
+                    });
+
+                }
+
+            }else{
+                if(currentShapeRule.getProcessXML() != null){
+                    startBlurAnimation(vBox, 0.0, 30.0, Duration.millis(100), false);
+
+                    webView.getEngine().getLoadWorker().stateProperty().addListener((observableValue, state, t1) -> {
+                        if(t1 == Worker.State.SUCCEEDED){
+                            webView.getEngine().executeScript("novoTeste('"+ currentShapeRule.getProcessXML() +"')");
+                            startBlurAnimation(vBox, 30.0, 0.0, Duration.millis(100), false);
+
+                        }
+                    });
+
+                }
+
+            }
+            System.out.println("ended current saved");
+
+
+
+            Pane button = getWebViewSaveButton();
+            System.out.println("cliquei!");
+            button.setOnMouseClicked(mouseEvent -> {
+                int canSave = (int) webView.getEngine().executeScript("numberOfNonConnectedBlocks()");
+                if(canSave == 1 || canSave == 0){
+                    System.out.println("GUARDEI!");
+                    String workspaceXML = (String) webView.getEngine().executeScript("teste()");
+                    String code = webView.getEngine().executeScript("getCode()").toString();
+
+                    if(isItBool){
+                        currentShapeRule.setBoolCode(code);
+                        currentShapeRule.setBoolXML(workspaceXML);
+                    }else{
+                        currentShapeRule.setProcessCode(code);
+                        currentShapeRule.setProcessXML(workspaceXML);
+                    }
+
+
+                }
+
+            });
+
+            vBox.getChildren().addAll(webView, button);
+            VBox.setVgrow(webView, Priority.ALWAYS);
+
+            Scene dialogScene = new Scene(vBox, 1280, 720);
             dialogScene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
 
             newStage.setScene(dialogScene);
@@ -430,6 +600,100 @@ public class NewShapeRuleEditor {
     private void clearTranslationSections(){
         leftTranslationSection.getChildren().clear();
         rightTranslationSection.getChildren().clear();
+
+        //TODO This shouldn't be here.
+        addRemovedPanes();
+    }
+
+    private void addRemovedPanes(){
+        if(!mainPanel.getChildren().contains(editorPanel))
+            mainPanel.getChildren().add(0, editorPanel);
+
+        if(!mainPanel.getChildren().contains(nameAndSaveHBox))
+            mainPanel.getChildren().add(1, nameAndSaveHBox);
+    }
+
+    private void setUpShapeShape(){
+        clearTranslationSections();
+        editorPanel.getChildren().clear();
+        editorPanel.getChildren().addAll(getLeftPane(),getArrowPane(), getRightPane());
+    }
+
+    private void setUpBoolShapeShape(){
+        clearTranslationSections();
+        editorPanel.getChildren().clear();
+        editorPanel.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane());
+    }
+
+    private void setUpShapeShapeProc(){
+        clearTranslationSections();
+        editorPanel.getChildren().clear();
+        editorPanel.getChildren().addAll(getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
+    }
+
+    private void setUpBoolShapeShapeProc(){
+        clearTranslationSections();
+        editorPanel.getChildren().clear();
+        editorPanel.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
+    }
+
+    private void setUpShapeShapeProc(ShapeShapeProc shapeShapeProc){
+        setUpShapeShapeProc();
+        addShapeRuleShapesToGrid(shapeShapeProc);
+    }
+
+    private void setUpBoolShapeShapeProc(BoolShapeShapeProc boolShapeShapeProc){
+        setUpBoolShapeShapeProc();
+        addShapeRuleShapesToGrid(boolShapeShapeProc);
+    }
+
+    private void setUpBoolShapeShape(BoolShapeShape boolShapeShape){
+        setUpBoolShapeShape();
+        addShapeRuleShapesToGrid(boolShapeShape);
+    }
+
+    private void addShapeRuleShapesToGrid(ShapeRule shapeRule){
+        shapeRule.getLeftBasicShapes().forEach(basicShape -> leftGrid.addShape(basicShape, UUID.randomUUID()));
+        shapeRule.getRightBasicShapes().forEach(basicShape -> rightGrid.addShape(basicShape, UUID.randomUUID()));
+
+        shapeRule.getLeftCompositionShapes().forEach(newCompositionShape -> {
+            Pane toAddLeft = new Pane();
+            NewCompositionShape toPut = newCompositionShape.getPaneWithBasicAndCompositionShapes(toAddLeft, true, 0,0, leftTranslationSection);
+
+            toPut.setProceedWhenDeleting(a -> {
+                if(leftTranslationSection.getChildren().contains(toPut.getTranslationXSection())){
+                    leftTranslationSection.getChildren().removeAll(toPut.getTranslationXSection(), toPut.getTranslationYSection());
+                }
+
+                leftGrid.removeCompositionShapeFromList(newCompositionShape);
+
+                return 0.0;}
+            );
+
+            leftGrid.addGroup(toAddLeft, newCompositionShape);
+        });
+
+        shapeRule.getRightCompositionShapes().forEach(newCompositionShape -> {
+            Pane toAddRight = new Pane();
+            NewCompositionShape toPut = newCompositionShape.getPaneWithBasicAndCompositionShapes(toAddRight, true, 0,0, rightTranslationSection);
+
+            toPut.setProceedWhenDeleting(a -> {
+                if(rightTranslationSection.getChildren().contains(toPut.getTranslationXSection())){
+                    rightTranslationSection.getChildren().removeAll(toPut.getTranslationXSection(), toPut.getTranslationYSection());
+                }
+
+                rightGrid.removeCompositionShapeFromList(newCompositionShape);
+
+                return 0.0;}
+            );
+
+            rightGrid.addGroup(toAddRight, newCompositionShape);
+        });
+    }
+
+    private void setUpShapeShape(ShapeShape shape){
+        setUpShapeShape();
+        addShapeRuleShapesToGrid(shape);
     }
 
     private void setUpNewShapeRuleButton(){
@@ -459,24 +723,27 @@ public class NewShapeRuleEditor {
             currentShapeRule = new ShapeShape();
             nameTextField.setText("NO_NAME");
 
-            clearTranslationSections();
-            editorPanel.getChildren().clear();
-            editorPanel.getChildren().addAll(getLeftPane(),getArrowPane(), getRightPane());
+            setUpShapeShape();
         });
 
         menuItem_shape_shape_proc.setOnAction(actionEvent -> {
-            clearTranslationSections();
-            editorPanel.getChildren().clear();
-            editorPanel.getChildren().addAll(getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
+            currentShapeRule = new ShapeShapeProc();
+            nameTextField.setText("NO_NAME");
+
+            setUpShapeShapeProc();
         });
 
         menuItem_bool_shape_shape.setOnAction(actionEvent -> {
-            clearTranslationSections();
-            editorPanel.getChildren().clear();
-            editorPanel.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane());
+            currentShapeRule = new BoolShapeShape();
+            nameTextField.setText("NO_NAME");
+
+            setUpBoolShapeShape();
         });
 
         menuItem_bool_shape_shape_proc.setOnAction(actionEvent -> {
+            currentShapeRule = new BoolShapeShapeProc();
+            nameTextField.setText("NO_NAME");
+
             clearTranslationSections();
             editorPanel.getChildren().clear();
             editorPanel.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
@@ -484,9 +751,7 @@ public class NewShapeRuleEditor {
 
         contextMenu.getItems().addAll(menuItem_shape_shape, menuItem_shape_shape_proc, menuItem_bool_shape_shape, menuItem_bool_shape_shape_proc );
 
-        newShapeRuleButton.setOnMouseClicked(mouseEvent -> {
-            contextMenu.show(newShapeRuleButton, mouseEvent.getScreenX(), mouseEvent.getScreenY());
-        });
+        newShapeRuleButton.setOnMouseClicked(mouseEvent -> contextMenu.show(newShapeRuleButton, mouseEvent.getScreenX(), mouseEvent.getScreenY()));
 
     }
 
@@ -513,6 +778,26 @@ public class NewShapeRuleEditor {
         saveButton.setPrefHeight(50);
 
         saveButton.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 10");
+
+        saveButton.setOnMouseClicked(mouseEvent -> {
+            currentShapeRule.setShapeRuleName(nameTextField.getText());
+            scrollBarThumbnails.add(currentShapeRule);
+
+            currentShapeRule.setLeftBasicShapes(leftGrid.getAddedBasicShapes());
+            currentShapeRule.setRightBasicShapes(rightGrid.getAddedBasicShapes());
+
+            currentShapeRule.setLeftCompositionShapes(leftGrid.getAddedNewCompositionShapes());
+            currentShapeRule.setRightCompositionShapes(rightGrid.getAddedNewCompositionShapes());
+
+            if(shapeRules.stream().noneMatch(p -> p.equals(currentShapeRule))){
+                shapeRules.add(currentShapeRule);
+            }
+
+        });
+
+        saveButton.setOnMouseEntered(event -> saveButton.setStyle("-fx-background-color: #078D55;-fx-background-radius: 10"));
+
+        saveButton.setOnMouseExited(event -> saveButton.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 10"));
     }
 
     private void setUpNameAndSaveHBox(){
@@ -544,7 +829,7 @@ public class NewShapeRuleEditor {
         mainPanel = new VBox();
         mainPanel.setSpacing(20);
         mainPanel.setPadding(new Insets(20));
-        mainPanel.getChildren().addAll(editorPanel, nameAndSaveHBox, newShapeRuleButton, horizontalScrollPane);
+        mainPanel.getChildren().addAll(newShapeRuleButton);
         mainPanel.setStyle("-fx-background-color: #262528;");
     }
 
@@ -601,6 +886,26 @@ public class NewShapeRuleEditor {
     private void selectTheFirstProcess(){
         currentShapeRule = shapeRules.get(0);
         nameTextField.setText(currentShapeRule.getShapeRuleName());
+
+
+
+        loadShapeRule();
+    }
+
+    private void loadShapeRule(){
+        if( currentShapeRule instanceof ShapeShape){
+            setUpShapeShape((ShapeShape) currentShapeRule);
+
+        }else if(currentShapeRule instanceof BoolShapeShape){
+            setUpBoolShapeShape((BoolShapeShape) currentShapeRule);
+
+        }else if(currentShapeRule instanceof ShapeShapeProc){
+            setUpShapeShapeProc((ShapeShapeProc) currentShapeRule);
+
+        }else if(currentShapeRule instanceof BoolShapeShapeProc){
+            setUpBoolShapeShapeProc((BoolShapeShapeProc) currentShapeRule);
+
+        }
     }
 
 }

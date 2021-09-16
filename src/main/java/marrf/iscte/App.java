@@ -415,7 +415,7 @@ public class App extends Application {
             /*ShapeRuleEditor shapeRuleEditor = new ShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
             shapeRuleEditor.openPopup();*/
 
-            NewShapeRuleEditor newShapeRuleEditor = new NewShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator, shapeRuleArrayList);
+            NewShapeRuleEditor newShapeRuleEditor = new NewShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
             newShapeRuleEditor.openPopup();
 
         });

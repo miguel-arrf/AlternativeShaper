@@ -3,6 +3,7 @@ package marrf.iscte;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import marrf.iscte.ShapeRules.ShapeRule;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -28,6 +29,7 @@ public class Orchestrator {
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
     private final ArrayList<Process> processes = new ArrayList<>();
+    private final ArrayList<ShapeRule> shapeRules = new ArrayList<>();
 
     public static int getSCALE() {
         return SCALE;
@@ -39,6 +41,10 @@ public class Orchestrator {
 
     public ArrayList<Process> getProcesses() {
         return processes;
+    }
+
+    public ArrayList<ShapeRule> getShapeRules() {
+        return shapeRules;
     }
 
     public void addAllBasicShapes(ArrayList<BasicShape> basicShapesToAdd){

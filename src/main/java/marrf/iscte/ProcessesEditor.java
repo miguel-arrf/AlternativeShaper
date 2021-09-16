@@ -248,12 +248,10 @@ public class ProcessesEditor {
             int canSave = (int) webView.getEngine().executeScript("numberOfNonConnectedBlocks()");
 
 
-            if(canSave == 1){
+            if(canSave == 1 || canSave == 0){
 
                 String workspaceXML = (String) webView.getEngine().executeScript("teste()");
                 String code = webView.getEngine().executeScript("getCode()").toString();
-
-
 
                 currentProcess.setProcessCode(code);
                 currentProcess.setBlocklyXML(workspaceXML);
@@ -265,7 +263,6 @@ public class ProcessesEditor {
 
                 orchestrator.processesToString();
             }
-
 
 
 
@@ -416,6 +413,8 @@ public class ProcessesEditor {
         nameTextfield.setText(currentProcess.getProcessName());
         webView.getEngine().executeScript("novoTeste('"+ currentProcess.getBlocklyXML() +"')");
     }
+
+
 
 
 }

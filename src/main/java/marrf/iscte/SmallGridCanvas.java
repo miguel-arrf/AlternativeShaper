@@ -21,9 +21,18 @@ public class SmallGridCanvas {
     private final ArrayList<Double> initialHorizontalDrag = new ArrayList<>();
     private final ArrayList<Double> initialVerticalDrag = new ArrayList<>();
 
-    private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private Circle circle;
 
+    private ArrayList<BasicShape> addedBasicShapes = new ArrayList<>();
+    private ArrayList<NewCompositionShape> addedNewCompositionShapes = new ArrayList<>();
+
+    public ArrayList<BasicShape> getAddedBasicShapes() {
+        return addedBasicShapes;
+    }
+
+    public ArrayList<NewCompositionShape> getAddedNewCompositionShapes() {
+        return addedNewCompositionShapes;
+    }
 
     private void redraw(){
         pane.getChildren().clear();
@@ -123,9 +132,18 @@ public class SmallGridCanvas {
         //basicShape.writeTranslateX.apply(basicShape.getInitialTranslation().getX());
 
         pane.getChildren().add(toAdd);
-        basicShapes.add(basicShape);
 
         toAdd.setId("shape:" + uuid.toString());
+
+        addedBasicShapes.add(basicShape);
+    }
+
+    public void removeBasicShapeFromList(BasicShape toRemove){
+        addedBasicShapes.remove(toRemove);
+    }
+
+    public void removeCompositionShapeFromList(NewCompositionShape toRemove){
+        addedNewCompositionShapes.remove(toRemove);
     }
 
     public void removeShapeWithID(UUID id){
@@ -139,13 +157,17 @@ public class SmallGridCanvas {
 
     }
 
-    public void addGroup(Pane basicShape) {
+    public void addGroup(Pane basicShape, NewCompositionShape compositionShape) {
         basicShape.setTranslateX(basicShape.getTranslateX() + circle.getCenterX() + circle.getTranslateX());
         basicShape.setTranslateY(basicShape.getTranslateY() + circle.getCenterY() + circle.getTranslateY());
         basicShape.setId("shape");
         pane.getChildren().add(basicShape);
 
+        addedNewCompositionShapes.add(compositionShape);
     }
+
+
+
 
     public void addArrow(Arrow arrow){
 
@@ -160,7 +182,7 @@ public class SmallGridCanvas {
 
     public void clearEverything(){
         redraw();
-        basicShapes.clear();
+        addedBasicShapes.clear();
         //compositionShapes.clear();
     }
 

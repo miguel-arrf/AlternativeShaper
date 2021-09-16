@@ -230,7 +230,7 @@ public class ShapeRuleEditor {
                     return 0.0;}
                 );
 
-                smallGridCanvas.addGroup(toAddLeft);
+                smallGridCanvas.addGroup(toAddLeft, toPut);
 
             });
 
