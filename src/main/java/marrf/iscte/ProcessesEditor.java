@@ -36,7 +36,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 import static marrf.iscte.PopupWindow.startBlurAnimation;
-import static marrf.iscte.ShapeRuleEditor.getShapesJSON;
 
 public class ProcessesEditor {
 
@@ -61,6 +60,33 @@ public class ProcessesEditor {
     private final WebView webView = new WebView();
 
     private TextField nameTextfield;
+
+    public static String getShapesJSON(ArrayList<BasicShape> basicShapes, ArrayList<NewCompositionShape> newCompositionShapes){
+        StringBuilder toReturn = new StringBuilder();
+
+        basicShapes.forEach(basicShape -> {
+            toReturn.append("[\n");
+
+            toReturn.append("\"").append(basicShape.getShapeName()).append("\",\n");
+            toReturn.append("\"").append(basicShape.getShapeName()).append("\"\n");
+
+            toReturn.append("],\n");
+
+        });
+
+        newCompositionShapes.forEach(newCompositionShape -> {
+            toReturn.append("[\n");
+
+            toReturn.append("\"").append(newCompositionShape.getShapeName()).append("\",\n");
+            toReturn.append("\"").append(newCompositionShape.getShapeName()).append("\"\n");
+
+            toReturn.append("],\n");
+        });
+
+
+
+        return toReturn.toString();
+    }
 
     public ProcessesEditor(Scene scene, ArrayList<NewCompositionShape> newCompositionShapes, ArrayList<BasicShape> basicShapes, Orchestrator orchestrator){
         this.scene = scene;

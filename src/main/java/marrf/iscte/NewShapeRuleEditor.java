@@ -148,7 +148,11 @@ public class NewShapeRuleEditor {
             }
 
             if(scrollBarThumbnails.size() == 0 ){
-                mainPanel.getChildren().removeAll(nameAndSaveHBox, editorPanel, horizontalScrollPane);
+                System.out.println("THIS IS THE LAST ONE!");
+                mainPanel.getChildren().remove(nameAndSaveHBox);
+                mainPanel.getChildren().remove(editorPanel);
+                mainPanel.getChildren().remove(horizontalScrollPane);
+
             }else{
                 if(!mainPanel.getChildren().contains(horizontalScrollPane)){
                     mainPanel.getChildren().add(horizontalScrollPane);
@@ -230,27 +234,13 @@ public class NewShapeRuleEditor {
 
                 UUID toPut = UUID.randomUUID();
 
-                BasicShape leftBasicShapeCopy = orchestrator.getCopyOfBasicShape(originalBasicShape.getUUID().toString(), a -> 0.0, a -> 0.0, a -> 0.0);
-
-                leftBasicShapeCopy.setOnMouseClicked(mouseEvent1 -> {
+                BasicShape shapeToAdd = smallGridCanvas.getCompositionShape().addBasicShape(originalBasicShape.getUUID().toString());
+                shapeToAdd.setOnMouseClicked(mouseEvent1 -> {
                     toAddTo.getChildren().clear();
-                    toAddTo.getChildren().addAll(leftBasicShapeCopy.getTranslationXSection(), leftBasicShapeCopy.getTranslationYSection());
+                    toAddTo.getChildren().addAll(shapeToAdd.getTranslationXSection(), shapeToAdd.getTranslationYSection());
                 });
 
-                leftBasicShapeCopy.setProceedWhenDeleting(a -> {
-                    if(toAddTo.getChildren().contains(leftBasicShapeCopy.getTranslationXSection())){
-                        toAddTo.getChildren().removeAll(leftBasicShapeCopy.getTranslationXSection(), leftBasicShapeCopy.getTranslationYSection());
-                    }
-                        smallGridCanvas.removeBasicShapeFromList(leftBasicShapeCopy);
-                        rightGrid.removeBasicShapeFromList(leftBasicShapeCopy);
-
-                    return 0.0;
-                });
-
-                smallGridCanvas.addShape(leftBasicShapeCopy, toPut);
-
-
-
+                smallGridCanvas.addShape(shapeToAdd, toPut);
 
             });
 
@@ -271,22 +261,7 @@ public class NewShapeRuleEditor {
             compositionShapeLabel.setOnMouseClicked(mouseEvent -> {
                 NewCompositionShape originalCompositionShape = newCompositionShapes.stream().filter( a -> a.getShapeName().equals(p)).findFirst().get();
 
-                Pane toAddLeft = new Pane();
-                NewCompositionShape toPut = originalCompositionShape.getPaneWithBasicAndCompositionShapes(toAddLeft, true, 0,0, toAddTo);
-
-                toPut.setProceedWhenDeleting(a -> {
-                    if(toAddTo.getChildren().contains(toPut.getTranslationXSection())){
-                        toAddTo.getChildren().removeAll(toPut.getTranslationXSection(), toPut.getTranslationYSection());
-                    }
-
-                    smallGridCanvas.removeCompositionShapeFromList(originalCompositionShape);
-
-                    return 0.0;}
-                );
-
-                smallGridCanvas.addGroup(toAddLeft, originalCompositionShape);
-
-
+                smallGridCanvas.addGroup(smallGridCanvas.getCompositionShape().addNewCompositionShape(originalCompositionShape), originalCompositionShape);
 
             });
 
@@ -600,9 +575,6 @@ public class NewShapeRuleEditor {
     private void clearTranslationSections(){
         leftTranslationSection.getChildren().clear();
         rightTranslationSection.getChildren().clear();
-
-        //TODO This shouldn't be here.
-        addRemovedPanes();
     }
 
     private void addRemovedPanes(){
@@ -615,24 +587,28 @@ public class NewShapeRuleEditor {
 
     private void setUpShapeShape(){
         clearTranslationSections();
+        addRemovedPanes();
         editorPanel.getChildren().clear();
         editorPanel.getChildren().addAll(getLeftPane(),getArrowPane(), getRightPane());
     }
 
     private void setUpBoolShapeShape(){
         clearTranslationSections();
+        addRemovedPanes();
         editorPanel.getChildren().clear();
         editorPanel.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane());
     }
 
     private void setUpShapeShapeProc(){
         clearTranslationSections();
+        addRemovedPanes();
         editorPanel.getChildren().clear();
         editorPanel.getChildren().addAll(getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
     }
 
     private void setUpBoolShapeShapeProc(){
         clearTranslationSections();
+        addRemovedPanes();
         editorPanel.getChildren().clear();
         editorPanel.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
     }
@@ -653,27 +629,53 @@ public class NewShapeRuleEditor {
     }
 
     private void addShapeRuleShapesToGrid(ShapeRule shapeRule){
-        shapeRule.getLeftBasicShapes().forEach(basicShape -> leftGrid.addShape(basicShape, UUID.randomUUID()));
-        shapeRule.getRightBasicShapes().forEach(basicShape -> rightGrid.addShape(basicShape, UUID.randomUUID()));
+        shapeRule.getRightShape().setTransformersBox(rightTranslationSection);
+        shapeRule.getLeftShape().setTransformersBox(leftTranslationSection);
 
-        shapeRule.getLeftCompositionShapes().forEach(newCompositionShape -> {
-            Pane toAddLeft = new Pane();
-            NewCompositionShape toPut = newCompositionShape.getPaneWithBasicAndCompositionShapes(toAddLeft, true, 0,0, leftTranslationSection);
 
-            toPut.setProceedWhenDeleting(a -> {
-                if(leftTranslationSection.getChildren().contains(toPut.getTranslationXSection())){
-                    leftTranslationSection.getChildren().removeAll(toPut.getTranslationXSection(), toPut.getTranslationYSection());
-                }
+        shapeRule.setRightShapeCopy(shapeRule.getRightShape().getCopy());
+        shapeRule.setLeftShapeCopy(shapeRule.getLeftShape().getCopy());
 
-                leftGrid.removeCompositionShapeFromList(newCompositionShape);
+        leftGrid.setCompositionShape(shapeRule.getLeftShapeCopy());
+        rightGrid.setCompositionShape(shapeRule.getRightShapeCopy());
 
-                return 0.0;}
-            );
 
-            leftGrid.addGroup(toAddLeft, newCompositionShape);
+        shapeRule.getLeftShapeCopy().getBasicShapes().forEach(shape -> {
+
+            shape.setOnMouseClicked(mouseEvent1 -> {
+                leftTranslationSection.getChildren().clear();
+                leftTranslationSection.getChildren().addAll(shape.getTranslationXSection(), shape.getTranslationYSection());
+            });
+
+            leftGrid.addShape(shape, UUID.randomUUID());
+
+
         });
 
-        shapeRule.getRightCompositionShapes().forEach(newCompositionShape -> {
+        Pane toAdd = new Pane();
+        shapeRule.getLeftShapeCopy().getTeste(toAdd, true, 0,0);
+        leftGrid.addGroup(toAdd, shapeRule.getLeftShapeCopy());
+
+
+        shapeRule.getRightShapeCopy().getBasicShapes().forEach(shape -> {
+
+            shape.setOnMouseClicked(mouseEvent1 -> {
+                rightTranslationSection.getChildren().clear();
+                rightTranslationSection.getChildren().addAll(shape.getTranslationXSection(), shape.getTranslationYSection());
+            });
+
+            rightGrid.addShape(shape, UUID.randomUUID());
+
+
+        });
+
+        Pane toAddRight = new Pane();
+        shapeRule.getRightShapeCopy().getTeste(toAddRight, true, 0,0);
+        rightGrid.addGroup(toAddRight, shapeRule.getRightShapeCopy());
+
+
+
+/*        shapeRule.getRightCompositionShapes().forEach(newCompositionShape -> {
             Pane toAddRight = new Pane();
             NewCompositionShape toPut = newCompositionShape.getPaneWithBasicAndCompositionShapes(toAddRight, true, 0,0, rightTranslationSection);
 
@@ -689,6 +691,8 @@ public class NewShapeRuleEditor {
 
             rightGrid.addGroup(toAddRight, newCompositionShape);
         });
+        */
+
     }
 
     private void setUpShapeShape(ShapeShape shape){
@@ -720,33 +724,47 @@ public class NewShapeRuleEditor {
         CustomMenuItem menuItem_bool_shape_shape_proc = new CustomMenuItem(ProcTemplate.get_Bool_Shape_Shape_Proc(null));
 
         menuItem_shape_shape.setOnAction(actionEvent -> {
-            currentShapeRule = new ShapeShape();
+            currentShapeRule = new ShapeShape(orchestrator, leftTranslationSection, rightTranslationSection, a -> 0.0, a -> 0.0);
+
             nameTextField.setText("NO_NAME");
 
             setUpShapeShape();
+
+            leftGrid.setCompositionShape(currentShapeRule.getLeftShapeCopy());
+            rightGrid.setCompositionShape(currentShapeRule.getRightShapeCopy());
         });
 
         menuItem_shape_shape_proc.setOnAction(actionEvent -> {
-            currentShapeRule = new ShapeShapeProc();
+            currentShapeRule = new ShapeShapeProc(orchestrator, leftTranslationSection, rightTranslationSection, a -> 0.0, a -> 0.0);
+
             nameTextField.setText("NO_NAME");
 
             setUpShapeShapeProc();
+
+            leftGrid.setCompositionShape(currentShapeRule.getLeftShapeCopy());
+            rightGrid.setCompositionShape(currentShapeRule.getRightShapeCopy());
         });
 
         menuItem_bool_shape_shape.setOnAction(actionEvent -> {
-            currentShapeRule = new BoolShapeShape();
+            currentShapeRule = new BoolShapeShape(orchestrator, leftTranslationSection, rightTranslationSection, a -> 0.0, a -> 0.0);
+
             nameTextField.setText("NO_NAME");
 
             setUpBoolShapeShape();
+
+            leftGrid.setCompositionShape(currentShapeRule.getLeftShapeCopy());
+            rightGrid.setCompositionShape(currentShapeRule.getRightShapeCopy());
         });
 
         menuItem_bool_shape_shape_proc.setOnAction(actionEvent -> {
-            currentShapeRule = new BoolShapeShapeProc();
+            currentShapeRule = new BoolShapeShapeProc(orchestrator, leftTranslationSection, rightTranslationSection, a -> 0.0, a -> 0.0);
+
             nameTextField.setText("NO_NAME");
 
-            clearTranslationSections();
-            editorPanel.getChildren().clear();
-            editorPanel.getChildren().addAll(getButton(true), getLeftPane(),getArrowPane(), getRightPane(), getButton(false));
+            setUpBoolShapeShapeProc();
+
+            leftGrid.setCompositionShape(currentShapeRule.getLeftShapeCopy());
+            rightGrid.setCompositionShape(currentShapeRule.getRightShapeCopy());
         });
 
         contextMenu.getItems().addAll(menuItem_shape_shape, menuItem_shape_shape_proc, menuItem_bool_shape_shape, menuItem_bool_shape_shape_proc );
@@ -783,15 +801,12 @@ public class NewShapeRuleEditor {
             currentShapeRule.setShapeRuleName(nameTextField.getText());
             scrollBarThumbnails.add(currentShapeRule);
 
-            currentShapeRule.setLeftBasicShapes(leftGrid.getAddedBasicShapes());
-            currentShapeRule.setRightBasicShapes(rightGrid.getAddedBasicShapes());
-
-            currentShapeRule.setLeftCompositionShapes(leftGrid.getAddedNewCompositionShapes());
-            currentShapeRule.setRightCompositionShapes(rightGrid.getAddedNewCompositionShapes());
-
             if(shapeRules.stream().noneMatch(p -> p.equals(currentShapeRule))){
                 shapeRules.add(currentShapeRule);
             }
+
+            currentShapeRule.setRightShape(currentShapeRule.getRightShapeCopy());
+            currentShapeRule.setLeftShape(currentShapeRule.getLeftShapeCopy());
 
         });
 
@@ -812,7 +827,7 @@ public class NewShapeRuleEditor {
         editorPanel.setAlignment(Pos.CENTER);
         editorPanel.setSpacing(20);
         editorPanel.setPadding(new Insets(20));
-        editorPanel.setStyle("-fx-background-color: #232225; -fx-background-radius: 20");
+        editorPanel.setStyle("-fx-background-color: #232225; -fx-background-radius: 10");
     }
 
     private void setUpPanes(){
@@ -893,6 +908,7 @@ public class NewShapeRuleEditor {
     }
 
     private void loadShapeRule(){
+
         if( currentShapeRule instanceof ShapeShape){
             setUpShapeShape((ShapeShape) currentShapeRule);
 

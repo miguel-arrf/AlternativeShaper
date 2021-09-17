@@ -8,25 +8,22 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import marrf.iscte.BasicShape;
 import marrf.iscte.NewCompositionShape;
+import marrf.iscte.Orchestrator;
 
-import java.util.ArrayList;
 import java.util.UUID;
+import java.util.function.Function;
 
 public abstract class ShapeRule {
 
     private final UUID id = UUID.randomUUID();
     private String shapeRuleName;
 
-    private ArrayList<BasicShape> leftBasicShapes = new ArrayList<>();
-    private ArrayList<NewCompositionShape> leftCompositionShapes = new ArrayList<>();
+    private NewCompositionShape leftShape;
+    private NewCompositionShape rightShape;
 
-    private ArrayList<BasicShape> rightBasicShapes = new ArrayList<>();
-    private ArrayList<NewCompositionShape> rightCompositionShapes = new ArrayList<>();
-
-    private boolean hasBool;
-    private boolean hasProc;
+    private NewCompositionShape leftShapeCopy;
+    private NewCompositionShape rightShapeCopy;
 
     private String boolCode;
     private String processCode;
@@ -36,17 +33,44 @@ public abstract class ShapeRule {
 
     private final Pane thumbnail = new VBox();
 
-    public ShapeRule(boolean hasBool, boolean hasProc){
-        this.hasBool = hasBool;
-        this.hasProc = hasProc;
+    public ShapeRule(Orchestrator orchestrator, Pane transformersBox,Pane right, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting){
+        leftShape = new NewCompositionShape(orchestrator, transformersBox, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
+        rightShape = new NewCompositionShape(orchestrator, right, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
+
+        leftShapeCopy = leftShape.getCopy();
+        rightShapeCopy = rightShape.getCopy();
     }
 
-    public String getProcessCode() {
-        return processCode;
+    public NewCompositionShape getLeftShapeCopy() {
+        return leftShapeCopy;
     }
 
-    public String getBoolCode() {
-        return boolCode;
+    public NewCompositionShape getRightShapeCopy() {
+        return rightShapeCopy;
+    }
+
+    public void setLeftShapeCopy(NewCompositionShape leftShapeCopy) {
+        this.leftShapeCopy = leftShapeCopy;
+    }
+
+    public void setRightShapeCopy(NewCompositionShape rightShapeCopy) {
+        this.rightShapeCopy = rightShapeCopy;
+    }
+
+    public void setLeftShape(NewCompositionShape leftShape) {
+        this.leftShape = leftShape;
+    }
+
+    public void setRightShape(NewCompositionShape rightShape) {
+        this.rightShape = rightShape;
+    }
+
+    public NewCompositionShape getLeftShape() {
+        return leftShape;
+    }
+
+    public NewCompositionShape getRightShape() {
+        return rightShape;
     }
 
     public String getBoolXML() {
@@ -77,68 +101,12 @@ public abstract class ShapeRule {
         this.processCode = processCode;
     }
 
-    public boolean isHasBool() {
-        return hasBool;
-    }
-
-    public boolean isHasProc() {
-        return hasProc;
-    }
-
     public void setShapeRuleName(String shapeRuleName) {
         this.shapeRuleName = shapeRuleName;
     }
 
     public String getShapeRuleName() {
         return shapeRuleName;
-    }
-
-    public ArrayList<BasicShape> getLeftBasicShapes() {
-        return leftBasicShapes;
-    }
-
-    public ArrayList<NewCompositionShape> getLeftCompositionShapes() {
-        return leftCompositionShapes;
-    }
-
-    public ArrayList<BasicShape> getRightBasicShapes() {
-        return rightBasicShapes;
-    }
-
-    public ArrayList<NewCompositionShape> getRightCompositionShapes() {
-        return rightCompositionShapes;
-    }
-
-    public void addBasicShapeToLeft(BasicShape basicShape){
-        leftBasicShapes.add(basicShape);
-    }
-
-    public void addBasicShapeToRight(BasicShape basicShape){
-        rightBasicShapes.add(basicShape);
-    }
-
-    public void addCompositionShapeToRight(NewCompositionShape newCompositionShape){
-        rightCompositionShapes.add(newCompositionShape);
-    }
-
-    public void addCompositionShapeToLeft(NewCompositionShape newCompositionShape){
-        leftCompositionShapes.add(newCompositionShape);
-    }
-
-    public void setLeftBasicShapes(ArrayList<BasicShape> basicShapes){
-        this.leftBasicShapes = basicShapes;
-    }
-
-    public void setLeftCompositionShapes(ArrayList<NewCompositionShape> leftCompositionShapes) {
-        this.leftCompositionShapes = leftCompositionShapes;
-    }
-
-    public void setRightBasicShapes(ArrayList<BasicShape> rightBasicShapes) {
-        this.rightBasicShapes = rightBasicShapes;
-    }
-
-    public void setRightCompositionShapes(ArrayList<NewCompositionShape> rightCompositionShapes) {
-        this.rightCompositionShapes = rightCompositionShapes;
     }
 
     public Pane getThumbnail(){

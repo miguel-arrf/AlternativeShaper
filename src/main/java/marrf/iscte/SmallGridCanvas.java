@@ -26,12 +26,14 @@ public class SmallGridCanvas {
     private ArrayList<BasicShape> addedBasicShapes = new ArrayList<>();
     private ArrayList<NewCompositionShape> addedNewCompositionShapes = new ArrayList<>();
 
-    public ArrayList<BasicShape> getAddedBasicShapes() {
-        return addedBasicShapes;
+    private NewCompositionShape compositionShape;
+
+    public void setCompositionShape(NewCompositionShape compositionShape) {
+        this.compositionShape = compositionShape;
     }
 
-    public ArrayList<NewCompositionShape> getAddedNewCompositionShapes() {
-        return addedNewCompositionShapes;
+    public NewCompositionShape getCompositionShape() {
+        return compositionShape;
     }
 
     private void redraw(){

@@ -1,6 +1,7 @@
 package marrf.iscte;
 
 import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -66,17 +67,10 @@ public class GridCanvas {
         double translateXBy = basicShape.getInitialTranslation().getX() * -1;
         double translateYBy = basicShape.getHeight() * basicShape.scaleYProperty().get() + basicShape.getInitialTranslation().getY() * -1;
 
-        //translateXBy = 0;
-        //translateYBy = basicShape.getHeight();
-
         basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() - translateXBy);
         basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() - translateYBy);
 
         Pane toAdd = basicShape.getRectangle();
-
-        //basicShape.addTranslationX(basicShape.getInitialTranslation().getX());
-        //basicShape.translateXProperty.setValue(basicShape.getInitialTranslation().getX());
-        //basicShape.writeTranslateX.apply(basicShape.getInitialTranslation().getX());
 
         pane.getChildren().add(toAdd);
         basicShapes.add(basicShape);

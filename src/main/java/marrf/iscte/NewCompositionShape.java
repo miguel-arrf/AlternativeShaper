@@ -48,7 +48,7 @@ public class NewCompositionShape implements CustomShape {
     private Node selected;
     private Information selectedTranslationX;
     private Information selectedTranslationY;
-    private final Pane transformersBox;
+    private Pane transformersBox;
     //Modifiers boxes
     private HBox translationXBox;
     private HBox translationYBox;
@@ -56,6 +56,37 @@ public class NewCompositionShape implements CustomShape {
     private Function<String, Double> proceedWhenDeletingFromThumbnail;
     private Function<String, Double> proceedToRedrawWhenDeleting;
     private Function<Pane, Double> proceedWhenDeleting;
+
+    public NewCompositionShape getCopy(){
+        NewCompositionShape toReturn = new NewCompositionShape(orchestrator, transformersBox, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
+
+        toReturn.name = name;
+        toReturn.compositionShapeMap.putAll(compositionShapeMap);
+
+        compositionShapesXTranslation.forEach(information -> {
+            toReturn.compositionShapesXTranslation.add(new Information(information.getId(), information.getValue()));
+        });
+
+        compositionShapesYTranslation.forEach(information -> {
+            toReturn.compositionShapesYTranslation.add(new Information(information.getId(), information.getValue()));
+        });
+
+        basicShapesXTranslation.forEach(information -> {
+            toReturn.basicShapesXTranslation.add(new Information(information.getId(), information.getValue()));
+        });
+
+        basicShapesYTranslation.forEach(information -> {
+            toReturn.basicShapesYTranslation.add(new Information(information.getId(), information.getValue()));
+            System.out.println("copiei!");
+        });
+
+
+        return toReturn;
+    }
+
+    public void setTransformersBox(Pane transformersBox) {
+        this.transformersBox = transformersBox;
+    }
 
     public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
@@ -219,7 +250,7 @@ public class NewCompositionShape implements CustomShape {
             Information translationX = basicShapesXTranslation.get(position);
             Information translationY = basicShapesYTranslation.get(position);
 
-            System.out.println("no get: " + "translationX: " + translationX.getValue() + ", translationY: " + translationY.getValue());
+            //System.out.println("no get: " + "translationX: " + translationX.getValue() + ", translationY: " + translationY.getValue());
 
             basicShapes.add(orchestrator.getCopyOfBasicShape(information.id, translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(translationY.getId())));
         });
@@ -285,10 +316,7 @@ public class NewCompositionShape implements CustomShape {
                 Group toAddTemp = (Group) toAdd;
                 toAddTemp.getChildren().add(addTo);
             }
-            //toAdd.getChildren().add(addTo);
 
-            if (addHover)
-                System.out.println("first translation X: " + translationX);
 
             compositionShape.getTeste(addTo, false, translationX.getValue() + upperTranslationX, translationY.getValue() + upperTranslationY);
 
@@ -350,7 +378,7 @@ public class NewCompositionShape implements CustomShape {
                     compositionShapesXTranslation.remove(xTranslationToRemove);
                     compositionShapesYTranslation.remove(yTranslationToRemove);
 
-                    proceedWhenDeleting.apply(null);
+                    //proceedWhenDeleting.apply(null);
                 });
 
                 addTo.setOnContextMenuRequested(contextMenuEvent -> {
@@ -363,6 +391,117 @@ public class NewCompositionShape implements CustomShape {
 
     }
 
+    public void getTesteForSpecific(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY, String newID, NewCompositionShape compositionShape) {
+
+            toAdd.setPickOnBounds(false);
+            Group addTo = new Group();
+
+            int position = compositionShapesXTranslation.indexOf(compositionShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get());
+
+            Information translationX = compositionShapesXTranslation.get(position);
+            Information translationY = compositionShapesYTranslation.get(position);
+
+            //Adding basic shapes
+            compositionShape.getBasicShapes().forEach(basicShape -> {
+                double translateXBy = basicShape.getInitialTranslation().getX();
+                double translateYBy = basicShape.getHeight() + basicShape.getInitialTranslation().getY() * -1;
+
+                //Este é o translation X e Y final porque já não temos mais profundidade de composition shapes, visto que já é uma basic shape.
+                basicShape.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
+                basicShape.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
+
+                BasicShape copy = new BasicShape(basicShape.getWidth(), basicShape.getHeight(), basicShape.getFill(), basicShape.getWriteTranslateX(), basicShape.getWriteTranslateY(), basicShape.getProceedWhenDeleting());
+                copy.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
+                copy.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
+
+                Pane rectangle = copy.getRectangle();
+
+                addTo.getChildren().add(rectangle);
+            });
+
+            if (toAdd instanceof Pane) {
+                Pane toAddTemp = (Pane) toAdd;
+                toAddTemp.getChildren().add(addTo);
+            } else if (toAdd instanceof Group) {
+                Group toAddTemp = (Group) toAdd;
+                toAddTemp.getChildren().add(addTo);
+            }
+
+
+            compositionShape.getTeste(addTo, false, translationX.getValue() + upperTranslationX, translationY.getValue() + upperTranslationY);
+
+            if (addHover) {
+                Rectangle rectangle = new Rectangle(addTo.getLayoutBounds().getWidth() + 20, addTo.getLayoutBounds().getHeight() + 20);
+                rectangle.setArcWidth(10);
+                rectangle.setArcHeight(10);
+                rectangle.setFill(Color.web("rgba(255,255,255,0.2)"));
+                rectangle.setX(addTo.getLayoutBounds().getMinX() - 10);
+                rectangle.setY(addTo.getLayoutBounds().getMinY() - 10);
+
+
+                Label shapeName = new Label(compositionShape.getShapeName());
+                shapeName.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+                shapeName.setTextFill(Color.web("#BDBDBD"));
+                shapeName.setPadding(new Insets(4));
+                shapeName.setStyle("-fx-background-color:  rgba(255,255,255,0.3); -fx-background-radius: 15px;");
+
+                addTo.setOnMouseMoved(mouseEvent -> {
+                    shapeName.setLayoutX(mouseEvent.getX() + 15);
+                    shapeName.setLayoutY(mouseEvent.getY() + 15);
+                });
+
+
+
+                addTo.setOnMouseEntered(event -> {
+                addTo.getChildren().add(rectangle);
+                  addTo.getChildren().add(shapeName);
+                });
+
+
+                addTo.setOnMouseExited(event -> {
+                    addTo.getChildren().remove(rectangle);
+                    addTo.getChildren().remove(shapeName);
+                });
+
+                addTo.setOnMouseClicked(event -> {
+                    selected = addTo;
+                    selectedTranslationX = translationX;
+                    selectedTranslationY = translationY;
+
+                    setUpComponents();
+                    System.out.println("I've clicked on here. It should now be true!");
+
+                    transformersBox.getChildren().clear();
+                    transformersBox.getChildren().addAll(getTransformers());
+                });
+
+                ContextMenu contextMenu = new ContextMenu();
+                contextMenu.setId("betterMenuItem");
+
+                MenuItem menuItem = new MenuItem("Delete");
+                menuItem.setStyle("-fx-text-fill: red");
+                contextMenu.getItems().add(menuItem);
+
+                menuItem.setOnAction(actionEvent -> {
+                    ((Pane) addTo.getParent()).getChildren().remove(addTo);
+                    compositionShapeMap.remove(newID);
+                    Information xTranslationToRemove = compositionShapesXTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
+                    Information yTranslationToRemove = compositionShapesYTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
+                    compositionShapesXTranslation.remove(xTranslationToRemove);
+                    compositionShapesYTranslation.remove(yTranslationToRemove);
+
+                    //proceedWhenDeleting.apply(null);
+                });
+
+                addTo.setOnContextMenuRequested(contextMenuEvent -> {
+                    contextMenu.show(addTo, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+                });
+
+            }
+
+    }
+
+
     public Pane addNewCompositionShape(NewCompositionShape NewCompositionShape) {
         String id = UUID.randomUUID().toString();
 
@@ -372,7 +511,7 @@ public class NewCompositionShape implements CustomShape {
         compositionShapesYTranslation.add(new Information(id, 0.0));
 
         Pane toAdd = new Pane();
-        getTeste(toAdd, true, 0, 0);
+        getTesteForSpecific(toAdd, true, 0, 0, id, NewCompositionShape);
 
         return toAdd;
     }

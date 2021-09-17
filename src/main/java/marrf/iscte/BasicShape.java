@@ -85,6 +85,18 @@ public class BasicShape implements CustomShape {
         return shapeName;
     }
 
+    public Function<Pane, Double> getProceedWhenDeleting() {
+        return proceedWhenDeleting;
+    }
+
+    public Function<Double, Double> getWriteTranslateX() {
+        return writeTranslateX;
+    }
+
+    public Function<Double, Double> getWriteTranslateY() {
+        return writeTranslateY;
+    }
+
     public BasicShape(double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting) {
         uuid = UUID.randomUUID();
 

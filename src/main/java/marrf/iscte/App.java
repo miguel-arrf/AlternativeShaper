@@ -245,7 +245,7 @@ public class App extends Application {
 
     private void addCompositionShape(NewCompositionShape compositionShape, boolean wasDragged){
         if(wasDragged){
-            gridCanvas.addGroup(selectedCompositionShape.addNewCompositionShape(compositionShape));
+            GridCanvas.addGroup(selectedCompositionShape.addNewCompositionShape(compositionShape));
 
         }else {
             //I've clicked on a thumbnail
@@ -254,7 +254,7 @@ public class App extends Application {
             compositionShape.getTeste(toAdd, true, 0,0);
             System.out.println("tamanho de basic shapes: " + compositionShape.getBasicShapes().size());
 
-            gridCanvas.addGroup(toAdd);
+            GridCanvas.addGroup(toAdd);
         }
     }
 
