@@ -22,7 +22,7 @@ public class Orchestrator {
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
 
     //private String path = "C:\\Users\\mferr\\Downloads\\objetos\\test.json";
-    private String path = "/Users/miguelferreira/Downloads/alternativeShaperSaves/test.json";
+    public static String path = "/Users/miguelferreira/Downloads/alternativeShaperSaves/test.json";
 
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();

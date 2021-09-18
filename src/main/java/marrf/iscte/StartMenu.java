@@ -6,6 +6,8 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.effect.Effect;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -29,7 +31,66 @@ public class StartMenu extends Application {
     private Scene scene;
     public static Stage primaryStage;
 
-    private Pane getBasicShape(){
+    private HBox basicShapePane;
+    private HBox loadFilePane;
+
+    private boolean fileDirectoryChoosen = false;
+
+
+    private Effect getDarkerEffect(){
+        ColorAdjust colorAdjust = new ColorAdjust();
+        colorAdjust.setSaturation(-0.8);
+        colorAdjust.setBrightness(-0.3);
+
+        return colorAdjust;
+    }
+
+    private Pane getSelectFolder(){
+        Image basicPlus = new Image(App.class.getResource("/icons/icons8-folder-384.png").toExternalForm());
+        ImageView basicPlusImageView = new ImageView(basicPlus);
+        basicPlusImageView.setSmooth(true);
+        basicPlusImageView.setPreserveRatio(true);
+        basicPlusImageView.setFitWidth(18);
+
+        Label basicShape = new Label("Select Save Folder");
+        basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
+        basicShape.setTextFill(Color.web("#F2C94B"));
+
+        HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
+        basicShapeHBox.setAlignment(Pos.CENTER);
+        basicShapeHBox.setSpacing(5);
+        basicShapeHBox.setStyle("-fx-background-color: #644832;-fx-background-radius: 20");
+        basicShapeHBox.setPrefHeight(30);
+
+        basicShapeHBox.setOnMouseClicked(event -> {
+            System.out.println("Select Save Folder button was pressed.");
+
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+            File selectFile = fileChooser.showSaveDialog(primaryStage);
+
+            if(selectFile != null){
+                System.out.println("new path: " + selectFile.getPath());
+                Orchestrator.path = selectFile.getPath();
+                fileDirectoryChoosen = true;
+
+                basicShapePane.setEffect(null);
+                loadFilePane.setEffect(null);
+            }else{
+                fileDirectoryChoosen = false;
+                basicShapePane.setEffect(getDarkerEffect());
+                loadFilePane.setEffect(getDarkerEffect());
+            }
+
+        });
+
+        HBox.setHgrow(basicShapeHBox, Priority.ALWAYS);
+        basicShapeHBox.setMinHeight(45);
+
+        return basicShapeHBox;
+    }
+
+    private void getBasicShape(){
         Image basicPlus = new Image(App.class.getResource("/icons/plus.png").toExternalForm());
         ImageView basicPlusImageView = new ImageView(basicPlus);
         basicPlusImageView.setSmooth(true);
@@ -40,29 +101,31 @@ public class StartMenu extends Application {
         basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
         basicShape.setTextFill(Color.web("#56CCF2"));
 
-        HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
-        basicShapeHBox.setAlignment(Pos.CENTER);
-        basicShapeHBox.setSpacing(5);
-        basicShapeHBox.setStyle("-fx-background-color: #355765;-fx-background-radius: 20");
-        basicShapeHBox.setPrefHeight(30);
+        basicShapePane = new HBox(basicPlusImageView, basicShape);
+        basicShapePane.setAlignment(Pos.CENTER);
+        basicShapePane.setSpacing(5);
+        basicShapePane.setStyle("-fx-background-color: #355765;-fx-background-radius: 20");
+        basicShapePane.setPrefHeight(30);
 
-        basicShapeHBox.setOnMouseClicked(event -> {
-            System.out.println("Add Basic Shape button clicked");
+        basicShapePane.setOnMouseClicked(event -> {
+            if(fileDirectoryChoosen){
+                System.out.println("Add Basic Shape button clicked");
 
-            scene.setRoot(app.getScenePanel(scene));
-            primaryStage.setResizable(true);
-            primaryStage.setMinWidth(300);
-            primaryStage.sizeToScene();
-            primaryStage.setMaximized(true);
+                scene.setRoot(app.getScenePanel(scene));
+                primaryStage.setResizable(true);
+                primaryStage.setMinWidth(300);
+                primaryStage.sizeToScene();
+                primaryStage.setMaximized(true);
+            }
         });
 
-        HBox.setHgrow(basicShapeHBox, Priority.ALWAYS);
-        basicShapeHBox.setMinHeight(45);
+        basicShapePane.setEffect(getDarkerEffect());
 
-        return basicShapeHBox;
+        HBox.setHgrow(basicShapePane, Priority.ALWAYS);
+        basicShapePane.setMinHeight(45);
     }
 
-    private Pane getLoadFile(){
+    private void getLoadFile(){
         Image basicPlus = new Image(App.class.getResource("/icons/jsonIcon.png").toExternalForm());
         ImageView basicPlusImageView = new ImageView(basicPlus);
         basicPlusImageView.setSmooth(true);
@@ -73,39 +136,42 @@ public class StartMenu extends Application {
         basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
         basicShape.setTextFill(Color.web("#56f28f"));
 
-        HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
-        basicShapeHBox.setAlignment(Pos.CENTER);
-        basicShapeHBox.setSpacing(5);
-        basicShapeHBox.setStyle("-fx-background-color: #35654f;-fx-background-radius: 20");
-        basicShapeHBox.setPrefHeight(30);
+        loadFilePane = new HBox(basicPlusImageView, basicShape);
+        loadFilePane.setAlignment(Pos.CENTER);
+        loadFilePane.setSpacing(5);
+        loadFilePane.setStyle("-fx-background-color: #35654f;-fx-background-radius: 20");
+        loadFilePane.setPrefHeight(30);
 
-        basicShapeHBox.setOnMouseClicked(event -> {
-            System.out.println("Load JSON file button clicked");
+        loadFilePane.setOnMouseClicked(event -> {
+            if(fileDirectoryChoosen){
+                System.out.println("Load JSON file button clicked");
 
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
-            File selectedFile = fileChooser.showOpenDialog(basicShapeHBox.getScene().getWindow());
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
+                File selectedFile = fileChooser.showOpenDialog(loadFilePane.getScene().getWindow());
 
-            System.out.println("Selected file: " + selectedFile);
+                System.out.println("Selected file: " + selectedFile);
 
-            if(selectedFile != null){
-                scene.setRoot(app.getScenePanelWithLoadedFile(scene));
-                primaryStage.setResizable(true);
-                primaryStage.setMinWidth(300);
-                primaryStage.sizeToScene();
-                primaryStage.setMaximized(true);
+                if(selectedFile != null){
+                    scene.setRoot(app.getScenePanelWithLoadedFile(scene));
+                    primaryStage.setResizable(true);
+                    primaryStage.setMinWidth(300);
+                    primaryStage.sizeToScene();
+                    primaryStage.setMaximized(true);
 
-                app.loadBasicShapes(selectedFile);
-                app.loadNewCompositionShapes(selectedFile);
-                app.loadProcesses(selectedFile);
+                    app.loadBasicShapes(selectedFile);
+                    app.loadNewCompositionShapes(selectedFile);
+                    app.loadProcesses(selectedFile);
+                }
+
             }
 
         });
 
-        HBox.setHgrow(basicShapeHBox, Priority.ALWAYS);
-        basicShapeHBox.setMinHeight(45);
+        loadFilePane.setEffect(getDarkerEffect());
 
-        return basicShapeHBox;
+        HBox.setHgrow(loadFilePane, Priority.ALWAYS);
+        loadFilePane.setMinHeight(45);
     }
 
     private Pane getBottomPane(){
@@ -117,15 +183,17 @@ public class StartMenu extends Application {
         subTitle.setFont(Font.font("SF Pro Rounded", FontWeight.LIGHT, 15));
         subTitle.setTextFill(Color.WHITE);
 
-        var horizontalPanel = new HBox(getBasicShape(), getLoadFile());
+        getBasicShape();
+        getLoadFile();
+        var horizontalPanel = new HBox(basicShapePane, loadFilePane);
         horizontalPanel.setSpacing(20);
 
-        var verticalPanel = new VBox(title, subTitle,verticalGrower(), horizontalPanel);
+        var verticalPanel = new VBox(title, subTitle,verticalGrower(), horizontalPanel, getSelectFolder());
         verticalPanel.setSpacing(20);
         verticalPanel.setPadding(new Insets(30,20,20,20));
 
-        verticalPanel.setMaxHeight(239);
-        verticalPanel.setMinHeight(239);
+        verticalPanel.setMaxHeight(270);
+        verticalPanel.setMinHeight(270);
 
         return verticalPanel;
     }
@@ -176,7 +244,7 @@ public class StartMenu extends Application {
         mainPanel.setAlignment(Pos.TOP_CENTER);
         mainPanel.setStyle("-fx-background-color: #262528");
 
-        scene = new Scene(mainPanel, 377, 553);
+        scene = new Scene(mainPanel, 377, 583);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
         scene.setFill(Color.web("#262528"));
 
