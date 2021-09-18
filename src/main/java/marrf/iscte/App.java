@@ -445,7 +445,7 @@ public class App extends Application {
 
     }
 
-    public Pane getScenePanelWithLoadedFile(Scene scene, File file){
+    public Pane getScenePanelWithLoadedFile(Scene scene){
         finishSetup();
 
         this.scene = scene;
@@ -481,6 +481,10 @@ public class App extends Application {
 
 
         return borderPane;
+    }
+
+    public void loadProcesses(File file){
+        orchestrator.getProcessesFromFile(file);
     }
 
     public void loadNewCompositionShapes(File file){
@@ -1025,6 +1029,9 @@ public class App extends Application {
             sideBarThumbnails.add(selectedCompositionShape);
             orchestrator.addAllCompositionShapes(newCompositionShapes);
         }
+
+        orchestrator.printDesignTXT();
+
     }
 
     public static void main(String[] args) {

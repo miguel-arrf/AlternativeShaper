@@ -91,27 +91,36 @@ public class Orchestrator {
         return true;
     }
 
-    /*public Pane getCopyOfCompositionShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY){
-        Pane toReturn = new Pane();
+    public void getProcessesFromFile(File file){
+        JSONParser jsonParser = new JSONParser();
 
-        Optional<NewCompositionShape> compositionShape = newCompositionShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
+        try{
+            Object object = jsonParser.parse(new FileReader(file));
+            JSONObject jsonObject = (JSONObject) object;
 
-        if(compositionShape.isPresent()){
-            NewCompositionShape toCopyFrom = compositionShape.get();
+            JSONArray processesList = (JSONArray) jsonObject.get("processes");
+            Iterator<JSONObject> iterator =  processesList.iterator();
 
-            toCopyFrom.getBasicShapes().forEach(basicShape -> {
-                basicShape.setTranslateX(basicShape.getInitialTranslation().getX());
-                basicShape.setTranslateY(basicShape.getInitialTranslation().getY());
+            while (iterator.hasNext()){
+                JSONObject processJSON = iterator.next();
 
-                toReturn.getChildren().add(basicShape.getRectangle());
-            });
+                System.out.println(processJSON);
 
+                String name = (String) processJSON.get("name");
+                UUID id = UUID.fromString((String) processJSON.get("id"));
+                String blocklyXML = (String)processJSON.get("blocklyXML");
+                String processCode = (String) processJSON.get("processCode");
 
+                Process processToAdd = new Process(id, name, blocklyXML, processCode);
+                processes.add(processToAdd);
 
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
         }
 
-        return toReturn;
-    }*/
+    }
 
     public ArrayList<NewCompositionShape> getNewCompositionShapesFromFile(File file, VBox transformersBox){
         ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
@@ -123,7 +132,7 @@ public class Orchestrator {
             JSONObject jsonObject = (JSONObject) object;
 
             JSONArray newCompositionShapesList = (JSONArray) jsonObject.get("compositionShapes");
-            Iterator<JSONObject> iterator = newCompositionShapesList.iterator();
+            Iterator<JSONObject> iterator =  newCompositionShapesList.iterator();
 
             while (iterator.hasNext()){
                 JSONObject newCompositionShapeJSON = iterator.next();
@@ -152,6 +161,8 @@ public class Orchestrator {
                 });
 
                 JSONArray newCompositionShapesInnerList = (JSONArray) newCompositionShapeJSON.get("compositionShapes");
+                System.out.println("inner list:" + newCompositionShapesInnerList);
+                System.out.println("------");
                 newCompositionShapesInnerList.forEach(newCompositionShapeObject -> {
                     JSONObject newCompositionShapeInnerJSON = (JSONObject) newCompositionShapeObject;
 
@@ -161,7 +172,9 @@ public class Orchestrator {
 
                     NewCompositionShape position = newCompositionShapes.stream().filter(p -> p.getID().toString().equals(newCompositionShapeInnerID)).findFirst().get();
 
-                    newCompositionShape.addNewCompositionShapeWithTranslation(position, translationX, translationY, newCompositionShapeInnerID);
+                    System.out.println("translationx: " + translationX + ", Y: " + translationY + ", id: " + id);
+
+                    newCompositionShape.addNewCompositionShapeWithTranslation(position, translationX, translationY, UUID.randomUUID().toString());
                 });
 
 
@@ -209,15 +222,12 @@ public class Orchestrator {
         return basicShapes;
     }
 
-
     public void addAllCompositionShapes(ArrayList<NewCompositionShape> newCompositionShapesToAdd){
         newCompositionShapes.clear();
         newCompositionShapes.addAll(newCompositionShapesToAdd);
 
         saveFile();
     }
-
-
 
     private JSONArray getBasicShapesJSON(){
         JSONArray list = new JSONArray();
@@ -231,6 +241,23 @@ public class Orchestrator {
             jsonObject.put("width", basicShape.getWidth());
             jsonObject.put("height", basicShape.getHeight());
             jsonObject.put("name", basicShape.getShapeName());
+
+            list.add(jsonObject);
+        }
+
+        return list;
+    }
+
+    private JSONArray getProcessesJSON(){
+        JSONArray list = new JSONArray();
+
+        for(Process process: processes){
+            JSONObject jsonObject = new JSONObject();
+
+            jsonObject.put("id", process.getId().toString());
+            jsonObject.put("name", process.getProcessName());
+            jsonObject.put("blocklyXML", process.getBlocklyXML());
+            jsonObject.put("processCode", process.getProcessCode());
 
             list.add(jsonObject);
         }
@@ -262,7 +289,6 @@ public class Orchestrator {
 
         processes.forEach(process -> {
 
-
             if(!Process.hasDependencies(process)){
                 toReturn.append(process.getProcessCode()).append("\n");
             }else{
@@ -272,10 +298,43 @@ public class Orchestrator {
 
         });
 
-        System.out.println("final:\n" + toReturn);
+        System.out.println(toReturn);
+    }
+
+    private void basicShapesToString(){
+        StringBuilder toReturn = new StringBuilder();
+
+        basicShapes.forEach(basicShape -> {
+
+            toReturn.append("shape(").append(basicShape.getShapeName()).append(",COLOCAR_IMAGEM).").append("\n");
+            toReturn.append("basicShapeDimention(").append(basicShape.getShapeName()).append(",").append(basicShape.getWidth()).append(",").append(basicShape.getHeight()).append(").");
+            toReturn.append("\n");
+        });
+
+        toReturn.append("shapebringtofront([");
+
+        for(int i = 0; i < basicShapes.size() ; i++){
+            toReturn.append(basicShapes.get(i).getShapeName());
+            if(i < basicShapes.size() - 1){
+                toReturn.append(",");
+            }
+        }
+
+        toReturn.append("]).");
+
+        System.out.println(toReturn);
     }
 
 
+
+    public void printDesignTXT(){
+        System.out.println("--------- ### DESIGN.TXT ### ---------");
+        System.out.println("scale_unit(40)");
+        basicShapesToString();
+        processesToString();
+
+
+    }
 
     private void saveFile(){
         System.out.println("Orchestrator saveFile()");
@@ -284,6 +343,7 @@ public class Orchestrator {
 
         jsonObject.put("basicShapes", getBasicShapesJSON());
         jsonObject.put("compositionShapes", getCompositionShapesJSON());
+        jsonObject.put("processes", getProcessesJSON());
 
         try{
             FileWriter fileWriter = new FileWriter(path);
@@ -296,7 +356,5 @@ public class Orchestrator {
             e.printStackTrace();
         }
     }
-
-
 
 }

@@ -92,6 +92,13 @@ public class Process {
 
     }
 
+    public Process(UUID id, String processName, String blocklyXML, String processCode) {
+        this.id = id;
+        this.processName = processName;
+        this.blocklyXML = blocklyXML;
+        this.processCode = processCode;
+    }
+
     //Constructors
     public Process(){
         this.id = UUID.randomUUID();

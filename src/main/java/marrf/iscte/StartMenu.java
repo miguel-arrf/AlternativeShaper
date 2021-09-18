@@ -89,7 +89,7 @@ public class StartMenu extends Application {
             System.out.println("Selected file: " + selectedFile);
 
             if(selectedFile != null){
-                scene.setRoot(app.getScenePanelWithLoadedFile(scene, selectedFile));
+                scene.setRoot(app.getScenePanelWithLoadedFile(scene));
                 primaryStage.setResizable(true);
                 primaryStage.setMinWidth(300);
                 primaryStage.sizeToScene();
@@ -97,6 +97,7 @@ public class StartMenu extends Application {
 
                 app.loadBasicShapes(selectedFile);
                 app.loadNewCompositionShapes(selectedFile);
+                app.loadProcesses(selectedFile);
             }
 
         });
