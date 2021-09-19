@@ -24,6 +24,8 @@ public class Orchestrator {
     //private String path = "C:\\Users\\mferr\\Downloads\\objetos\\test.json";
     public static String path = "/Users/miguelferreira/Downloads/alternativeShaperSaves/test.json";
 
+    public static String htmlFolder = "/Users/miguelferreira/Downloads/AlternativeShaperFiles/";
+
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
     private final ArrayList<Process> processes = new ArrayList<>();

@@ -17,6 +17,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -35,14 +36,63 @@ public class StartMenu extends Application {
     private HBox loadFilePane;
 
     private boolean fileDirectoryChoosen = false;
+    private boolean htmlDirectoryChoosen = false;
 
 
     private Effect getDarkerEffect(){
         ColorAdjust colorAdjust = new ColorAdjust();
-        colorAdjust.setSaturation(-0.8);
+        colorAdjust.setSaturation(-1);
         colorAdjust.setBrightness(-0.3);
 
         return colorAdjust;
+    }
+
+    private Pane getSelectHTMLFolder(){
+        Image basicPlus = new Image(App.class.getResource("/icons/icons8-select-none-96.png").toExternalForm());
+        ImageView basicPlusImageView = new ImageView(basicPlus);
+        basicPlusImageView.setSmooth(true);
+        basicPlusImageView.setPreserveRatio(true);
+        basicPlusImageView.setFitWidth(18);
+
+        Label basicShape = new Label("Select HTML Folder");
+        basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
+        basicShape.setTextFill(Color.web("#F967A8"));
+
+        HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
+        basicShapeHBox.setAlignment(Pos.CENTER);
+        basicShapeHBox.setSpacing(5);
+        basicShapeHBox.setStyle("-fx-background-color: #472953;-fx-background-radius: 20");
+        basicShapeHBox.setPrefHeight(30);
+
+        basicShapeHBox.setOnMouseClicked(event -> {
+            System.out.println("Select Save Folder button was pressed.");
+
+            DirectoryChooser fileChooser = new DirectoryChooser();
+            File selectFile = fileChooser.showDialog(primaryStage);
+
+            if(selectFile != null){
+                System.out.println("new html folder: " + selectFile.getPath());
+                Orchestrator.htmlFolder = selectFile.getPath();
+
+                htmlDirectoryChoosen = true;
+
+                if(fileDirectoryChoosen){
+                    basicShapePane.setEffect(null);
+                    loadFilePane.setEffect(null);
+                }
+
+            }else{
+                fileDirectoryChoosen = false;
+                basicShapePane.setEffect(getDarkerEffect());
+                loadFilePane.setEffect(getDarkerEffect());
+            }
+
+        });
+
+        HBox.setHgrow(basicShapeHBox, Priority.ALWAYS);
+        basicShapeHBox.setMinHeight(45);
+
+        return basicShapeHBox;
     }
 
     private Pane getSelectFolder(){
@@ -74,8 +124,11 @@ public class StartMenu extends Application {
                 Orchestrator.path = selectFile.getPath();
                 fileDirectoryChoosen = true;
 
-                basicShapePane.setEffect(null);
-                loadFilePane.setEffect(null);
+                if(htmlDirectoryChoosen){
+                    basicShapePane.setEffect(null);
+                    loadFilePane.setEffect(null);
+                }
+
             }else{
                 fileDirectoryChoosen = false;
                 basicShapePane.setEffect(getDarkerEffect());
@@ -188,12 +241,12 @@ public class StartMenu extends Application {
         var horizontalPanel = new HBox(basicShapePane, loadFilePane);
         horizontalPanel.setSpacing(20);
 
-        var verticalPanel = new VBox(title, subTitle,verticalGrower(), horizontalPanel, getSelectFolder());
+        var verticalPanel = new VBox(title, subTitle,verticalGrower(), horizontalPanel, getSelectFolder(), getSelectHTMLFolder());
         verticalPanel.setSpacing(20);
         verticalPanel.setPadding(new Insets(30,20,20,20));
 
-        verticalPanel.setMaxHeight(270);
-        verticalPanel.setMinHeight(270);
+        verticalPanel.setMaxHeight(300);
+        verticalPanel.setMinHeight(300);
 
         return verticalPanel;
     }
@@ -244,7 +297,7 @@ public class StartMenu extends Application {
         mainPanel.setAlignment(Pos.TOP_CENTER);
         mainPanel.setStyle("-fx-background-color: #262528");
 
-        scene = new Scene(mainPanel, 377, 583);
+        scene = new Scene(mainPanel, 377, 650);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
         scene.setFill(Color.web("#262528"));
 

@@ -377,9 +377,9 @@ public class NewShapeRuleEditor {
     }
 
     private File setUpFiles(String fileName){
-        Path htmlOriginal = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/" + fileName + ".html");
+        Path htmlOriginal = Paths.get(Orchestrator.htmlFolder + fileName + ".html");
 
-        File directory = new File("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/");
+        File directory = new File(Orchestrator.htmlFolder);
         for (File childrenFile : directory.listFiles()){
             if(childrenFile.getName().contains("Copied_")){
                 childrenFile.delete();
@@ -388,7 +388,7 @@ public class NewShapeRuleEditor {
 
         int randomNum = ThreadLocalRandom.current().nextInt(0, 100 + 1);
 
-        Path htmlCopied = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/" + fileName + "Copied"+ "_" + randomNum + ".html");
+        Path htmlCopied = Paths.get(Orchestrator.htmlFolder + fileName + "Copied"+ "_" + randomNum + ".html");
 
         try{
             Files.copy(htmlOriginal, htmlCopied, StandardCopyOption.REPLACE_EXISTING);
@@ -398,8 +398,8 @@ public class NewShapeRuleEditor {
             Files.write(htmlCopied, fileContentJS.getBytes());
 
 
-            Path original = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/scripts/myBlocks.js" );
-            Path copied = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/scripts/myBlocksCopied.js" );
+            Path original = Paths.get(Orchestrator.htmlFolder + "scripts/myBlocks.js" );
+            Path copied = Paths.get(Orchestrator.htmlFolder + "scripts/myBlocksCopied.js" );
 
             Files.copy(original, copied, StandardCopyOption.REPLACE_EXISTING);
 
@@ -447,7 +447,6 @@ public class NewShapeRuleEditor {
         saveButton.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 10");
 
         saveButton.setOnMouseEntered(event -> saveButton.setStyle("-fx-background-color: #078D55;-fx-background-radius: 10"));
-
         saveButton.setOnMouseExited(event -> saveButton.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 10"));
 
         return saveButton;

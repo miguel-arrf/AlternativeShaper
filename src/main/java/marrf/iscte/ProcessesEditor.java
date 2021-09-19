@@ -25,6 +25,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,6 +61,21 @@ public class ProcessesEditor {
     private final WebView webView = new WebView();
 
     private TextField nameTextfield;
+
+    private InputStream getFileFromResourceAsStream(String fileName) {
+
+        // The class loader that loaded the class
+        ClassLoader classLoader = getClass().getClassLoader();
+        InputStream inputStream = classLoader.getResourceAsStream(fileName);
+
+        // the stream holding the file content
+        if (inputStream == null) {
+            throw new IllegalArgumentException("file not found! " + fileName);
+        } else {
+            return inputStream;
+        }
+
+    }
 
     public static String getShapesJSON(ArrayList<BasicShape> basicShapes, ArrayList<NewCompositionShape> newCompositionShapes){
         StringBuilder toReturn = new StringBuilder();
@@ -97,9 +113,9 @@ public class ProcessesEditor {
     }
 
     private File setUpFiles(String fileName){
-        Path htmlOriginal = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/" + fileName + ".html");
+        Path htmlOriginal = Paths.get(Orchestrator.htmlFolder + fileName + ".html");
 
-        File directory = new File("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/");
+        File directory = new File(Orchestrator.htmlFolder);
         for (File childrenFile : directory.listFiles()){
             if(childrenFile.getName().contains("Copied_")){
                 childrenFile.delete();
@@ -108,7 +124,7 @@ public class ProcessesEditor {
 
         int randomNum = ThreadLocalRandom.current().nextInt(0, 100 + 1);
 
-        Path htmlCopied = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/" + fileName + "Copied"+ "_" + randomNum + ".html");
+        Path htmlCopied = Paths.get(Orchestrator.htmlFolder + fileName + "Copied"+ "_" + randomNum + ".html");
 
         try{
             Files.copy(htmlOriginal, htmlCopied, StandardCopyOption.REPLACE_EXISTING);
@@ -118,8 +134,8 @@ public class ProcessesEditor {
             Files.write(htmlCopied, fileContentJS.getBytes());
 
 
-            Path original = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/scripts/myBlocks.js" );
-            Path copied = Paths.get("/Users/miguelferreira/Downloads/blockly-samples-master/examples/getting-started-codelab/starter-code/scripts/myBlocksCopied.js" );
+            Path original = Paths.get(Orchestrator.htmlFolder + "scripts/myBlocks.js" );
+            Path copied = Paths.get(Orchestrator.htmlFolder + "scripts/myBlocksCopied.js" );
 
             Files.copy(original, copied, StandardCopyOption.REPLACE_EXISTING);
 
