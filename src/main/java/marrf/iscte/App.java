@@ -306,7 +306,7 @@ public class App extends Application {
         });
 
 
-        Label complexShape = new Label("Add Complex Shape");
+        Label complexShape = new Label("Add Composition Shape");
         complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         complexShape.setTextFill(Color.web("#F2C94C"));
 
@@ -321,7 +321,7 @@ public class App extends Application {
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new complex shape!");
-            gridCanvas.clearEverything();
+            GridCanvas.clearEverything();
             isCurrentSimple = false;
             currentName.setText("complexDefault");
 
@@ -1027,7 +1027,15 @@ public class App extends Application {
         }else{
             selectedCompositionShape.setShapeName(currentName.getText());
             sideBarThumbnails.add(selectedCompositionShape);
-            orchestrator.addAllCompositionShapes(newCompositionShapes);
+
+            ArrayList<NewCompositionShape> toAdd = new ArrayList<>();
+            sideBarThumbnails.forEach(customShape -> {
+                if(customShape instanceof NewCompositionShape){
+                    if(toAdd.stream().noneMatch(p -> p.getID().equals(((NewCompositionShape) customShape).getID())))
+                        toAdd.add((NewCompositionShape) customShape);
+                }
+            });
+            orchestrator.addAllCompositionShapes(toAdd);
         }
 
         orchestrator.printDesignTXT();

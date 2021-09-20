@@ -172,7 +172,7 @@ public class ProcessesEditor {
 
     private Node getWebView(){
         WebEngine webEngine = webView.getEngine();
-        //webEngine.setUserAgent("AppleWebKit/537.44");
+        //webEngine.sethAgent("AppleWebKit/537.44");
 
         File file = setUpFiles("proc");
 

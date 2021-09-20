@@ -3,7 +3,9 @@ package marrf.iscte;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import marrf.iscte.ShapeRules.BoolShapeShape;
 import marrf.iscte.ShapeRules.ShapeRule;
+import marrf.iscte.ShapeRules.ShapeShape;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -34,6 +36,11 @@ public class Orchestrator {
     public static int getSCALE() {
         return SCALE;
     }
+
+    public String getBasicShapeNameFromID(String id){
+        return  basicShapes.stream().filter(p -> p.getUUID().toString().equals(id)).findFirst().get().getShapeName();
+    }
+
 
     public static int getNumberColumnsAndRows() {
         return NUMBER_COLUMNS_AND_ROWS;
@@ -227,7 +234,6 @@ public class Orchestrator {
     public void addAllCompositionShapes(ArrayList<NewCompositionShape> newCompositionShapesToAdd){
         newCompositionShapes.clear();
         newCompositionShapes.addAll(newCompositionShapesToAdd);
-
         saveFile();
     }
 
@@ -286,7 +292,7 @@ public class Orchestrator {
         return list;
     }
 
-    public void processesToString(){
+    public StringBuilder processesToString(){
         StringBuilder toReturn = new StringBuilder();
 
         processes.forEach(process -> {
@@ -301,9 +307,22 @@ public class Orchestrator {
         });
 
         System.out.println(toReturn);
+        return toReturn;
     }
 
-    private void basicShapesToString(){
+    public StringBuilder shapeRulesToString(){
+        StringBuilder toReturn = new StringBuilder();
+
+        shapeRules.forEach(shapeRule -> {
+            if(shapeRule instanceof ShapeShape || shapeRule instanceof BoolShapeShape){
+                toReturn.append(shapeRule.getCode()).append("\n");
+            }
+        });
+
+        return toReturn;
+    }
+
+    private StringBuilder basicShapesToString(){
         StringBuilder toReturn = new StringBuilder();
 
         basicShapes.forEach(basicShape -> {
@@ -325,17 +344,33 @@ public class Orchestrator {
         toReturn.append("]).");
 
         System.out.println(toReturn);
+        return toReturn;
     }
 
+    private StringBuilder compositionShapesToString(){
+        StringBuilder toReturn = new StringBuilder();
 
+        newCompositionShapes.forEach(newCompositionShape -> {
+            toReturn.append(newCompositionShape.getPrologRepresentation(true, false)).append("\n");
+        });
 
-    public void printDesignTXT(){
+        return toReturn;
+    }
+
+    public StringBuilder printDesignTXT(){
+        StringBuilder toReturn = new StringBuilder();
         System.out.println("--------- ### DESIGN.TXT ### ---------");
-        System.out.println("scale_unit(40)");
-        basicShapesToString();
-        processesToString();
+        toReturn.append("scale_unit(40)").append("\n");
 
+        toReturn.append("\n\n").append(basicShapesToString()).append("\n");
 
+        toReturn.append("\n\n").append(compositionShapesToString()).append("\n");
+
+        toReturn.append("\n\n").append(processesToString()).append("\n");
+
+        toReturn.append("\n\n").append(shapeRulesToString());
+
+        return toReturn;
     }
 
     private void saveFile(){
@@ -348,10 +383,15 @@ public class Orchestrator {
         jsonObject.put("processes", getProcessesJSON());
 
         try{
-            FileWriter fileWriter = new FileWriter(path);
+            FileWriter fileWriter = new FileWriter(path + "/toLoad.json");
             fileWriter.write(jsonObject.toJSONString());
             fileWriter.flush();
             fileWriter.close();
+
+            FileWriter fileWriterDesign = new FileWriter(path + "/design.txt");
+            fileWriterDesign.write(printDesignTXT().toString());
+            fileWriterDesign.flush();
+            fileWriterDesign.close();
 
             System.out.println("Guardei: " + jsonObject.toJSONString());
         }catch (IOException e){

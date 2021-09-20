@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -82,6 +83,59 @@ public class NewCompositionShape implements CustomShape {
 
 
         return toReturn;
+    }
+
+    public String getPrologRepresentation(boolean withFinalDot, boolean justInner){
+        StringBuilder toReturn = new StringBuilder();
+
+        if(!justInner){
+            toReturn.append("shapeComposition(").append(getShapeName()).append("[");
+        }
+
+        basicShapesXTranslation.forEach(information -> {
+            Information translationY = basicShapesYTranslation.stream().filter(inf -> inf.getId().equals(information.getId())).findFirst().get();
+
+            toReturn.append("s(").append(orchestrator.getBasicShapeNameFromID(information.getId()));
+            toReturn.append(",[1,0,0,0,1,0,").append(information.getValue()).append(",").append(translationY.getValue()).append(",1]");
+
+            if(basicShapesXTranslation.lastIndexOf(information) == basicShapesXTranslation.size() - 1 || compositionShapeMap.size() == 0){
+                toReturn.append(")");
+            }else{
+                toReturn.append("),");
+            }
+
+        });
+
+        AtomicInteger added = new AtomicInteger();
+
+        compositionShapeMap.forEach((randomID, newCompositionShape) -> {
+
+            var translationX = compositionShapesXTranslation.stream().filter(translation -> translation.getId().equals(randomID)).findFirst().get();
+            var translationY = compositionShapesYTranslation.stream().filter(translation -> translation.getId().equals(randomID)).findFirst().get();
+
+            toReturn.append("s(").append(newCompositionShape.getShapeName());
+            toReturn.append(",[1,0,0,0,1,0,").append(translationX.getValue()).append(",").append(translationY.getValue()).append(",1]");
+
+
+            if(added.get() == compositionShapesXTranslation.size() - 1){
+                toReturn.append(")");
+            }else{
+                toReturn.append("),");
+            }
+
+            added.getAndIncrement();
+
+
+        });
+
+
+
+        if(!justInner){
+            toReturn.append(withFinalDot ? "])." : "])");
+        }
+
+
+        return toReturn.toString();
     }
 
     public void setTransformersBox(Pane transformersBox) {

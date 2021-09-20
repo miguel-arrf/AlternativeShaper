@@ -72,7 +72,7 @@ public class StartMenu extends Application {
 
             if(selectFile != null){
                 System.out.println("new html folder: " + selectFile.getPath());
-                Orchestrator.htmlFolder = selectFile.getPath();
+                Orchestrator.htmlFolder = selectFile.getPath() + "/";
 
                 htmlDirectoryChoosen = true;
 
@@ -115,9 +115,8 @@ public class StartMenu extends Application {
         basicShapeHBox.setOnMouseClicked(event -> {
             System.out.println("Select Save Folder button was pressed.");
 
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON Files", "*.json"));
-            File selectFile = fileChooser.showSaveDialog(primaryStage);
+            DirectoryChooser directoryChooser = new DirectoryChooser();
+            File selectFile = directoryChooser.showDialog(primaryStage);
 
             if(selectFile != null){
                 System.out.println("new path: " + selectFile.getPath());

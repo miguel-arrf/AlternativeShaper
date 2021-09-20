@@ -14,7 +14,7 @@ import marrf.iscte.Orchestrator;
 import java.util.UUID;
 import java.util.function.Function;
 
-public abstract class ShapeRule {
+public abstract class ShapeRule implements ShapeRuleInterface{
 
     private final UUID id = UUID.randomUUID();
     private String shapeRuleName;
@@ -71,6 +71,14 @@ public abstract class ShapeRule {
 
     public NewCompositionShape getRightShape() {
         return rightShape;
+    }
+
+    public String getBoolCode() {
+        return boolCode;
+    }
+
+    public String getProcessCode() {
+        return processCode;
     }
 
     public String getBoolXML() {
