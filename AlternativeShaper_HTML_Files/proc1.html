@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Blockly for the Web Codelab</title>
+
+  <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+
+  <style>
+    #blocklyContainer{
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    #blocklyDiv{
+            position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom :0;
+              }
+
+
+          .injectionDiv{
+            border-radius: 10px !important;
+          }
+
+          .blocklyToolboxDiv{
+            border-radius: 10px !important;
+            padding: 10px !important;
+            margin: 10px !important;
+            height: auto !important;
+            background-color: rgb(83,83,83);
+
+          }
+
+          .blocklyTreeLabel{
+            color: white;
+            font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace !important;
+            font-weight: 700 !important;
+          }
+
+          .blocklyFlyout{
+            border-radius: 10px !important;
+          }
+
+
+  </style>
+
+</head>
+
+<body >
+
+
+<main class="h-screen bg-black bg-opacity-90">
+
+  <div class="grid grid-cols-4 gap-4 h-screen">
+    <div class="bg-white bg-opacity-25 rounded-xl col-span-4">
+
+
+
+      <!-- BLOCKLY -->
+      <xml id="toolbox" style="display: none">
+
+
+        <category name="Proc1" colour="#ffc090">
+          <block type="assign"></block>
+          <block type="seq"></block>
+        </category>
+
+        <category name="Existing Processes" colour="#ceff90">
+          <block type="existingproc"></block>
+        </category>
+
+
+      </xml>
+
+      <section id="blocklyContainer">
+        <div id="blocklyDiv"></div>
+      </section>
+      <!-- FIM BLOCKLY -->
+
+
+
+    </div>
+
+  </div>
+
+</main>
+
+
+<script src="teste/blockly_compressed.js"></script>
+<script src="teste/blocks_compressed.js"></script>
+<script src="teste/javascript_compressed.js"></script>
+<script src="teste/en.js"></script>
+
+
+  <script>
+    var workspace = Blockly.inject('blocklyDiv', {
+      toolbox: document.getElementById('toolbox'),
+      scrollbars: true,
+      grid:
+              {spacing: 20,
+                length: 10,
+                colour: '#ccc'},
+    });
+
+    function numberOfNonConnectedBlocks(){
+      var value = workspace.getTopBlocks().length;
+      return value;
+    }
+
+    function getCode(){
+      var code = Blockly.JavaScript.workspaceToCode(workspace);
+      console.log(code);
+      return "" + code;
+    }
+
+    function teste(){
+      var xml = Blockly.Xml.workspaceToDom(workspace);
+      var xml_text = Blockly.Xml.domToText(xml);
+
+      console.log(xml_text);
+
+      var code = Blockly.JavaScript.workspaceToCode(workspace);
+
+
+      return "" + xml_text;
+    };
+
+    function clear(){
+      Blockly.mainWorkspace.clear();
+    }
+
+    function novoTeste(xmlParaColocar){
+      var xml = Blockly.Xml.textToDom(xmlParaColocar);
+      Blockly.Xml.domToWorkspace(xml, workspace);
+    };
+
+
+  </script>
+
+
+  <script src="scripts/myBlocksCopied.js"></script>
+
+</body>
+</html>
