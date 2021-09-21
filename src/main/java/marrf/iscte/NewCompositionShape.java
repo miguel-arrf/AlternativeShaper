@@ -44,7 +44,7 @@ public class NewCompositionShape implements CustomShape {
     private final Orchestrator orchestrator;
     //Composition Shape Thumbnail
     private final HBox thumbnail = new HBox();
-    private String name;
+    private String name = "COMPLEX_DEFAULT";
     private final UUID ID;
     private Node selected;
     private Information selectedTranslationX;

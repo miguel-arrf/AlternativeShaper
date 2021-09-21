@@ -129,7 +129,7 @@ public class App extends Application {
 
         comboBox.valueProperty().addListener((observableValue, o, t1) -> {
 
-            if(t1.toString().equals("Basic Shapes")){
+            if(t1.equals("Basic Shapes")){
                 addBasicShapesToSideBarIfTheyArent();
 
                 sideBarThumbnails.removeIf(p -> {
@@ -138,7 +138,7 @@ public class App extends Application {
                     }
                     return true;
                 });
-            }else if(t1.toString().equals("Composition Shapes")){
+            }else if(t1.equals("Composition Shapes")){
                 addCompositionShapesToSideBarIfTheyArent();
 
                 sideBarThumbnails.removeIf(p -> {
@@ -320,18 +320,27 @@ public class App extends Application {
         HBox.setHgrow(complexShapeVBox, Priority.ALWAYS);
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
-            System.out.println("I want to add a new complex shape!");
+            System.out.println("I want to add a new composition shape!");
             GridCanvas.clearEverything();
             isCurrentSimple = false;
             currentName.setText("complexDefault");
 
             transformersBox.getChildren().clear();
+
+            /*if(!sideBarThumbnails.contains(selectedCompositionShape))
+                newCompositionShapes.remove(selectedCompositionShape);
+             */
+
+
             selectedCompositionShape = new NewCompositionShape(orchestrator, transformersBox, getProceedWhenDeletingCompositionShape(), teste -> {
                 System.err.println("oh, here I am!");
                 newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
                 return null;
             });
+
+
             newCompositionShapes.add(selectedCompositionShape);
+            sideBarThumbnails.add(selectedCompositionShape);
         });
 
         HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
@@ -583,14 +592,23 @@ public class App extends Application {
         sideBarThumbnails.remove(temp);
 
         if(basicShapesToSave.size() == 0){
-            //mainPanel.getChildren().remove(nameSection);
-            //mainPanel.getChildren().remove(saveSection);
+            //isCurrentSimple = true;
+
+            /*addNameSectionIfItIsNot();
+            addSaveSectionIfItIsNot();
+*/
+            //currentName.setText("defaultName");
+            mainPanel.getChildren().remove(nameSection);
+            mainPanel.getChildren().remove(saveSection);
             //Ads a basic shape when we delete the last one!
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
-            addShape(toAdd);
-            basicShapesToSave.add(toAdd);
-            currentName.setText("defaultName");
-            sideBarThumbnails.add(toAdd);
+            //BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+            //addShape(toAdd);
+            //basicShapesToSave.add(toAdd);
+            //sideBarThumbnails.add(toAdd);
+            //selectedCompositionShape = null;
+
+
+
         }else{
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
@@ -648,6 +666,7 @@ public class App extends Application {
                Pane acceptButton = PopupWindow.getButton("Accept, and delete this shape from compositions shapes that use this one.", "null",  "#807229", "#E7CE4A", event -> {
                    deleteBasicShape(uuidToRemove);
                    deleteBasicShapeFromCompositionShape(uuidToRemove);
+                   //saveCurrentShape(); //Needed in order to be able to then drag it!
                    tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
                });
                Pane refuseButton = PopupWindow.getButton("Keep this shape.", "null",  "#5E2323", "#EB5757", event -> {
@@ -1026,16 +1045,18 @@ public class App extends Application {
 
         }else{
             selectedCompositionShape.setShapeName(currentName.getText());
-            sideBarThumbnails.add(selectedCompositionShape);
+            //sideBarThumbnails.add(selectedCompositionShape);
 
-            ArrayList<NewCompositionShape> toAdd = new ArrayList<>();
+            /*ArrayList<NewCompositionShape> toAdd = new ArrayList<>();
             sideBarThumbnails.forEach(customShape -> {
                 if(customShape instanceof NewCompositionShape){
                     if(toAdd.stream().noneMatch(p -> p.getID().equals(((NewCompositionShape) customShape).getID())))
                         toAdd.add((NewCompositionShape) customShape);
                 }
             });
-            orchestrator.addAllCompositionShapes(toAdd);
+            orchestrator.addAllCompositionShapes(toAdd);*/
+            newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
+            orchestrator.addAllCompositionShapes(newCompositionShapes);
         }
 
         orchestrator.printDesignTXT();
