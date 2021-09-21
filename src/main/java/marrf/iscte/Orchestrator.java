@@ -84,6 +84,14 @@ public class Orchestrator {
                 return false;
             }
         }
+
+        for(ShapeRule shapeRule : shapeRules) {
+            if (shapeRule.getLeftShape().getBasicShapesUUIDList().stream().anyMatch(p -> p.equals(uuid)))
+                return false;
+            if (shapeRule.getRightShape().getBasicShapesUUIDList().stream().anyMatch(p -> p.equals(uuid)))
+                return false;
+        }
+
         return true;
     }
 
@@ -96,6 +104,13 @@ public class Orchestrator {
             if(newCompositionShape.getCompositionShapesUUIDList().stream().anyMatch(p -> p.equals(uuid))){
                 return false;
             }
+        }
+
+        for(ShapeRule shapeRule : shapeRules) {
+            if (shapeRule.getLeftShape().getCompositionShapesUUIDList().stream().anyMatch(p -> p.equals(uuid)))
+                return false;
+            if (shapeRule.getRightShape().getCompositionShapesUUIDList().stream().anyMatch(p -> p.equals(uuid)))
+                return false;
         }
 
         return true;

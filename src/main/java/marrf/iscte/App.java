@@ -591,6 +591,8 @@ public class App extends Application {
         transformersBox.getChildren().clear();
         sideBarThumbnails.remove(temp);
 
+
+
         if(basicShapesToSave.size() == 0){
             //isCurrentSimple = true;
 
@@ -663,9 +665,11 @@ public class App extends Application {
 
                Stage tempStage = popupWindow.getStage();
 
-               Pane acceptButton = PopupWindow.getButton("Accept, and delete this shape from compositions shapes that use this one.", "null",  "#807229", "#E7CE4A", event -> {
+               Pane acceptButton = PopupWindow.getButton("Accept, and delete this shape from compositions shapes and shape rules that use it.", "null",  "#807229", "#E7CE4A", event -> {
                    deleteBasicShape(uuidToRemove);
                    deleteBasicShapeFromCompositionShape(uuidToRemove);
+                   deleteBasicShapeFromShapeRule(uuidToRemove);
+
                    //saveCurrentShape(); //Needed in order to be able to then drag it!
                    tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
                });
@@ -673,16 +677,30 @@ public class App extends Application {
                    tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
                });
 
-                popupWindow.createPopup("Delete confirmation",scene,"Deleting this basic shape will also delete compositionShapes that use it. Do you want to proceed?", acceptButton, refuseButton);
+                popupWindow.createPopup("Delete confirmation",scene,"Deleting this basic shape will also delete it from composition shapes and shape rules that use it. Do you want to proceed?", acceptButton, refuseButton);
 
             }else{
 
                deleteBasicShape(uuidToRemove);
-
+                deleteBasicShapeFromShapeRule(uuidToRemove);
             }
 
             return null;
         };
+    }
+
+    private void deleteBasicShapeFromShapeRule(String uuidToRemove){
+        orchestrator.getShapeRules().forEach(p -> {
+            p.getLeftShape().deleteBasicShape(uuidToRemove);
+            p.getRightShape().deleteBasicShape(uuidToRemove);
+        });
+    }
+
+    private void deleteCompositionShapeFromShapeRule(String uuidToRemove){
+        orchestrator.getShapeRules().forEach(p -> {
+            p.getLeftShape().deleteCompositionShape(uuidToRemove);
+            p.getRightShape().deleteCompositionShape(uuidToRemove);
+        });
     }
 
     private Function<String, Double> getProceedWhenDeletingCompositionShape(){
@@ -695,20 +713,23 @@ public class App extends Application {
 
                 Stage tempStage = popupWindow.getStage();
 
-                Pane acceptButton = PopupWindow.getButton("Accept, and delete this shape from compositions shapes that use this one.", "null",  "#807229", "#E7CE4A", event -> {
+                Pane acceptButton = PopupWindow.getButton("Accept, and delete this shape from compositions shapes and shape rules that use it.", "null",  "#807229", "#E7CE4A", event -> {
                     deleteCompositionShape(uuidToRemove);
                     deleteCompositionShapeFromCompositionShape(uuidToRemove);
+                    deleteCompositionShapeFromShapeRule(uuidToRemove);
+
                     tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
                 });
                 Pane refuseButton = PopupWindow.getButton("Keep this shape.", "null",  "#5E2323", "#EB5757", event -> {
                     tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
                 });
 
-                popupWindow.createPopup("Delete confirmation",scene,"Deleting this basic shape will also delete compositionShapes that use it. Do you want to proceed?", acceptButton, refuseButton);
+                popupWindow.createPopup("Delete confirmation",scene,"Deleting this composition shape will also delete it from composition shapes and shape rules that use it. Do you want to proceed?", acceptButton, refuseButton);
 
             }else{
 
                 deleteCompositionShape(uuidToRemove);
+                deleteCompositionShapeFromShapeRule(uuidToRemove);
 
             }
 
