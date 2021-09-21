@@ -30,6 +30,6 @@ public class BoolShapeShapeProc extends ShapeRule{
 
         toReturnString.append(")").append(").");
 
-        return toReturnString.toString();
+        return toReturnString.toString().replace(System.getProperty("line.separator"), "");
     }
 }

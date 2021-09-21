@@ -10,9 +10,14 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import marrf.iscte.NewCompositionShape;
 import marrf.iscte.Orchestrator;
+import marrf.iscte.Process;
 
+import java.util.ArrayList;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class ShapeRule implements ShapeRuleInterface{
 
@@ -32,6 +37,127 @@ public abstract class ShapeRule implements ShapeRuleInterface{
     private String processXML;
 
     private final Pane thumbnail = new VBox();
+
+
+    public static boolean hasDependencies(ShapeRule shapeRule){
+
+        String processCode = shapeRule.getProcessCode();
+        String boolCode = shapeRule.getBoolCode();
+
+        String code = shapeRule.getCode();
+
+        if(code != null){
+            if(code.contains("existingproc") ||
+                    code.contains("existingproc0") ||
+                    code.contains("existingproc1") ||
+                    code.contains("existingbool")){
+                //Can we simplify to just having "existing"...?
+                return true;
+            }
+        }
+
+        /*if(processCode != null){
+            if(processCode.contains("existingproc") ||
+                    processCode.contains("existingproc0") ||
+                    processCode.contains("existingproc1") ||
+                    processCode.contains("existingbool")){
+                //Can we simplify to just having "existing"...?
+                return true;
+            }
+        }
+
+        if(boolCode != null){
+            if(boolCode.contains("existingproc") ||
+                    boolCode.contains("existingproc0") ||
+                    boolCode.contains("existingproc1") ||
+                    boolCode.contains("existingbool")){
+                //Can we simplify to just having "existing"...?
+                return true;
+            }
+        }*/
+
+
+        return false;
+    }
+
+  /*  public static String solveDependency(ArrayList<ShapeRule> shapeRules, ArrayList<Process> processes, String shapeRuleCode){
+        String toReturn = solveDependency(shapeRules, processes,shapeRuleCode, "existingproc");
+        toReturn = solveDependency(shapeRules,processes, toReturn, "existingproc0");
+        toReturn = solveDependency(shapeRules, processes,toReturn, "existingproc1");
+        toReturn = solveDependency(shapeRules, processes,toReturn, "existingbool");
+
+        return toReturn;
+    }
+
+    public static String solveDependency(ArrayList<ShapeRule> shapeRules, ArrayList<Process> processes, String shapeRuleCode, String existingProc){
+
+        Pattern pattern = Pattern.compile(existingProc + "\\((.*?)\\)", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(shapeRuleCode);
+
+        if(shapeRules != null){
+            while (matcher.find()){
+                String match = matcher.group(1);
+                String toReplace = existingProc + "(" + match + ")";
+
+
+                    if(existingProc.equals("existingproc")){
+
+                        Optional<Process> seeIfExists = processes.stream().filter(p -> p.getProcessName().equals(match)).findFirst();
+                        if(seeIfExists.isPresent()) {
+                            Process toPut = seeIfExists.get();
+                            if (Process.hasDependencies(toPut)) {
+                                shapeRuleCode = shapeRuleCode.replaceAll(Pattern.quote(toReplace), Process.solveDependency(processes, toPut));
+                            } else {
+                                shapeRuleCode = shapeRuleCode.replaceAll(Pattern.quote(toReplace), toPut.getProcessCode());
+                            }
+                        }
+
+                    }else if(existingProc.equals("existingproc0")){
+                        Optional<ShapeRule> seeIfExists = shapeRules.stream().filter(p -> p.getShapeRuleName().equals(match)).findFirst();
+                        if(seeIfExists.isPresent()) {
+                            ShapeRule toPut = seeIfExists.get();
+                            if (ShapeRule.hasDependencies(toPut)) {
+                                shapeRuleCode = shapeRuleCode.replaceAll(Pattern.quote(toReplace), solveDependency(shapeRules,processes, toPut.getCode()));
+                            } else {
+                                shapeRuleCode = shapeRuleCode.replaceAll(Pattern.quote(toReplace), toPut.getCode());
+                            }
+                        }
+                    }else if(existingProc.equals("existingproc1")){
+                        Optional<ShapeRule> seeIfExists = shapeRules.stream().filter(p -> p.getShapeRuleName().equals(match)).findFirst();
+                        if(seeIfExists.isPresent()) {
+                            ShapeRule toPut = seeIfExists.get();
+                            if (ShapeRule.hasDependencies(toPut)) {
+                                shapeRuleCode = shapeRuleCode.replaceAll(Pattern.quote(toReplace), solveDependency(shapeRules,processes, toPut.getProcessCode()));
+                            } else {
+                                shapeRuleCode = shapeRuleCode.replaceAll(Pattern.quote(toReplace), toPut.getProcessCode());
+                            }
+                        }
+                    }else if(existingProc.equals("existingbool")){
+                        Optional<ShapeRule> seeIfExists = shapeRules.stream().filter(p -> p.getShapeRuleName().equals(match)).findFirst();
+                        if(seeIfExists.isPresent()) {
+                            ShapeRule toPut = seeIfExists.get();
+                            if (ShapeRule.hasDependencies(toPut)) {
+                                shapeRuleCode = shapeRuleCode.replaceAll(Pattern.quote(toReplace), solveDependency(shapeRules,processes, toPut.getBoolCode()));
+                            } else {
+                                shapeRuleCode = shapeRuleCode.replaceAll(Pattern.quote(toReplace), toPut.getBoolCode());
+                            }
+                        }
+                    }
+
+                //}
+
+            }
+        }
+
+
+        if(shapeRuleCode.chars().filter(ch -> ch == ';').count() >= 2){
+            shapeRuleCode = shapeRuleCode.substring(0, shapeRuleCode.lastIndexOf(";")).replaceAll(";" , "").concat(shapeRuleCode.substring(shapeRuleCode.lastIndexOf(";")));
+        }
+
+        return shapeRuleCode;
+    }
+
+   */
 
     public ShapeRule(Orchestrator orchestrator, Pane transformersBox,Pane right, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting){
         leftShape = new NewCompositionShape(orchestrator, transformersBox, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);

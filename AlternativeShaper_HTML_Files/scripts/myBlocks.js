@@ -1042,7 +1042,7 @@ Blockly.JavaScript['oncorner'] = function(block) {
   var value_shape = Blockly.JavaScript.valueToCode(block, 'shape', Blockly.JavaScript.ORDER_NONE);
   var dropdown_corner = block.getFieldValue('corner');
   // TODO: Assemble JavaScript into code variable.
-  var code = "oncorner(shape: " + value_shape + ", corner: " + dropdown_corner + ")";
+  var code = "oncorner(" + value_shape + ", " + dropdown_corner + ")";
   // TODO: Change ORDER_NONE to the correct strength.
   return [code, Blockly.JavaScript.ORDER_ATOMIC];
 };

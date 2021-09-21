@@ -16,6 +16,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Orchestrator {
@@ -40,7 +42,6 @@ public class Orchestrator {
     public String getBasicShapeNameFromID(String id){
         return  basicShapes.stream().filter(p -> p.getUUID().toString().equals(id)).findFirst().get().getShapeName();
     }
-
 
     public static int getNumberColumnsAndRows() {
         return NUMBER_COLUMNS_AND_ROWS;
@@ -298,9 +299,9 @@ public class Orchestrator {
         processes.forEach(process -> {
 
             if(!Process.hasDependencies(process)){
-                toReturn.append(process.getProcessCode()).append("\n");
+                toReturn.append(process.getProcessCode().replace("\n", "").replace(";","")).append("\n");
             }else{
-                toReturn.append(Process.solveDependency(processes, process)).append("\n");
+                toReturn.append(solveDependencies(process.getProcessCode().replace("\n", "").replace(";",""))).append("\n");
 
             }
 
@@ -314,9 +315,13 @@ public class Orchestrator {
         StringBuilder toReturn = new StringBuilder();
 
         shapeRules.forEach(shapeRule -> {
-            if(shapeRule instanceof ShapeShape || shapeRule instanceof BoolShapeShape){
-                toReturn.append(shapeRule.getCode()).append("\n");
+
+            if(!ShapeRule.hasDependencies(shapeRule)){
+                toReturn.append(shapeRule.getCode().replace("\n", "").replace(";","")).append("\n");
+            }else{
+                toReturn.append(solveDependencies(shapeRule.getCode()).replace("\n", "").replace(";","")).append("\n");
             }
+
         });
 
         return toReturn;
@@ -397,6 +402,74 @@ public class Orchestrator {
         }catch (IOException e){
             e.printStackTrace();
         }
+    }
+
+
+    private String solveDependencies(String code){
+        String toReturn = solveDependency(code, "existingproc");
+        toReturn = solveDependency(toReturn, "existingproc0");
+        toReturn = solveDependency(toReturn, "existingproc1");
+        toReturn = solveDependency(toReturn, "existingbool");
+
+        return toReturn;
+    }
+
+    private String solveDependency(String code, String existingProc){
+
+        Pattern pattern = Pattern.compile(existingProc + "\\((.*?)\\)", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(code);
+
+        while (matcher.find()){
+            String match = matcher.group(1);
+            String toReplace = existingProc + "(" + match + ")";
+
+            if(existingProc.equals("existingproc")){
+
+                Optional<Process> seeIfExists = processes.stream().filter(p -> p.getProcessName().equals(match)).findFirst();
+                if(seeIfExists.isPresent()) {
+                    Process toPut = seeIfExists.get();
+                    if (Process.hasDependencies(toPut)) {
+                        code = code.replaceAll(Pattern.quote(toReplace), solveDependency(toPut.getProcessCode(), existingProc));
+                    } else {
+                        code = code.replaceAll(Pattern.quote(toReplace), toPut.getProcessCode());
+                    }
+                }
+
+            }else if(existingProc.equals("existingproc0")){
+                Optional<ShapeRule> seeIfExists = shapeRules.stream().filter(p -> p.getShapeRuleName().equals(match)).findFirst();
+                if(seeIfExists.isPresent()) {
+                    ShapeRule toPut = seeIfExists.get();
+                    if (ShapeRule.hasDependencies(toPut)) {
+                        code = code.replaceAll(Pattern.quote(toReplace), solveDependency( toPut.getCode(), existingProc));
+                    } else {
+                        code = code.replaceAll(Pattern.quote(toReplace), toPut.getCode());
+                    }
+                }
+            }else if(existingProc.equals("existingproc1")){
+                Optional<ShapeRule> seeIfExists = shapeRules.stream().filter(p -> p.getShapeRuleName().equals(match)).findFirst();
+                if(seeIfExists.isPresent()) {
+                    ShapeRule toPut = seeIfExists.get();
+                    if (ShapeRule.hasDependencies(toPut)) {
+                        code = code.replaceAll(Pattern.quote(toReplace), solveDependency(toPut.getProcessCode(), existingProc));
+                    } else {
+                        code = code.replaceAll(Pattern.quote(toReplace), toPut.getProcessCode());
+                    }
+                }
+            }else if(existingProc.equals("existingbool")){
+                Optional<ShapeRule> seeIfExists = shapeRules.stream().filter(p -> p.getShapeRuleName().equals(match)).findFirst();
+                if(seeIfExists.isPresent()) {
+                    ShapeRule toPut = seeIfExists.get();
+                    if (ShapeRule.hasDependencies(toPut)) {
+                        code = code.replaceAll(Pattern.quote(toReplace), solveDependency( toPut.getBoolCode(), existingProc));
+                    } else {
+                        code = code.replaceAll(Pattern.quote(toReplace), toPut.getBoolCode());
+                    }
+                }
+            }
+
+        }
+
+        return code;
     }
 
 }

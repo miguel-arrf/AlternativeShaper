@@ -39,7 +39,7 @@ public class Process {
         return false;
     }
 
-        public static String solveDependency(ArrayList<Process> processes, Process process){
+    /*    public static String solveDependency(ArrayList<Process> processes, Process process){
             String existingProc = "existingproc";
 
             String processCode = process.getProcessCode();
@@ -76,7 +76,7 @@ public class Process {
 
             return processCode;
         }
-
+*/
     public static void updateOrAdd(ArrayList<Process> processes, Process toAddOrUpdate){
 
         Optional<Process> processOptional = processes.stream().filter(p -> p.getId().equals(toAddOrUpdate.getId())).findFirst();
