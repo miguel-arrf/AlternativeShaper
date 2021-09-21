@@ -831,8 +831,11 @@ public class App extends Application {
                         System.out.println("i was dropped: " + db.getString());
                         addShape(selectedCompositionShape.addBasicShape(basicShapes.get(Integer.parseInt(db.getString())).getUUID().toString()));
                     }else{
-                        System.out.println("I was dropped a composition shape");
-                        addCompositionShape((NewCompositionShape) inDragCustomShape, true);
+                        if(!inDragCustomShape.getUUID().equals(selectedCompositionShape.getUUID())){
+                            System.out.println("I was dropped a composition shape");
+                            addCompositionShape((NewCompositionShape) inDragCustomShape, true);
+                        }
+
                     }
 
                 }

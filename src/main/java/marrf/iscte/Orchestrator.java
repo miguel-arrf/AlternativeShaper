@@ -333,7 +333,7 @@ public class Orchestrator {
         basicShapes.forEach(basicShape -> {
 
             toReturn.append("shape(").append(basicShape.getShapeName()).append(",COLOCAR_IMAGEM).").append("\n");
-            toReturn.append("basicShapeDimention(").append(basicShape.getShapeName()).append(",").append(basicShape.getWidth()).append(",").append(basicShape.getHeight()).append(").");
+            toReturn.append("basicShapeDimention(").append(basicShape.getShapeName()).append(",").append(basicShape.getWidth()/SCALE).append(",").append(basicShape.getHeight()/SCALE).append(").");
             toReturn.append("\n");
         });
 

@@ -31,6 +31,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static marrf.iscte.App.NUMBER_COLUMNS_AND_ROWS;
+import static marrf.iscte.App.SCALE;
 import static marrf.iscte.BasicShape.colorToRGBString;
 import static marrf.iscte.BasicShape.getRelativeLuminance;
 
@@ -96,7 +98,7 @@ public class NewCompositionShape implements CustomShape {
             Information translationY = basicShapesYTranslation.stream().filter(inf -> inf.getId().equals(information.getId())).findFirst().get();
 
             toReturn.append("s(").append(orchestrator.getBasicShapeNameFromID(information.getId()));
-            toReturn.append(",[1,0,0,0,1,0,").append(information.getValue()).append(",").append(translationY.getValue()).append(",1]");
+            toReturn.append(",[1,0,0,0,1,0,").append(information.getValue()/SCALE).append(",").append(translationY.getValue()/SCALE).append(",1]");
 
             if(basicShapesXTranslation.lastIndexOf(information) == basicShapesXTranslation.size() - 1 || compositionShapeMap.size() == 0){
                 toReturn.append(")");
@@ -599,60 +601,62 @@ public class NewCompositionShape implements CustomShape {
         Label translationLabel = new Label("Translation X:");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
 
-        double labelSize = TextUtils.computeTextWidth(translationLabel.getFont(), translationLabel.getText(), 0.0D) + 10;
-        translationLabel.setPrefWidth(labelSize);
-        translationLabel.setMinWidth(labelSize);
-        translationLabel.setMaxWidth(labelSize);
-
-        String truncatedValue = Double.toString(BigDecimal.valueOf(selectedTranslationX.getValue()).setScale(2, RoundingMode.HALF_UP).doubleValue());
-
-        TextField textField = new TextField(truncatedValue);
-        textField.setPromptText(truncatedValue);
+        TextField textField = new TextField(String.valueOf(selectedTranslationX.getValue() / SCALE));
+        textField.setPromptText(String.valueOf(selectedTranslationX.getValue() / SCALE));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setMinWidth(90);
-        textField.setPrefWidth(90);
-        textField.setMaxWidth(Double.MAX_VALUE);
-        textField.setAlignment(Pos.CENTER_LEFT);
+        textField.setPrefWidth(60);
+        textField.setAlignment(Pos.CENTER);
 
         Information tempTranslationX = selectedTranslationX;
 
-        Slider slider = getSlider(tempTranslationX, aDouble -> {
-            selected.setTranslateX(selected.getTranslateX() + aDouble);
-        }, aDouble -> {
-            Double truncatedDouble = BigDecimal.valueOf(aDouble).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-        });
+        Slider translationXSlider = new Slider();
+        translationXSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
+        translationXSlider.setMin(- NUMBER_COLUMNS_AND_ROWS);
+        translationXSlider.setValue(tempTranslationX.getValue() / SCALE);
 
-        textField.setOnKeyPressed(event -> {
-            if (event.getCode().equals(KeyCode.ENTER)) {
+        textField.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+
                 try {
-                    if (Double.parseDouble(textField.getText()) < slider.getMin()) {
-                        textField.setText(String.valueOf(slider.getMin()));
-                    } else if (Double.parseDouble(textField.getText()) > slider.getMax()) {
-                        textField.setText(String.valueOf(slider.getMax()));
+                    if (Double.parseDouble(textField.getText()) < translationXSlider.getMin()) {
+                        textField.setText(String.valueOf(translationXSlider.getMin()));
                     }
 
-                    slider.setValue(Double.parseDouble(textField.getText()));
+                    translationXSlider.setValue(Double.parseDouble(textField.getText()));
 
                 } catch (NumberFormatException e) {
-                    textField.setText("0");
-                    slider.setValue(0);
+                    textField.setText(String.valueOf(translationXSlider.getMin()));
+                    translationXSlider.setValue(translationXSlider.getMin());
                 }
+
             }
         });
 
-        slider.setValue(tempTranslationX.getValue());
-        slider.setMajorTickUnit(0.1);
-        slider.setMinorTickCount(0);
-        slider.setSnapToTicks(true);
+        //TODO: TextField should allow for 0.##, and slider only for 0.#.
+        //TODO: Height pane
+
+        translationXSlider.setMajorTickUnit(0.1);
+        translationXSlider.setMinorTickCount(0);
+        translationXSlider.setSnapToTicks(true);
 
 
-        slider.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(slider, Priority.ALWAYS);
+        translationXSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
 
-        translationXBox = new HBox(translationLabel, slider, textField);
+            tempTranslationX.setValue(truncatedDouble * SCALE);
+            selected.setTranslateX(selected.getTranslateX() + (newValue.doubleValue() -oldValue.doubleValue()) * SCALE) ;
+        });
+
+        translationXSlider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(translationXSlider, Priority.ALWAYS);
+
+
+
+        translationXBox = new HBox(translationLabel, translationXSlider, textField);
         translationXBox.setPadding(new Insets(10, 10, 10, 15));
         translationXBox.setAlignment(Pos.CENTER_LEFT);
         translationXBox.setSpacing(20);
@@ -664,58 +668,60 @@ public class NewCompositionShape implements CustomShape {
         Label translationLabel = new Label("Translation Y:");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
 
-        double labelSize = TextUtils.computeTextWidth(translationLabel.getFont(), translationLabel.getText(), 0.0D) + 10;
-        translationLabel.setPrefWidth(labelSize);
-        translationLabel.setMinWidth(labelSize);
-        translationLabel.setMaxWidth(labelSize);
-
-        String truncatedValue = Double.toString(BigDecimal.valueOf(selectedTranslationY.getValue()).setScale(2, RoundingMode.HALF_UP).doubleValue());
-
-        TextField textField = new TextField(truncatedValue);
-        textField.setPromptText(truncatedValue);
+        TextField textField = new TextField(String.valueOf(selectedTranslationY.getValue() / SCALE));
+        textField.setPromptText(String.valueOf(selectedTranslationY.getValue() / SCALE));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        textField.setMinWidth(90);
-        textField.setPrefWidth(90);
-        textField.setAlignment(Pos.CENTER_LEFT);
+        textField.setPrefWidth(60);
+        textField.setAlignment(Pos.CENTER);
 
         Information tempTranslationY = selectedTranslationY;
 
-        Slider slider = getSlider(tempTranslationY, aDouble -> {
-            selected.setTranslateY((selected.getTranslateY() + aDouble));
-        }, aDouble -> {
-            Double truncatedDouble = BigDecimal.valueOf(aDouble).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-        });
+        Slider translationYSlider = new Slider();
+        translationYSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
+        translationYSlider.setMin(- NUMBER_COLUMNS_AND_ROWS);
+        translationYSlider.setValue(tempTranslationY.getValue() / SCALE);
 
-        textField.setOnKeyPressed(event -> {
-            if (event.getCode().equals(KeyCode.ENTER)) {
+        textField.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+
                 try {
-                    if (Double.parseDouble(textField.getText()) < slider.getMin()) {
-                        textField.setText(String.valueOf(slider.getMin()));
-                    } else if (Double.parseDouble(textField.getText()) > slider.getMax()) {
-                        textField.setText(String.valueOf(slider.getMax()));
+                    if (Double.parseDouble(textField.getText()) < translationYSlider.getMin()) {
+                        textField.setText(String.valueOf(translationYSlider.getMin()));
                     }
 
-                    slider.setValue(Double.parseDouble(textField.getText()));
+                    translationYSlider.setValue(Double.parseDouble(textField.getText()));
 
                 } catch (NumberFormatException e) {
-                    textField.setText("0");
-                    slider.setValue(0);
+                    textField.setText(String.valueOf(translationYSlider.getMin()));
+                    translationYSlider.setValue(translationYSlider.getMin());
                 }
+
             }
         });
 
-        slider.setValue(tempTranslationY.getValue());
-        slider.setMajorTickUnit(0.1);
-        slider.setMinorTickCount(0);
-        slider.setSnapToTicks(true);
+        //TODO: TextField should allow for 0.##, and slider only for 0.#.
+        //TODO: Height pane
 
-        slider.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(slider, Priority.ALWAYS);
+        translationYSlider.setMajorTickUnit(0.1);
+        translationYSlider.setMinorTickCount(0);
+        translationYSlider.setSnapToTicks(true);
 
-        translationYBox = new HBox(translationLabel, slider, textField);
+        translationYSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+
+            tempTranslationY.setValue(truncatedDouble * SCALE);
+            selected.setTranslateY(selected.getTranslateY() + (newValue.doubleValue() - oldValue.doubleValue()) * SCALE); ;
+        });
+
+        translationYSlider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(translationYSlider, Priority.ALWAYS);
+
+
+        translationYBox = new HBox(translationLabel, translationYSlider, textField);
         translationYBox.setPadding(new Insets(10, 10, 10, 15));
         translationYBox.setAlignment(Pos.CENTER_LEFT);
         translationYBox.setMinHeight(40);
@@ -724,16 +730,17 @@ public class NewCompositionShape implements CustomShape {
 
     private Slider getSlider(Information informationToUpdate, Consumer<Double> consumer, Consumer<Double> textFieldConsumer) {
         Slider slider = new Slider();
-        slider.setMax(Orchestrator.getSCALE() * Orchestrator.getNumberColumnsAndRows() / 2.0);
-        slider.setMin(-Orchestrator.getSCALE() * Orchestrator.getNumberColumnsAndRows() / 2.0);
+        slider.setMax(Orchestrator.getNumberColumnsAndRows());
+        slider.setMin(- Orchestrator.getNumberColumnsAndRows());
         slider.setValue(informationToUpdate.getValue());
         slider.setMajorTickUnit(0.1);
         slider.setMinorTickCount(0);
         slider.setSnapToTicks(true);
 
         slider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            informationToUpdate.setValue(newValue.doubleValue());
-            consumer.accept(newValue.doubleValue() - oldValue.doubleValue());
+            informationToUpdate.setValue(newValue.doubleValue() * SCALE);
+            System.err.println("new value - old value: " + (newValue.doubleValue() - oldValue.doubleValue()));
+            consumer.accept((newValue.doubleValue() - oldValue.doubleValue()) * SCALE);
             textFieldConsumer.accept(newValue.doubleValue());
         });
 

@@ -384,17 +384,17 @@ public class BasicShape implements CustomShape {
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
 
-        TextField textField = new TextField(String.valueOf(getInitialTranslation().getX()));
-        textField.setPromptText(String.valueOf(getInitialTranslation().getX()));
+        TextField textField = new TextField(String.valueOf(getInitialTranslation().getX() / SCALE));
+        textField.setPromptText(String.valueOf(getInitialTranslation().getX() / SCALE));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(60);
         textField.setAlignment(Pos.CENTER);
 
         Slider translationXSlider = new Slider();
-        translationXSlider.setMax(SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationXSlider.setMin(- SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationXSlider.setValue(getInitialTranslation().getX());
+        translationXSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
+        translationXSlider.setMin(- NUMBER_COLUMNS_AND_ROWS);
+        translationXSlider.setValue(getInitialTranslation().getX() / SCALE);
 
         textField.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode().equals(KeyCode.ENTER)) {
@@ -421,19 +421,14 @@ public class BasicShape implements CustomShape {
         translationXSlider.setMinorTickCount(0);
         translationXSlider.setSnapToTicks(true);
 
-        translationXSlider.valueProperty().addListener(((observableValue, number, t1) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-            translationXSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
-        }));
 
         translationXSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            this.addTranslationX((newValue.doubleValue() - oldValue.doubleValue()));
-            translateXProperty.setValue(truncatedDouble);
-            writeTranslateX.apply(truncatedDouble);
+            this.addTranslationX((newValue.doubleValue() - oldValue.doubleValue())* SCALE);
+            translateXProperty.setValue(truncatedDouble * SCALE );
+            writeTranslateX.apply(truncatedDouble * SCALE);
         });
 
         translationXSlider.setMaxWidth(Double.MAX_VALUE);
@@ -454,17 +449,17 @@ public class BasicShape implements CustomShape {
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
 
-        TextField textField = new TextField((String.valueOf(getInitialTranslation().getY())));
-        textField.setPromptText((String.valueOf(getInitialTranslation().getY())));
+        TextField textField = new TextField((String.valueOf(getInitialTranslation().getY() / SCALE)));
+        textField.setPromptText((String.valueOf(getInitialTranslation().getY() / SCALE)));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(60);
         textField.setAlignment(Pos.CENTER);
 
         Slider translationYSlider = new Slider();
-        translationYSlider.setMax(SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationYSlider.setMin(- SCALE * NUMBER_COLUMNS_AND_ROWS / 2.0);
-        translationYSlider.setValue(getInitialTranslation().getY());
+        translationYSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
+        translationYSlider.setMin(- NUMBER_COLUMNS_AND_ROWS);
+        translationYSlider.setValue(getInitialTranslation().getY() / SCALE);
 
         translationYSlider.setMajorTickUnit(0.1);
         translationYSlider.setMinorTickCount(0);
@@ -496,11 +491,11 @@ public class BasicShape implements CustomShape {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            translateYProperty.setValue(truncatedDouble);
+            translateYProperty.setValue(truncatedDouble * SCALE);
 
-            this.addTranslationY((newValue.doubleValue() - oldValue.doubleValue()));
+            this.addTranslationY((newValue.doubleValue() - oldValue.doubleValue())* SCALE);
 
-            writeTranslateY.apply(truncatedDouble);
+            writeTranslateY.apply(truncatedDouble * SCALE);
         });
 
         translationYSlider.setMaxWidth(Double.MAX_VALUE);
