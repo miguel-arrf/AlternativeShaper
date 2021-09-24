@@ -30,6 +30,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
+import marrf.iscte.JavaAndProlog.DesignToProlog;
 import marrf.iscte.ShapeRules.ShapeRule;
 import org.json.simple.JSONObject;
 
@@ -352,7 +353,7 @@ public class App extends Application {
         HBox shapeAndProcessBox = new HBox(getShapeRuleButton(), getProcessButton());
         shapeAndProcessBox.setSpacing(20);
 
-        VBox buttons = new VBox(saveHB, shapeAndProcessBox);
+        VBox buttons = new VBox(saveHB, shapeAndProcessBox, getDesignViewer());
         buttons.setSpacing(15);
         buttons.setAlignment(Pos.CENTER);
 
@@ -424,6 +425,24 @@ public class App extends Application {
 
             NewShapeRuleEditor newShapeRuleEditor = new NewShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
             newShapeRuleEditor.openPopup();
+
+        });
+
+        return complexShapeHBox;
+    }
+
+    private Pane getDesignViewer(){
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Design Viewer", "#472953", "#ff8ad8", "icons8-rules-96.png");
+
+        complexShapeHBox.setMaxHeight(50);
+        complexShapeHBox.setPrefHeight(50);
+
+        complexShapeHBox.setOnMouseClicked(event -> {
+            /*ShapeRuleEditor shapeRuleEditor = new ShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
+            shapeRuleEditor.openPopup();*/
+
+            DesignToProlog designToProlog = new DesignToProlog(scene);
+            designToProlog.openPopup();
 
         });
 
@@ -866,7 +885,6 @@ public class App extends Application {
             event.setDropCompleted(success);
 
         });
-
 
         pane.setOnMouseMoved(event -> basicShapes.forEach(rectangle -> {
             Point2D transformation = rectangle.localToScene(rectangle.getX(), rectangle.getY()).add(new Point2D(rectangle.getWidth() , 0));

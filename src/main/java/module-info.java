@@ -6,5 +6,6 @@ module marrf.iscte {
     requires net.kurobako.gesturefx;
     requires json.simple;
     requires org.apache.commons.lang3;
+    requires jpl;
     exports marrf.iscte;
 }
