@@ -34,6 +34,8 @@ public class Orchestrator {
     private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
     private final ArrayList<Process> processes = new ArrayList<>();
     private final ArrayList<ShapeRule> shapeRules = new ArrayList<>();
+    private final ArrayList<Variable> variables = new ArrayList<>();
+
 
     public static int getSCALE() {
         return SCALE;
@@ -41,6 +43,22 @@ public class Orchestrator {
 
     public String getBasicShapeNameFromID(String id){
         return  basicShapes.stream().filter(p -> p.getUUID().toString().equals(id)).findFirst().get().getShapeName();
+    }
+
+    public boolean canAddVariable(Variable variable){
+        return variables.stream().noneMatch(p -> p.getName().equals(variable.getName()));
+    }
+
+    public ArrayList<Variable> getVariables() {
+        return variables;
+    }
+
+    public void removeVariable(Variable variable){
+        variables.remove(variable);
+    }
+
+    public void addVariable(Variable variable){
+        variables.add(variable);
     }
 
     public static int getNumberColumnsAndRows() {

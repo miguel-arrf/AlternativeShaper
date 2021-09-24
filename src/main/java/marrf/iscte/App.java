@@ -77,12 +77,14 @@ public class App extends Application {
 
     private final Orchestrator orchestrator = new Orchestrator();
 
-    private Pane getSeparator(){
+    public static Pane getSeparator(){
         Pane rectangle = new Pane();
         rectangle.setPrefHeight(8);
         rectangle.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
         rectangle.setMaxHeight(Double.MAX_VALUE);
         rectangle.setId("separator");
+
+        rectangle.setMinHeight(6);
 
         return rectangle;
     }
@@ -349,11 +351,13 @@ public class App extends Application {
         saveHB.setAlignment(Pos.CENTER);
         saveHB.setMaxHeight(50);
         saveHB.setPrefHeight(50);
+        saveHB.setMinHeight(30);
+
 
         HBox shapeAndProcessBox = new HBox(getShapeRuleButton(), getProcessButton());
         shapeAndProcessBox.setSpacing(20);
 
-        VBox buttons = new VBox(saveHB, shapeAndProcessBox, getDesignViewer());
+        VBox buttons = new VBox(saveHB, shapeAndProcessBox, getSeparator(), getDesignViewer(), getVariableEditor(), getSeparator());
         buttons.setSpacing(15);
         buttons.setAlignment(Pos.CENTER);
 
@@ -378,12 +382,12 @@ public class App extends Application {
 
     }
 
-    private HBox getButtonWith_Label_Color_Image(@NamedArg("label") String label, @NamedArg("background color") String backgroundColor,@NamedArg("label color") String labelColor, @NamedArg("image name") String imageLocation){
+    public static HBox getButtonWith_Label_Color_Image(@NamedArg("label") String label, @NamedArg("background color") String backgroundColor,@NamedArg("label color") String labelColor, @NamedArg("image name") String imageLocation){
         Image complexPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/" + imageLocation)).toExternalForm());
         ImageView complexPlusImageView = new ImageView(complexPlus);
         complexPlusImageView.setSmooth(true);
         complexPlusImageView.setPreserveRatio(true);
-        complexPlusImageView.setFitWidth(12);
+        complexPlusImageView.setFitWidth(16);
 
         Label complexShape = new Label(label);
         complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
@@ -393,6 +397,22 @@ public class App extends Application {
         complexShapeHBox.setAlignment(Pos.CENTER);
         complexShapeHBox.setSpacing(5);
         complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: 20");
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
+        complexShape.setMinHeight(30);
+
+        return complexShapeHBox;
+    }
+
+    public static HBox getButtonWith_Label_Color(@NamedArg("label") String label, @NamedArg("background color") String backgroundColor,@NamedArg("label color") String labelColor){
+        Label complexShape = new Label(label);
+        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        complexShape.setTextFill(Color.web(labelColor));
+
+        HBox complexShapeHBox = new HBox(complexShape);
+        complexShapeHBox.setAlignment(Pos.CENTER);
+        complexShapeHBox.setSpacing(5);
+        complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: 10");
         HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
 
         return complexShapeHBox;
@@ -432,7 +452,7 @@ public class App extends Application {
     }
 
     private Pane getDesignViewer(){
-        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Design Viewer", "#472953", "#ff8ad8", "icons8-rules-96.png");
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Design Viewer", "#2A2953", "#8194F4", "editorViewerIcon.png");
 
         complexShapeHBox.setMaxHeight(50);
         complexShapeHBox.setPrefHeight(50);
@@ -443,6 +463,24 @@ public class App extends Application {
 
             DesignToProlog designToProlog = new DesignToProlog(scene);
             designToProlog.openPopup();
+
+        });
+
+        return complexShapeHBox;
+    }
+
+    private Pane getVariableEditor(){
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Variables Editor", "#5B4E2D", "#C6AA63", "variableIcon.png");
+
+        complexShapeHBox.setMaxHeight(50);
+        complexShapeHBox.setPrefHeight(50);
+
+        complexShapeHBox.setOnMouseClicked(event -> {
+            /*ShapeRuleEditor shapeRuleEditor = new ShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
+            shapeRuleEditor.openPopup();*/
+
+            VariablesEditor variablesEditor = new VariablesEditor(scene, orchestrator);
+            variablesEditor.openPopup();
 
         });
 
