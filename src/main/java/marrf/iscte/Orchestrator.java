@@ -1,8 +1,12 @@
 package marrf.iscte;
 
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import marrf.iscte.ShapeRules.BoolShapeShape;
 import marrf.iscte.ShapeRules.ShapeRule;
 import marrf.iscte.ShapeRules.ShapeShape;
@@ -10,6 +14,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -132,6 +137,32 @@ public class Orchestrator {
         }
 
         return true;
+    }
+
+    public void getVariablesFromFile(File file){
+        JSONParser jsonParser = new JSONParser();
+
+        try{
+            Object object = jsonParser.parse(new FileReader(file));
+            JSONObject jsonObject = (JSONObject) object;
+
+            JSONArray variablesList = (JSONArray) jsonObject.get("variables");
+            Iterator<JSONObject> iterator =  variablesList.iterator();
+
+            while (iterator.hasNext()){
+                JSONObject processJSON = iterator.next();
+
+                String name = (String) processJSON.get("name");
+                Double value = (Double) processJSON.get("value");
+
+                Variable variableToAdd = new Variable(name, value);
+                variables.add(variableToAdd);
+
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void getProcessesFromFile(File file){
@@ -290,6 +321,21 @@ public class Orchestrator {
         return list;
     }
 
+    private JSONArray getVariablesJSON(){
+        JSONArray list = new JSONArray();
+
+        for(Variable variable: variables){
+            JSONObject jsonObject = new JSONObject();
+
+            jsonObject.put("name", variable.getName());
+            jsonObject.put("value", variable.getValue());
+
+            list.add(jsonObject);
+        }
+
+        return list;
+    }
+
     private JSONArray getProcessesJSON(){
         JSONArray list = new JSONArray();
 
@@ -344,6 +390,24 @@ public class Orchestrator {
         return toReturn;
     }
 
+    public StringBuilder variablesToString(){
+        StringBuilder toReturn = new StringBuilder();
+
+        toReturn.append("memory(global, [");
+
+        for (int i = 0; i < variables.size(); i++) {
+            Variable toAdd = variables.get(i);
+            toReturn.append("var(").append(toAdd.getName()).append(",").append(toAdd.getValue()).append(")");
+            if(i < variables.size() - 1){
+                toReturn.append(",");
+            }
+        }
+
+        toReturn.append("]).");
+
+        return toReturn;
+    }
+
     public StringBuilder shapeRulesToString(){
         StringBuilder toReturn = new StringBuilder();
 
@@ -365,7 +429,7 @@ public class Orchestrator {
 
         basicShapes.forEach(basicShape -> {
 
-            toReturn.append("shape(").append(basicShape.getShapeName()).append(",COLOCAR_IMAGEM).").append("\n");
+            toReturn.append("shape(").append(basicShape.getShapeName()).append("," + "'shapes/" + basicShape.getShapeName() + ".gif'" +  ").").append("\n");
             toReturn.append("basicShapeDimention(").append(basicShape.getShapeName()).append(",").append(basicShape.getWidth()/SCALE).append(",").append(basicShape.getHeight()/SCALE).append(").");
             toReturn.append("\n");
         });
@@ -380,6 +444,21 @@ public class Orchestrator {
         }
 
         toReturn.append("]).");
+
+        basicShapes.forEach(basicShape -> {
+            Rectangle toExport = new Rectangle(basicShape.getWidth(), basicShape.getHeight());
+            toExport.setFill(basicShape.getFill());
+
+            WritableImage image = toExport.snapshot(new SnapshotParameters(), null);
+            try {
+                File toSave = new File(path + "/shapes/" + basicShape.getShapeName() + ".gif");
+
+                ImageIO.write(SwingFXUtils.fromFXImage(image, null), "gif", toSave);
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+
+        });
 
         System.out.println(toReturn);
         return toReturn;
@@ -402,6 +481,8 @@ public class Orchestrator {
 
         toReturn.append("\n\n").append(basicShapesToString()).append("\n");
 
+        toReturn.append("\n\n").append(variablesToString()).append("\n");
+
         toReturn.append("\n\n").append(compositionShapesToString()).append("\n");
 
         toReturn.append("\n\n").append(processesToString()).append("\n");
@@ -419,6 +500,7 @@ public class Orchestrator {
         jsonObject.put("basicShapes", getBasicShapesJSON());
         jsonObject.put("compositionShapes", getCompositionShapesJSON());
         jsonObject.put("processes", getProcessesJSON());
+        jsonObject.put("variables", getVariablesJSON());
 
         try{
             FileWriter fileWriter = new FileWriter(path + "/toLoad.json");

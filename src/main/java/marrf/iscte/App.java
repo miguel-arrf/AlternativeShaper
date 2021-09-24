@@ -549,6 +549,10 @@ public class App extends Application {
         return borderPane;
     }
 
+    public void loadVariables(File file){
+        orchestrator.getVariablesFromFile(file);
+    }
+
     public void loadProcesses(File file){
         orchestrator.getProcessesFromFile(file);
     }
@@ -1039,7 +1043,7 @@ public class App extends Application {
         namePrompt.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         namePrompt.setTextFill(Color.web("#BDBDBD"));
 
-        currentName = new TextField(" default ");
+        currentName = new TextField("default");
         currentName.setPromptText("default");
         currentName.setStyle("-fx-background-color: #333234; -fx-text-fill: #5D5C5E; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         currentName.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));

@@ -289,7 +289,9 @@ public class VariablesEditor {
     }
 
     private void loadVariables(){
-        startBlurAnimation(scene.getRoot(), 30.0, 0.0, Duration.millis(100), true);
+        if(orchestrator.getVariables().size() != 0){
+            scrollBarThumbnails.addAll(orchestrator.getVariables());
+        }
     }
 
 }

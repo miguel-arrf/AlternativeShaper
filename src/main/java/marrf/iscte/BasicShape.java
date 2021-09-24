@@ -82,7 +82,7 @@ public class BasicShape implements CustomShape {
     }
 
     public String getShapeName() {
-        return shapeName;
+        return shapeName.trim();
     }
 
     public Function<Pane, Double> getProceedWhenDeleting() {
