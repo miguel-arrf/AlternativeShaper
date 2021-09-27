@@ -83,6 +83,13 @@ public class GridCanvas {
         pane.getChildren().add(basicShape);
     }
 
+    public static void addNode(Node basicShape){
+        basicShape.setTranslateX(basicShape.getTranslateX() + circle.getCenterX() + circle.getTranslateX());
+        basicShape.setTranslateY(basicShape.getTranslateY() + circle.getCenterY() + circle.getTranslateY());
+
+        pane.getChildren().add(basicShape);
+    }
+
 
     public GridCanvas(){
     }
@@ -208,6 +215,46 @@ public class GridCanvas {
             p.setTranslateX(p.getTranslateX() - xOriginTranslation);
             p.setTranslateY(p.getTranslateY() - yOriginTranslation);
         });
+    }
+
+    public static Rectangle takeScreenshootWithRoundedCornersAndLoadTemporarilyWithNode(Node node){
+        double nodeX = node.getTranslateX();
+        double nodeY = node.getTranslateY();
+
+        ArrayList<Node> nodesToThenAdd = new ArrayList<>(pane.getChildren());
+        Circle circleCopy = circle;
+        double xOriginTranslation = GridCanvas.xOriginTranslation;
+        double yOriginTranslation = GridCanvas.yOriginTranslation;
+        double initialTranslationXCircle = GridCanvas.initialTranslationXCircle;
+        double initialTranslationYCircle = GridCanvas.initialTranslationYCircle;
+        double horizontalOffset = GridCanvas.horizontalOffset;
+        double verticalOffset = GridCanvas.verticalOffset;
+
+        clearEverything();
+
+        node.setTranslateX(node.getTranslateX() - (circleCopy.getCenterX() + circleCopy.getTranslateX() + xOriginTranslation));
+        node.setTranslateY(node.getTranslateY() - (circleCopy.getCenterY() + circleCopy.getTranslateY() + yOriginTranslation));
+
+        addNode(node);
+
+        Rectangle toReturn = takeScreenshootWithRoundedCorners();
+
+
+        clearEverythingWithoutRedrawingGrid();
+        GridCanvas.circle = circleCopy;
+        GridCanvas.xOriginTranslation = xOriginTranslation;
+        GridCanvas.yOriginTranslation = yOriginTranslation;
+        GridCanvas.initialTranslationYCircle = initialTranslationYCircle;
+        GridCanvas.initialTranslationXCircle = initialTranslationXCircle;
+        GridCanvas.horizontalOffset = horizontalOffset;
+        GridCanvas.verticalOffset = verticalOffset;
+
+        pane.getChildren().addAll(nodesToThenAdd);
+        System.out.println(pane.getChildren().contains(node));
+        node.setTranslateX(nodeX);
+        node.setTranslateY(nodeY);
+
+        return toReturn;
     }
 
     public static Rectangle takeScreenshootWithRoundedCornersAndLoadTemporarily(NewCompositionShape compositionShape){

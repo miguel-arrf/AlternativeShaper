@@ -215,6 +215,7 @@ public class StartMenu extends Application {
                     app.loadNewCompositionShapes(selectedFile);
                     app.loadProcesses(selectedFile);
                     app.loadVariables(selectedFile);
+                    app.loadPowerShapes(selectedFile);
                 }
 
             }

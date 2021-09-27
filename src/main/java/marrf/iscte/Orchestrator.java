@@ -7,9 +7,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import marrf.iscte.ShapeRules.BoolShapeShape;
 import marrf.iscte.ShapeRules.ShapeRule;
-import marrf.iscte.ShapeRules.ShapeShape;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -19,7 +17,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,6 +41,7 @@ public class Orchestrator {
     private final ArrayList<Process> processes = new ArrayList<>();
     private final ArrayList<ShapeRule> shapeRules = new ArrayList<>();
     private final ArrayList<Variable> variables = new ArrayList<>();
+    private final ArrayList<Power> powerShapes = new ArrayList<>();
 
 
     public static int getSCALE() {
@@ -48,6 +50,14 @@ public class Orchestrator {
 
     public String getBasicShapeNameFromID(String id){
         return  basicShapes.stream().filter(p -> p.getUUID().toString().equals(id)).findFirst().get().getShapeName();
+    }
+
+    public Optional<BasicShape> existsBasicShapeWithID(String id) {
+        return  basicShapes.stream().filter(p -> p.getUUID().toString().equals(id)).findFirst();
+    }
+
+    public BasicShape getBasicShapeFromPosition(int position){
+        return basicShapes.get(position);
     }
 
     public boolean canAddVariable(Variable variable){
@@ -157,6 +167,50 @@ public class Orchestrator {
 
                 Variable variableToAdd = new Variable(name, value);
                 variables.add(variableToAdd);
+
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void getPowerShapesFromFile(File file){
+        JSONParser jsonParser = new JSONParser();
+
+        try{
+            Object object = jsonParser.parse(new FileReader(file));
+            JSONObject jsonObject = (JSONObject) object;
+
+            JSONArray variablesList = (JSONArray) jsonObject.get("powerShapes");
+            Iterator<JSONObject> iterator =  variablesList.iterator();
+
+            while (iterator.hasNext()){
+                JSONObject powerJSON = iterator.next();
+
+                String name = (String) powerJSON.get("name");
+                UUID id = UUID.fromString((String) powerJSON.get("id"));
+
+                Boolean hasLeft = (Boolean) powerJSON.get("hasLeft");
+                Boolean hasRight = (Boolean) powerJSON.get("hasRight");
+
+                Boolean leftHasVariable = (Boolean) powerJSON.get("leftHasVariable");
+                Boolean rightHasVariable = (Boolean) powerJSON.get("rightHasVariable");
+                Boolean centerHasVariable = (Boolean) powerJSON.get("centerHasVariable");
+
+                String rightVariable = (String) powerJSON.get("rightVariable");
+                String leftVariable = (String) powerJSON.get("leftVariable");
+                String centerVariable = (String) powerJSON.get("centerVariable");
+
+                String leftValue = (String) powerJSON.get("leftValue");
+                String rightValue = (String) powerJSON.get("rightValue");
+
+                String rightTranslation = (String) powerJSON.get("rightTranslation");
+                String leftTranslation = (String) powerJSON.get("leftTranslation");
+
+
+                Power powerToAdd = new Power(name, id,hasLeft, hasRight, leftHasVariable, rightHasVariable, centerHasVariable, rightVariable, leftVariable, centerVariable, leftValue, rightValue, rightTranslation, leftTranslation );
+                powerShapes.add(powerToAdd);
 
             }
 
@@ -302,6 +356,12 @@ public class Orchestrator {
         saveFile();
     }
 
+    public void addAllPowerShapes(ArrayList<Power> powerShapesToAdd){
+        powerShapes.clear();
+        powerShapes.addAll(powerShapesToAdd);
+        saveFile();
+    }
+
     private JSONArray getBasicShapesJSON(){
         JSONArray list = new JSONArray();
 
@@ -372,6 +432,14 @@ public class Orchestrator {
         return list;
     }
 
+    private JSONArray getPowerShapesJSON(){
+        JSONArray list = new JSONArray();
+
+        powerShapes.forEach(power -> list.add(power.getJSONObject()));
+
+        return list;
+    }
+
     public StringBuilder processesToString(){
         StringBuilder toReturn = new StringBuilder();
 
@@ -404,6 +472,14 @@ public class Orchestrator {
         }
 
         toReturn.append("]).");
+
+        return toReturn;
+    }
+
+    public StringBuilder powerToString(){
+        StringBuilder toReturn = new StringBuilder();
+
+        powerShapes.forEach(power -> toReturn.append(power.getPowerToString()).append("\n"));
 
         return toReturn;
     }
@@ -483,6 +559,8 @@ public class Orchestrator {
 
         toReturn.append("\n\n").append(variablesToString()).append("\n");
 
+        toReturn.append("\n\n").append(powerToString()).append("\n");
+
         toReturn.append("\n\n").append(compositionShapesToString()).append("\n");
 
         toReturn.append("\n\n").append(processesToString()).append("\n");
@@ -501,6 +579,7 @@ public class Orchestrator {
         jsonObject.put("compositionShapes", getCompositionShapesJSON());
         jsonObject.put("processes", getProcessesJSON());
         jsonObject.put("variables", getVariablesJSON());
+        jsonObject.put("powerShapes", getPowerShapesJSON());
 
         try{
             FileWriter fileWriter = new FileWriter(path + "/toLoad.json");

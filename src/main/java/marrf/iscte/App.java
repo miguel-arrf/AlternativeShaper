@@ -14,10 +14,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Dragboard;
@@ -68,12 +65,15 @@ public class App extends Application {
     private final VBox transformersBox = new VBox();
     private final ObservableList<CustomShape> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
 
-    private CustomShape inDragCustomShape;
+    public static CustomShape inDragCustomShape;
 
     private NewCompositionShape selectedCompositionShape;
     private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
 
-    private ArrayList<ShapeRule> shapeRuleArrayList = new ArrayList<>();
+    private final ArrayList<Power> powerArrayList = new ArrayList<>();
+    private Power selectedPower;
+
+    private final ArrayList<ShapeRule> shapeRuleArrayList = new ArrayList<>();
 
     private final Orchestrator orchestrator = new Orchestrator();
 
@@ -92,10 +92,17 @@ public class App extends Application {
 
     private String getStringToPutInDrag(CustomShape customShape){
         if(customShape instanceof BasicShape){
+            inDragCustomShape = customShape;
+
             return String.valueOf(basicShapes.indexOf(customShape));
-        }else{
-            return "[";
+        }else if(customShape instanceof NewCompositionShape){
+            inDragCustomShape = customShape;
+
+            return "[" + customShape.getShapeName();
             //return "positions.toString();";
+        }else{
+            inDragCustomShape = customShape;
+            return "getStringToPutInDrag received something OTHER than BasicShape or NewCompositionShape";
         }
     }
 
@@ -103,7 +110,7 @@ public class App extends Application {
         return () -> {
             if(customShape instanceof NewCompositionShape){
                 inDragCustomShape = customShape;
-                System.out.println("ISTO É ENGRAÇAAAAADO. Agora sei o que estou dragging numa variável temporária!");
+                System.out.println("Agora sei o que estou dragging numa variável temporária!");
             }else{
                 inDragCustomShape = null;
             }
@@ -187,13 +194,15 @@ public class App extends Application {
                                 transformersBox.getChildren().clear();
                                 GridCanvas.clearEverything();
                                 //TODO aqui está a true, mas em algum momento não será...
-                                isCurrentSimple = false;
                                 currentName.setText(basicShapeAdded.getShapeName());
 
                                 addCompositionShape(selectedCompositionShape, false);
                                 //addShape(basicShapeAdded, true);
+
+                                isCurrentSimple = false;
+                                selectedPower = null;
                             });
-                        }else{
+                        }else if(basicShapeAdded instanceof BasicShape){
                             //It is BasicShape
                             checkIfExists.setOnMouseClicked(mouseEvent -> {
                                 System.out.println("I've clicked on a basic shape thumbnail!");
@@ -209,6 +218,26 @@ public class App extends Application {
 
                                 addShape(basicShapeAdded);
 
+                                selectedPower = null;
+                                selectedCompositionShape = null;
+                            });
+                        }else if(basicShapeAdded instanceof Power){
+                            checkIfExists.setOnMouseClicked(mouseEvent -> {
+                                System.out.println("I've clicked on a POWER shape thumbnail!");
+                                selectedPower = (Power) basicShapeAdded;
+
+                                transformersBox.getChildren().clear();
+                                GridCanvas.clearEverything();
+                                //TODO aqui está a true, mas em algum momento não será...
+                                isCurrentSimple = false;
+                                currentName.setText(basicShapeAdded.getShapeName());
+
+                                addPowerShape(selectedPower);
+
+                                transformersBox.getChildren().add(basicShapeAdded.getTranslationXSection());
+
+                                isCurrentSimple = false;
+                                selectedCompositionShape = null;
                             });
                         }
                     }
@@ -290,7 +319,6 @@ public class App extends Application {
         HBox.setHgrow(basicShapeVBox, Priority.ALWAYS);
 
         basicShapeVBox.setOnMouseClicked(mouseEvent -> {
-
             System.out.println("I want to add a new basic shape!");
             GridCanvas.clearEverything();
             isCurrentSimple = true;
@@ -306,6 +334,7 @@ public class App extends Application {
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
             selectedCompositionShape = null;
+            selectedPower = null;
         });
 
 
@@ -330,10 +359,6 @@ public class App extends Application {
 
             transformersBox.getChildren().clear();
 
-            /*if(!sideBarThumbnails.contains(selectedCompositionShape))
-                newCompositionShapes.remove(selectedCompositionShape);
-             */
-
 
             selectedCompositionShape = new NewCompositionShape(orchestrator, transformersBox, getProceedWhenDeletingCompositionShape(), teste -> {
                 System.err.println("oh, here I am!");
@@ -341,6 +366,7 @@ public class App extends Application {
                 return null;
             });
 
+            selectedPower = null;
 
             newCompositionShapes.add(selectedCompositionShape);
             sideBarThumbnails.add(selectedCompositionShape);
@@ -357,7 +383,10 @@ public class App extends Application {
         HBox shapeAndProcessBox = new HBox(getShapeRuleButton(), getProcessButton());
         shapeAndProcessBox.setSpacing(20);
 
-        VBox buttons = new VBox(saveHB, shapeAndProcessBox, getSeparator(), getDesignViewer(), getVariableEditor(), getSeparator());
+        HBox designViewerAndVariablesEditor = new HBox(getDesignViewer(), getVariableEditor());
+        designViewerAndVariablesEditor.setSpacing(20);
+
+        VBox buttons = new VBox(saveHB,getAddPowerButton(), shapeAndProcessBox, getSeparator(),designViewerAndVariablesEditor, getSeparator());
         buttons.setSpacing(15);
         buttons.setAlignment(Pos.CENTER);
 
@@ -458,11 +487,42 @@ public class App extends Application {
         complexShapeHBox.setPrefHeight(50);
 
         complexShapeHBox.setOnMouseClicked(event -> {
-            /*ShapeRuleEditor shapeRuleEditor = new ShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
-            shapeRuleEditor.openPopup();*/
-
             DesignToProlog designToProlog = new DesignToProlog(scene);
             designToProlog.openPopup();
+
+        });
+
+        return complexShapeHBox;
+    }
+
+    private Pane getAddPowerButton(){
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Add Power", "#2A2953", "#8194F4", "editorViewerIcon.png");
+
+        complexShapeHBox.setMaxHeight(50);
+        complexShapeHBox.setPrefHeight(50);
+
+
+        complexShapeHBox.setOnMouseClicked(event -> {
+            System.out.println("I want to add a new power shape!");
+            GridCanvas.clearEverything();
+            isCurrentSimple = false;
+
+            addNameSectionIfItIsNot();
+            addSaveSectionIfItIsNot();
+
+            currentName.setText("simplePower");
+
+            transformersBox.getChildren().clear();
+
+            Power power = new Power(getProceedWhenDeletingPowerShape());
+            addPowerShape(power);
+            selectedPower = power;
+            selectedCompositionShape = null;
+
+            powerArrayList.add(power);
+            sideBarThumbnails.add(power);
+
+            transformersBox.getChildren().add(power.getTranslationXSection());
 
         });
 
@@ -476,9 +536,6 @@ public class App extends Application {
         complexShapeHBox.setPrefHeight(50);
 
         complexShapeHBox.setOnMouseClicked(event -> {
-            /*ShapeRuleEditor shapeRuleEditor = new ShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
-            shapeRuleEditor.openPopup();*/
-
             VariablesEditor variablesEditor = new VariablesEditor(scene, orchestrator);
             variablesEditor.openPopup();
 
@@ -509,6 +566,10 @@ public class App extends Application {
                 }
             }
 
+    }
+
+    private void addPowerShape(Power power){
+        GridCanvas.addNode(power.getEditorVisualization());
     }
 
     public Pane getScenePanelWithLoadedFile(Scene scene){
@@ -551,6 +612,10 @@ public class App extends Application {
 
     public void loadVariables(File file){
         orchestrator.getVariablesFromFile(file);
+    }
+
+    public void loadPowerShapes(File file){
+        orchestrator.getPowerShapesFromFile(file);
     }
 
     public void loadProcesses(File file){
@@ -655,22 +720,8 @@ public class App extends Application {
 
 
         if(basicShapesToSave.size() == 0){
-            //isCurrentSimple = true;
-
-            /*addNameSectionIfItIsNot();
-            addSaveSectionIfItIsNot();
-*/
-            //currentName.setText("defaultName");
             mainPanel.getChildren().remove(nameSection);
             mainPanel.getChildren().remove(saveSection);
-            //Ads a basic shape when we delete the last one!
-            //BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
-            //addShape(toAdd);
-            //basicShapesToSave.add(toAdd);
-            //sideBarThumbnails.add(toAdd);
-            //selectedCompositionShape = null;
-
-
 
         }else{
             currentName.setText(basicShapesToSave.get(0).getShapeName());
@@ -694,9 +745,17 @@ public class App extends Application {
             basicShapesToSave.add(toAdd);
             currentName.setText("defaultName");
             sideBarThumbnails.add(toAdd);
+
+            isCurrentSimple = true;
+            inDragCustomShape = null;
+            selectedPower = null;
         }else{
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
+
+            isCurrentSimple = true;
+            inDragCustomShape = null;
+            selectedPower = null;
         }
     }
 
@@ -762,6 +821,35 @@ public class App extends Application {
             p.getLeftShape().deleteCompositionShape(uuidToRemove);
             p.getRightShape().deleteCompositionShape(uuidToRemove);
         });
+    }
+
+    private void deletePowerShape(String uuidToRemove){
+        Power powerToRemove = powerArrayList.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
+        powerArrayList.remove(powerToRemove);
+        GridCanvas.clearEverything();
+        transformersBox.getChildren().clear();
+        sideBarThumbnails.remove(powerToRemove);
+
+        if(basicShapes.size() == 0){
+            //Ads a basic shape when we delete the last one!
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+            addShape(toAdd);
+            basicShapesToSave.add(toAdd);
+            currentName.setText("defaultName");
+            sideBarThumbnails.add(toAdd);
+        }else{
+            currentName.setText(basicShapesToSave.get(0).getShapeName());
+            addShape(basicShapesToSave.get(0));
+        }
+    }
+
+    private Function<String, Double> getProceedWhenDeletingPowerShape(){
+        return uuidToRemove -> {
+
+            deletePowerShape(uuidToRemove);
+
+            return null;
+        };
     }
 
     private Function<String, Double> getProceedWhenDeletingCompositionShape(){
@@ -899,7 +987,7 @@ public class App extends Application {
 
         pane.setOnDragDropped(event -> {
             event.acceptTransferModes(TransferMode.ANY);
-            System.out.println("oi");
+            System.out.println("---------- dragDropped in APP");
 
             Dragboard db = event.getDragboard();
             boolean success = false;
@@ -911,12 +999,16 @@ public class App extends Application {
                     if(!db.getString().contains("[")){
                         System.out.println("I was dropped a simple shape");
                         System.out.println("i was dropped: " + db.getString());
-                        addShape(selectedCompositionShape.addBasicShape(basicShapes.get(Integer.parseInt(db.getString())).getUUID().toString()));
+                        if(inDragCustomShape instanceof BasicShape)
+                            addShape(selectedCompositionShape.addBasicShape(basicShapes.get(Integer.parseInt(db.getString())).getUUID().toString()));
                     }else{
-                        if(!inDragCustomShape.getUUID().equals(selectedCompositionShape.getUUID())){
-                            System.out.println("I was dropped a composition shape");
-                            addCompositionShape((NewCompositionShape) inDragCustomShape, true);
+                        if(inDragCustomShape instanceof NewCompositionShape){
+                            if(!inDragCustomShape.getUUID().equals(selectedCompositionShape.getUUID())){
+                                System.out.println("I was dropped a composition shape");
+                                addCompositionShape((NewCompositionShape) inDragCustomShape, true);
+                            }
                         }
+
 
                     }
 
@@ -1127,20 +1219,17 @@ public class App extends Application {
 
             orchestrator.addAllBasicShapes(basicShapesToSave);
 
-        }else{
+        }else if(selectedCompositionShape != null){
             selectedCompositionShape.setShapeName(currentName.getText());
-            //sideBarThumbnails.add(selectedCompositionShape);
-
-            /*ArrayList<NewCompositionShape> toAdd = new ArrayList<>();
-            sideBarThumbnails.forEach(customShape -> {
-                if(customShape instanceof NewCompositionShape){
-                    if(toAdd.stream().noneMatch(p -> p.getID().equals(((NewCompositionShape) customShape).getID())))
-                        toAdd.add((NewCompositionShape) customShape);
-                }
-            });
-            orchestrator.addAllCompositionShapes(toAdd);*/
             newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
             orchestrator.addAllCompositionShapes(newCompositionShapes);
+            orchestrator.addAllPowerShapes(powerArrayList);
+
+        }else if(selectedPower != null){
+            selectedPower.setShapeName(currentName.getText());
+            orchestrator.addAllPowerShapes(powerArrayList);
+            orchestrator.addAllCompositionShapes(newCompositionShapes);
+            powerArrayList.forEach(Power::redrawThumbnail);
         }
 
         orchestrator.printDesignTXT();
