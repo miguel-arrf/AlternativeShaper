@@ -1,8 +1,11 @@
 package marrf.iscte.ShapeRules;
 
 import javafx.scene.layout.Pane;
+import marrf.iscte.NewCompositionShape;
 import marrf.iscte.Orchestrator;
+import org.json.simple.JSONObject;
 
+import java.util.UUID;
 import java.util.function.Function;
 
 public class BoolShapeShape extends ShapeRule{
@@ -10,6 +13,17 @@ public class BoolShapeShape extends ShapeRule{
 
     public BoolShapeShape(Orchestrator orchestrator, Pane transformersBox,Pane right, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
         super(orchestrator, transformersBox,right, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
+    }
+
+    public BoolShapeShape(NewCompositionShape leftShape, NewCompositionShape rightShape, UUID id, String name, boolean matched, String boolXML, String boolCode, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
+        super( proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting, leftShape, rightShape);
+
+        this.setId(id);
+        this.setShapeRuleName(name);
+        this.setMatched(matched);
+        this.setBoolCode(boolCode);
+        this.setBoolXML(boolXML);
+
     }
 
     @Override
@@ -27,4 +41,8 @@ public class BoolShapeShape extends ShapeRule{
 
         return toReturnString.toString().replace(System.getProperty("line.separator") + "n", "");
     }
+
+
+
+
 }

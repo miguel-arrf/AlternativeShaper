@@ -41,7 +41,7 @@ import static marrf.iscte.App.horizontalGrower;
 
 public class BasicShape implements CustomShape {
 
-    private static final int SCALE = 40;
+    private static final double SCALE = 40.0;
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
     private final Point2D translationOffset = new Point2D(0, 0); //-20 -60
     private UUID uuid;
@@ -104,6 +104,32 @@ public class BasicShape implements CustomShape {
 
         this.writeTranslateX = writeTranslateX;
         this.writeTranslateY = writeTranslateY;
+
+        this.width = width;
+        this.height = height;
+
+        this.color = color;
+
+        rectangle = new Pane();
+        rectangle.setPrefSize(width, height);
+
+        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+        Background background = new Background(backgroundFill);
+        rectangle.setBackground(background);
+
+
+        setUpComponents();
+    }
+
+    public BasicShape(double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting, String name) {
+        uuid = UUID.randomUUID();
+
+        this.proceedWhenDeleting = proceedWhenDeleting;
+
+        this.writeTranslateX = writeTranslateX;
+        this.writeTranslateY = writeTranslateY;
+
+        this.shapeName = name;
 
         this.width = width;
         this.height = height;
@@ -250,8 +276,8 @@ public class BasicShape implements CustomShape {
         widthLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         widthLabel.setTextFill(Color.web("#BDBDBD"));
 
-        TextField textField = new TextField("1");
-        textField.setPromptText("1");
+        TextField textField = new TextField(Double.toString(getWidth() / SCALE));
+        textField.setPromptText(Double.toString(getWidth() / SCALE));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(50);
@@ -259,8 +285,8 @@ public class BasicShape implements CustomShape {
 
         Slider widthSectionSlider = new Slider();
         widthSectionSlider.setMax(10);
-        widthSectionSlider.setMin(0.1);
-        widthSectionSlider.setValue(1);
+        widthSectionSlider.setMin(0);
+        widthSectionSlider.setValue( getWidth() / SCALE);
         widthSectionSlider.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(widthSectionSlider, Priority.ALWAYS);
 
@@ -290,15 +316,16 @@ public class BasicShape implements CustomShape {
         widthSectionSlider.setMinorTickCount(0);
         widthSectionSlider.setSnapToTicks(true);
 
-        widthSectionSlider.valueProperty().addListener(((observableValue, number, t1) -> {
+        /*widthSectionSlider.valueProperty().addListener(((observableValue, number, t1) -> {
             DecimalFormat df = new DecimalFormat("#.#");
             df.setRoundingMode(RoundingMode.HALF_UP);
             widthSectionSlider.setValue(Double.parseDouble(df.format(t1.doubleValue())));
-        }));
+        }));*/
 
         widthSectionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
+            //Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            //textField.setText(String.valueOf(truncatedDouble));
+            textField.setText(String.valueOf(newValue.doubleValue()));
 
             this.setWidth(newValue.doubleValue() * SCALE);
 
@@ -319,8 +346,8 @@ public class BasicShape implements CustomShape {
         heightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         heightLabel.setTextFill(Color.web("#BDBDBD"));
 
-        TextField textField = new TextField("1");
-        textField.setPromptText("1");
+        TextField textField = new TextField(Double.toString(getHeight() / SCALE));
+        textField.setPromptText(Double.toString(getHeight() / SCALE));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(50);
@@ -328,8 +355,8 @@ public class BasicShape implements CustomShape {
 
         Slider heightSectionSlider = new Slider();
         heightSectionSlider.setMax(10);
-        heightSectionSlider.setMin(0.1);
-        heightSectionSlider.setValue(1);
+        heightSectionSlider.setMin(0);
+        heightSectionSlider.setValue(getHeight() / SCALE);
         heightSectionSlider.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(heightSectionSlider, Priority.ALWAYS);
 
@@ -357,15 +384,17 @@ public class BasicShape implements CustomShape {
 
 
         heightSectionSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            DecimalFormat df = new DecimalFormat("#.#");
-            df.setRoundingMode(RoundingMode.HALF_UP);
+            //DecimalFormat df = new DecimalFormat("#.#");
+            //df.setRoundingMode(RoundingMode.HALF_UP);
 
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
-            textField.setText(String.valueOf(truncatedDouble));
-            
+            //Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            //textField.setText(String.valueOf(truncatedDouble));
+            textField.setText(String.valueOf(newValue.doubleValue()));
+
             this.setHeight(newValue.doubleValue() * SCALE);
 
-            heightSectionSlider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
+            //heightSectionSlider.setValue(Double.parseDouble(df.format(newValue.doubleValue())));
+
 
         });
 

@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -34,6 +35,7 @@ import java.util.function.Function;
 
 import static marrf.iscte.App.getAnchorPaneClip;
 import static marrf.iscte.PopupWindow.startBlurAnimation;
+import static marrf.iscte.Power.styleLabel;
 
 public class NewShapeRuleEditor {
 
@@ -245,6 +247,8 @@ public class NewShapeRuleEditor {
             });
 
             horizontal.getChildren().add(basicShapeLabel);
+            basicShapeLabel.setMinWidth(Region.USE_PREF_SIZE);
+
         });
 
         getCompositionShapesStringArray().forEach(p -> {
@@ -266,10 +270,14 @@ public class NewShapeRuleEditor {
             });
 
             horizontal.getChildren().add(compositionShapeLabel);
+            compositionShapeLabel.setMinWidth(Region.USE_PREF_SIZE);
 
         });
 
+
+
         scrollPane.setContent(horizontal);
+        scrollPane.setMinHeight(50);
 
         return scrollPane;
     }
@@ -469,6 +477,21 @@ public class NewShapeRuleEditor {
         complexShapeHBox.setMaxHeight(50);
         complexShapeHBox.setPrefHeight(20);
 
+
+
+
+        Label checkboxLabel = new Label("Matched: ");
+        styleLabel(checkboxLabel);
+        checkboxLabel.setMinWidth(Region.USE_PREF_SIZE);
+
+
+        CheckBox checkboxToUse = new CheckBox();
+        checkboxToUse.setSelected(true);
+
+        HBox toPut = new HBox(checkboxLabel, checkboxToUse);
+        checkboxToUse.setSelected(currentShapeRule.getMatched());
+        toPut.setSpacing(20);
+
         complexShapeHBox.setOnMouseClicked(event -> {
 
             Stage newStage = new Stage();
@@ -490,6 +513,11 @@ public class NewShapeRuleEditor {
             System.out.println("a carregar: " + boolFile.toURI().toString());
             webEngine.reload();
 
+
+            checkboxToUse.selectedProperty().addListener((observableValue, oldValue, newValue) -> {
+                currentShapeRule.setMatched(newValue);
+                webEngine.executeScript("setMatched(" + newValue +")");
+            });
 
             System.out.println("loading current saved");
             if(isItBool){
@@ -532,11 +560,32 @@ public class NewShapeRuleEditor {
             button.setOnMouseClicked(mouseEvent -> {
                 int canSave = (int) webView.getEngine().executeScript("numberOfNonConnectedBlocks()");
                 if(canSave == 1 || canSave == 0){
-                    System.out.println("GUARDEI!");
                     String workspaceXML = (String) webView.getEngine().executeScript("teste()");
                     String code = webView.getEngine().executeScript("getCode()").toString();
-
+                    System.out.println("saved code: " + code);
                     if(isItBool){
+                        if(currentShapeRule.getMatched()){
+
+                            String shapeNameToReplace = "";
+
+                            System.out.println("basic shapes size: " + currentShapeRule.getLeftShapeCopy().getBasicShapes().size());
+                            System.out.println("compoisitonShapeSize: " + currentShapeRule.getLeftShapeCopy().getCompositionShapesUUIDList().size());
+
+                            if(currentShapeRule.getLeftShapeCopy().getBasicShapes().size() == 0 && currentShapeRule.getLeftShapeCopy().getCompositionShapesUUIDList().size() == 1){
+                                Map<String, NewCompositionShape> map = currentShapeRule.getLeftShapeCopy().getCompositionShapeMap();
+                                for(var entry : map.entrySet()){
+                                    shapeNameToReplace = entry.getValue().getShapeName();
+                                    break;
+                                }
+
+                            }else if(currentShapeRule.getLeftShapeCopy().getBasicShapes().size() == 1 && currentShapeRule.getLeftShapeCopy().getCompositionShapesUUIDList().size() == 0){
+                                shapeNameToReplace = currentShapeRule.getLeftShapeCopy().getBasicShapes().get(0).getShapeName();
+                            }
+
+                            System.err.println("we need to replace because of the matched: " + shapeNameToReplace);
+                            code = code.replace("shape(" + shapeNameToReplace + ")","shape(matched(" + shapeNameToReplace + "))" );
+                            System.out.println("new code: " + code);
+                        }
                         currentShapeRule.setBoolCode(code);
                         currentShapeRule.setBoolXML(workspaceXML);
                     }else{
@@ -549,7 +598,11 @@ public class NewShapeRuleEditor {
 
             });
 
-            vBox.getChildren().addAll(webView, button);
+            HBox hBox = new HBox(button, checkboxLabel, checkboxToUse);
+            HBox.setHgrow(button, Priority.ALWAYS);
+            HBox.setHgrow(hBox, Priority.ALWAYS);
+
+            vBox.getChildren().addAll(webView, hBox);
             VBox.setVgrow(webView, Priority.ALWAYS);
 
             Scene dialogScene = new Scene(vBox, 1280, 720);
@@ -567,6 +620,8 @@ public class NewShapeRuleEditor {
         });
 
         complexShapeHBox.setMinWidth(60);
+
+
 
         return complexShapeHBox;
     }

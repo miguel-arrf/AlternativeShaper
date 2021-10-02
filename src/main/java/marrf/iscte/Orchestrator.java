@@ -7,7 +7,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import marrf.iscte.ShapeRules.ShapeRule;
+import marrf.iscte.ShapeRules.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -103,7 +103,7 @@ public class Orchestrator {
         if(shape.isPresent()){
             BasicShape toCopyFrom = shape.get();
 
-            toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY, proceedWhenDeleting);
+            toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY, proceedWhenDeleting, toCopyFrom.getShapeName());
         }
 
 
@@ -219,6 +219,136 @@ public class Orchestrator {
         }
     }
 
+    private NewCompositionShape getNewCompositionShapeFromJSONObject(JSONObject newCompositionShapeJSON, VBox transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting){
+        System.out.println(newCompositionShapeJSON);
+
+        String name = (String) newCompositionShapeJSON.get("name");
+        UUID id = UUID.fromString((String) newCompositionShapeJSON.get("id"));
+
+        System.out.println("name: " + name);
+
+        //TODO There's no function being added to handle the thumbnail deletion nor other deletions...
+        NewCompositionShape newCompositionShape = new NewCompositionShape(this, transformersBox,name, id, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
+
+        JSONArray basicShapesList = (JSONArray) newCompositionShapeJSON.get("basicShapes");
+
+        basicShapesList.forEach(basicShapeObject -> {
+            JSONObject basicShapeJSON = (JSONObject) basicShapeObject;
+
+            String basicShapeID = (String) basicShapeJSON.get("id");
+            System.out.println("id: " + id + ", com: " + basicShapeJSON.get("translationX"));
+            double translationX = (double) basicShapeJSON.get("translationX");
+            double translationY = (double) basicShapeJSON.get("translationY");
+
+            newCompositionShape.addBasicShapeWithTranslation(basicShapeID, translationX, translationY);
+        });
+
+        JSONArray newCompositionShapesInnerList = (JSONArray) newCompositionShapeJSON.get("compositionShapes");
+        System.out.println("inner list:" + newCompositionShapesInnerList);
+        System.out.println("------");
+
+        newCompositionShapesInnerList.forEach(newCompositionShapeObject -> {
+            JSONObject newCompositionShapeInnerJSON = (JSONObject) newCompositionShapeObject;
+
+            String newCompositionShapeInnerID = (String) newCompositionShapeInnerJSON.get("id");
+            double translationX = (double) newCompositionShapeInnerJSON.get("translationX");
+            double translationY = (double) newCompositionShapeInnerJSON.get("translationY");
+
+            NewCompositionShape position = newCompositionShapes.stream().filter(p -> p.getID().toString().equals(newCompositionShapeInnerID)).findFirst().get();
+
+            System.out.println("translationX: " + translationX + ", Y: " + translationY + ", id: " + id);
+
+            newCompositionShape.addNewCompositionShapeWithTranslation(position, translationX, translationY, UUID.randomUUID().toString());
+        });
+
+        return newCompositionShape;
+    }
+
+    public void getShapeRulesFromFile(File file){
+        JSONParser jsonParser = new JSONParser();
+
+        try{
+            Object object = jsonParser.parse(new FileReader(file));
+            JSONObject jsonObject = (JSONObject) object;
+
+            JSONArray shapeRulesList = (JSONArray) jsonObject.get("shapeRules");
+            Iterator<JSONObject> iterator =  shapeRulesList.iterator();
+
+            while (iterator.hasNext()){
+                JSONObject shapeRuleJSON = iterator.next();
+
+                ShapeRule shapeRuleToAdd = null;
+                String type = (String) shapeRuleJSON.get("type");
+
+                UUID id = UUID.fromString((String) shapeRuleJSON.get("id"));
+                String name = (String) shapeRuleJSON.get("name");
+                boolean matched = (boolean) shapeRuleJSON.get("matched");
+
+                JSONObject leftShape = (JSONObject) shapeRuleJSON.get("leftShape");
+                JSONObject rightShape = (JSONObject) shapeRuleJSON.get("rightShape");
+
+
+                if(type.equals("bool")){
+                    String boolXML = (String)shapeRuleJSON.get("boolXML");
+                    String boolCode = (String) shapeRuleJSON.get("boolCode");
+
+                    shapeRuleToAdd = new BoolShapeShape(
+                            getNewCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
+                            getNewCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
+                            id, name,
+                            matched,
+                            boolXML, boolCode,
+                            a -> 0.0, a -> 0.0);
+
+                }else if(type.equals("bool-proc")){
+                    String boolXML = (String)shapeRuleJSON.get("boolXML");
+                    String boolCode = (String) shapeRuleJSON.get("boolCode");
+
+                    String processXML = (String)shapeRuleJSON.get("processXML");
+                    String processCode = (String) shapeRuleJSON.get("processCode");
+
+                    shapeRuleToAdd = new BoolShapeShapeProc(
+                            getNewCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
+                            getNewCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
+                            id, name,
+                            matched,
+                            boolXML, boolCode,
+                            a -> 0.0, a -> 0.0,
+                            processXML, processCode);
+
+                }else if(type.equals("proc")){
+                    String processXML = (String)shapeRuleJSON.get("processXML");
+                    String processCode = (String) shapeRuleJSON.get("processCode");
+
+                    shapeRuleToAdd = new ShapeShapeProc(
+                            getNewCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
+                            getNewCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
+                            id, name,
+                            matched,
+                            processXML, processCode,
+                            a -> 0.0, a -> 0.0);
+
+                }else if (type.equals("")){
+
+                    shapeRuleToAdd = new ShapeShape(
+                            getNewCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
+                            getNewCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
+                            id, name,
+                            a -> 0.0, a -> 0.0);
+                }
+
+                System.out.println(shapeRuleJSON);
+
+
+                shapeRules.add(shapeRuleToAdd);
+
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
     public void getProcessesFromFile(File file){
         JSONParser jsonParser = new JSONParser();
 
@@ -250,7 +380,7 @@ public class Orchestrator {
 
     }
 
-    public ArrayList<NewCompositionShape> getNewCompositionShapesFromFile(File file, VBox transformersBox){
+    public ArrayList<NewCompositionShape> getNewCompositionShapesFromFile(File file, VBox transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting){
         ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
 
         JSONParser jsonParser = new JSONParser();
@@ -273,7 +403,7 @@ public class Orchestrator {
                 System.out.println("name: " + name);
 
                 //TODO There's no function being added to handle the thumbnail deletion nor other deletions...
-                NewCompositionShape newCompositionShape = new NewCompositionShape(this, transformersBox,name, id);
+                NewCompositionShape newCompositionShape = new NewCompositionShape(this, transformersBox,name, id, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
                 newCompositionShapes.add(newCompositionShape);
 
                 JSONArray basicShapesList = (JSONArray) newCompositionShapeJSON.get("basicShapes");
@@ -282,6 +412,7 @@ public class Orchestrator {
                     JSONObject basicShapeJSON = (JSONObject) basicShapeObject;
 
                     String basicShapeID = (String) basicShapeJSON.get("id");
+                    System.out.println("id: " + id + ", com: " + basicShapeJSON.get("translationX"));
                     double translationX = (double) basicShapeJSON.get("translationX");
                     double translationY = (double) basicShapeJSON.get("translationY");
 
@@ -300,7 +431,7 @@ public class Orchestrator {
 
                     NewCompositionShape position = newCompositionShapes.stream().filter(p -> p.getID().toString().equals(newCompositionShapeInnerID)).findFirst().get();
 
-                    System.out.println("translationx: " + translationX + ", Y: " + translationY + ", id: " + id);
+                    System.out.println("translationX: " + translationX + ", Y: " + translationY + ", id: " + id);
 
                     newCompositionShape.addNewCompositionShapeWithTranslation(position, translationX, translationY, UUID.randomUUID().toString());
                 });
@@ -432,6 +563,15 @@ public class Orchestrator {
         return list;
     }
 
+    private JSONArray getShapeRulesJSON(){
+        JSONArray list = new JSONArray();
+
+        shapeRules.forEach(power -> list.add(power.getJSONObject()));
+
+
+        return list;
+    }
+
     private JSONArray getPowerShapesJSON(){
         JSONArray list = new JSONArray();
 
@@ -544,6 +684,7 @@ public class Orchestrator {
         StringBuilder toReturn = new StringBuilder();
 
         newCompositionShapes.forEach(newCompositionShape -> {
+            System.err.println("printing composition shape to string");;
             toReturn.append(newCompositionShape.getPrologRepresentation(true, false)).append("\n");
         });
 
@@ -580,6 +721,7 @@ public class Orchestrator {
         jsonObject.put("processes", getProcessesJSON());
         jsonObject.put("variables", getVariablesJSON());
         jsonObject.put("powerShapes", getPowerShapesJSON());
+        jsonObject.put("shapeRules", getShapeRulesJSON());
 
         try{
             FileWriter fileWriter = new FileWriter(path + "/toLoad.json");

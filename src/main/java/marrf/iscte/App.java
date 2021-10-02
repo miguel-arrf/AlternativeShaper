@@ -622,14 +622,23 @@ public class App extends Application {
         orchestrator.getProcessesFromFile(file);
     }
 
+    public void loadShapeRules(File file){
+        orchestrator.getShapeRulesFromFile(file);
+    }
+
     public void loadNewCompositionShapes(File file){
-        ArrayList<NewCompositionShape> newCompositionShapeArrayList = orchestrator.getNewCompositionShapesFromFile(file, transformersBox);
+        ArrayList<NewCompositionShape> newCompositionShapeArrayList = orchestrator.getNewCompositionShapesFromFile(file, transformersBox,getProceedWhenDeletingCompositionShape(), teste -> {
+            System.err.println("oh, here I am!");
+            newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
+            return null;
+        } );
         newCompositionShapes.addAll(newCompositionShapeArrayList);
         sideBarThumbnails.addAll(newCompositionShapeArrayList);
     }
 
     public void loadBasicShapes(File file){
         ArrayList<BasicShape> basicShapes = orchestrator.getBasicShapesFromFile(file);
+        this.basicShapes.addAll(basicShapes);
 
         basicShapesToSave.addAll(basicShapes);
 
@@ -647,6 +656,7 @@ public class App extends Application {
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
         }
+
 
 
     }
@@ -1218,6 +1228,11 @@ public class App extends Application {
             }
 
             orchestrator.addAllBasicShapes(basicShapesToSave);
+
+
+            //TODO This was added. Is there any problem? If the comp shapes were added when the app was loaded, it shouldn't be needed.
+            orchestrator.addAllCompositionShapes(newCompositionShapes);
+            orchestrator.addAllPowerShapes(powerArrayList);
 
         }else if(selectedCompositionShape != null){
             selectedCompositionShape.setShapeName(currentName.getText());

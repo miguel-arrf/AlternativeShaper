@@ -10,18 +10,14 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import marrf.iscte.NewCompositionShape;
 import marrf.iscte.Orchestrator;
-import marrf.iscte.Process;
+import org.json.simple.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public abstract class ShapeRule implements ShapeRuleInterface{
 
-    private final UUID id = UUID.randomUUID();
+    private UUID id = UUID.randomUUID();
     private String shapeRuleName;
 
     private NewCompositionShape leftShape;
@@ -38,6 +34,54 @@ public abstract class ShapeRule implements ShapeRuleInterface{
 
     private final Pane thumbnail = new VBox();
 
+    private boolean matched = false;
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    @Override
+    public boolean getMatched() {
+        return matched;
+    }
+
+    public void setMatched(boolean matched) {
+        this.matched = matched;
+    }
+
+    @Override
+    public JSONObject getJSONObject() {
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("id", this.getId().toString());
+        jsonObject.put("name", this.getShapeRuleName());
+
+
+        jsonObject.put("leftShape", this.getLeftShape().getJSONObject());
+        jsonObject.put("rightShape", this.getRightShape().getJSONObject());
+
+        jsonObject.put("boolCode", this.getBoolCode());
+        jsonObject.put("processCode", this.getProcessCode());
+
+
+        jsonObject.put("boolXML", this.getBoolXML());
+        jsonObject.put("processXML", this.getProcessXML());
+
+        jsonObject.put("matched", this.getMatched());
+
+        if(this instanceof BoolShapeShapeProc){
+            jsonObject.put("type", "bool-proc");
+        }else if(this instanceof BoolShapeShape){
+            jsonObject.put("type", "bool");
+        }else if(this instanceof ShapeShape){
+            jsonObject.put("type", "");
+        }else if(this instanceof ShapeShapeProc){
+            jsonObject.put("type","proc");
+        }
+
+
+        return jsonObject;
+    }
 
     public static boolean hasDependencies(ShapeRule shapeRule){
 
@@ -162,6 +206,21 @@ public abstract class ShapeRule implements ShapeRuleInterface{
     public ShapeRule(Orchestrator orchestrator, Pane transformersBox,Pane right, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting){
         leftShape = new NewCompositionShape(orchestrator, transformersBox, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
         rightShape = new NewCompositionShape(orchestrator, right, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
+
+        leftShapeCopy = leftShape.getCopy();
+        rightShapeCopy = rightShape.getCopy();
+    }
+
+    public ShapeRule(Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting, NewCompositionShape leftShape, NewCompositionShape rightShape){
+        leftShape.setProceedWhenDeletingFromThumbnail(proceedWhenDeletingFromThumbnail);
+        leftShape.setProceedToRedrawWhenDeleting(proceedToRedrawWhenDeleting);
+
+        rightShape.setProceedWhenDeletingFromThumbnail(proceedWhenDeletingFromThumbnail);
+        rightShape.setProceedToRedrawWhenDeleting(proceedToRedrawWhenDeleting);
+
+        this.leftShape = leftShape;
+        this.rightShape = rightShape;
+
 
         leftShapeCopy = leftShape.getCopy();
         rightShapeCopy = rightShape.getCopy();

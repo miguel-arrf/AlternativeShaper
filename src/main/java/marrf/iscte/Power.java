@@ -559,7 +559,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         textField.setMaxHeight(30);
     }
 
-    private void styleLabel(Label label){
+    public static void styleLabel(Label label){
         label.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         label.setTextFill(Color.web("#BDBDBD"));
         label.setMaxHeight(30);

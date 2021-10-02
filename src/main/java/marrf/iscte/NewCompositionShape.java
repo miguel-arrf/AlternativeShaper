@@ -60,6 +60,10 @@ public class NewCompositionShape implements CustomShape {
     private Function<String, Double> proceedToRedrawWhenDeleting;
     private Function<Pane, Double> proceedWhenDeleting;
 
+    public Map<String, NewCompositionShape> getCompositionShapeMap() {
+        return compositionShapeMap;
+    }
+
     public NewCompositionShape getCopy(){
         NewCompositionShape toReturn = new NewCompositionShape(orchestrator, transformersBox, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
 
@@ -85,6 +89,17 @@ public class NewCompositionShape implements CustomShape {
 
 
         return toReturn;
+    }
+
+    public JSONObject getJSONObject(){
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("id", getID().toString());
+        jsonObject.put("name", getShapeName());
+        jsonObject.put("basicShapes", getBasicShapesJSON());
+        jsonObject.put("compositionShapes", getCompositionShapesJSON());
+
+        return jsonObject;
     }
 
     public String getPrologRepresentation(boolean withFinalDot, boolean justInner){
@@ -154,13 +169,15 @@ public class NewCompositionShape implements CustomShape {
         //setUpComponents();
     }
 
-    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, String name, UUID id) {
+    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, String name, UUID id, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
         this.name = name;
         this.ID = id;
 
         this.orchestrator = orchestrator;
         this.transformersBox = transformersBox;
         //setUpComponents();
+        this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+        this.proceedToRedrawWhenDeleting = proceedToRedrawWhenDeleting;
     }
 
     public UUID getID() {
@@ -335,6 +352,14 @@ public class NewCompositionShape implements CustomShape {
         teste.getTeste(toAdd, true, 0,0);
 
         return teste;
+    }
+
+    public void setProceedToRedrawWhenDeleting(Function<String, Double> proceedToRedrawWhenDeleting) {
+        this.proceedToRedrawWhenDeleting = proceedToRedrawWhenDeleting;
+    }
+
+    public void setProceedWhenDeletingFromThumbnail(Function<String, Double> proceedWhenDeletingFromThumbnail) {
+        this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
     }
 
     public void setProceedWhenDeleting(Function<Pane, Double> proceedWhenDeleting) {
