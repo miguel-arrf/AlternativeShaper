@@ -110,6 +110,35 @@ public class Orchestrator {
         return toReturn;
     }
 
+    public BasicShape getCopyOfParametricBasicShape(String id,Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting){
+        BasicShape toReturn = null;
+
+        Optional<BasicShape> shape = basicShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
+
+        if(shape.isPresent()){
+            BasicShape toCopyFrom = shape.get();
+
+            toReturn = new BasicShape(true,parametricXTranslation, parametricYTranslation, toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY, proceedWhenDeleting, toCopyFrom.getShapeName());
+        }
+
+        return toReturn;
+    }
+
+    public Power getCopyOfPowerShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting){
+        Power toReturn = null;
+
+        Optional<Power> shape = powerShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
+
+        if(shape.isPresent()){
+            Power toCopyFrom = shape.get();
+
+            toReturn = new Power(toCopyFrom.getShapeName(), toCopyFrom.getUUID(), toCopyFrom.getHasLeft(), toCopyFrom.getHasRight(), toCopyFrom.getLeftHasVariable(), toCopyFrom.getRightHasVariable(), toCopyFrom.getCenterHasVariable(), toCopyFrom.getRightVariable(), toCopyFrom.getLeftVariable(), toCopyFrom.getCenterVariable(), toCopyFrom.getLeftValue(), toCopyFrom.getRightValue(), toCopyFrom.getRightTranslation(), toCopyFrom.getLeftTranslation(), writeTranslateX, writeTranslateY);
+        }
+
+
+        return toReturn;
+    }
+
     public boolean canBasicShapeBeRemoved(String uuid){
         System.out.println("UUID HERE: " + uuid + ", newCompositionShapes: " + newCompositionShapes.size());
         for(NewCompositionShape newCompositionShape: newCompositionShapes){
@@ -209,7 +238,8 @@ public class Orchestrator {
                 String leftTranslation = (String) powerJSON.get("leftTranslation");
 
 
-                Power powerToAdd = new Power(name, id,hasLeft, hasRight, leftHasVariable, rightHasVariable, centerHasVariable, rightVariable, leftVariable, centerVariable, leftValue, rightValue, rightTranslation, leftTranslation );
+                Power powerToAdd = new Power(name, id,hasLeft, hasRight, leftHasVariable, rightHasVariable, centerHasVariable, rightVariable, leftVariable, centerVariable, leftValue, rightValue, rightTranslation, leftTranslation,
+                        a -> 0.0, a -> 0.0);
                 powerShapes.add(powerToAdd);
 
             }

@@ -1,13 +1,17 @@
 package marrf.iscte;
 
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -19,6 +23,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import org.json.simple.JSONObject;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Function;
@@ -67,7 +74,223 @@ public class Power implements CustomShape, ShapeWithVariables{
 
     private VBox verticalSection;
 
-    public Power(String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation) {
+    private static final int NUMBER_COLUMNS_AND_ROWS = 40;
+
+
+    public final Function<Double, Double> writeTranslateX;
+    public final Function<Double, Double> writeTranslateY;
+
+    private HBox translationXSection;
+    private HBox translationYSection;
+
+    public final DoubleProperty translateXProperty = new SimpleDoubleProperty(0.0);
+    public final DoubleProperty translateYProperty = new SimpleDoubleProperty(0.0);
+
+
+
+    public String getRightTranslation() {
+        return rightTranslation;
+    }
+
+    public String getLeftTranslation() {
+        return leftTranslation;
+    }
+
+    public boolean getHasLeft() {
+        return hasLeft;
+    }
+
+    public boolean getHasRight() {
+        return hasRight;
+    }
+
+    public boolean getLeftHasVariable() {
+        return leftHasVariable;
+    }
+
+    public boolean getRightHasVariable() {
+        return rightHasVariable;
+    }
+
+    public boolean getCenterHasVariable() {
+        return centerHasVariable;
+    }
+
+    public String getRightVariable() {
+        return rightVariable;
+    }
+
+    public String getLeftVariable() {
+        return leftVariable;
+    }
+
+    public String getCenterVariable() {
+        return centerVariable;
+    }
+
+    public String getLeftValue() {
+        return leftValue;
+    }
+
+    public String getRightValue() {
+        return rightValue;
+    }
+
+
+
+    public void setUpTranslationXBox() {
+        Label translationLabel = new Label("Translation X:");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
+
+        TextField textField = new TextField(String.valueOf(getInitialTranslation().getX() / SCALE));
+        textField.setPromptText(String.valueOf(getInitialTranslation().getX() / SCALE));
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setPrefWidth(60);
+        textField.setAlignment(Pos.CENTER);
+
+        Slider translationXSlider = new Slider();
+        translationXSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
+        translationXSlider.setMin(- NUMBER_COLUMNS_AND_ROWS);
+        translationXSlider.setValue(getInitialTranslation().getX() / SCALE);
+
+        textField.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+
+                try {
+                    if (Double.parseDouble(textField.getText()) < translationXSlider.getMin()) {
+                        textField.setText(String.valueOf(translationXSlider.getMin()));
+                    }
+
+                    translationXSlider.setValue(Double.parseDouble(textField.getText()));
+
+                } catch (NumberFormatException e) {
+                    textField.setText(String.valueOf(translationXSlider.getMin()));
+                    translationXSlider.setValue(translationXSlider.getMin());
+                }
+
+            }
+        });
+
+        //TODO: TextField should allow for 0.##, and slider only for 0.#.
+        //TODO: Height pane
+
+        translationXSlider.setMajorTickUnit(0.1);
+        translationXSlider.setMinorTickCount(0);
+        translationXSlider.setSnapToTicks(true);
+
+
+        translationXSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+
+            this.addTranslationX((newValue.doubleValue() - oldValue.doubleValue())* SCALE);
+            translateXProperty.setValue(truncatedDouble * SCALE );
+            writeTranslateX.apply(truncatedDouble * SCALE);
+        });
+
+        translationXSlider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(translationXSlider, Priority.ALWAYS);
+
+        translationXSection = new HBox(translationLabel, translationXSlider, textField);
+        translationXSection.setPadding(new Insets(10, 10, 10, 15));
+        translationXSection.setAlignment(Pos.CENTER_LEFT);
+        translationXSection.setMinHeight(30);
+        translationXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        translationXSection.setSpacing(20);
+
+    }
+
+    public void setUpTranslationYBox() {
+        Label translationLabel = new Label("Translation Y:");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
+
+        TextField textField = new TextField((String.valueOf(getInitialTranslation().getY() / SCALE)));
+        textField.setPromptText((String.valueOf(getInitialTranslation().getY() / SCALE)));
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setPrefWidth(60);
+        textField.setAlignment(Pos.CENTER);
+
+        Slider translationYSlider = new Slider();
+        translationYSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
+        translationYSlider.setMin(- NUMBER_COLUMNS_AND_ROWS);
+        translationYSlider.setValue(getInitialTranslation().getY() / SCALE);
+
+        translationYSlider.setMajorTickUnit(0.1);
+        translationYSlider.setMinorTickCount(0);
+        translationYSlider.setSnapToTicks(true);
+
+        textField.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+
+                try {
+                    if (Double.parseDouble(textField.getText()) < translationYSlider.getMin()) {
+                        textField.setText(String.valueOf(translationYSlider.getMin()));
+                    }
+
+                    translationYSlider.setValue(Double.parseDouble(textField.getText()));
+
+                } catch (NumberFormatException e) {
+                    textField.setText(String.valueOf(translationYSlider.getMin()));
+                    translationYSlider.setValue(translationYSlider.getMin());
+                }
+
+            }
+        });
+
+
+        translationYSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            DecimalFormat df = new DecimalFormat("#.#");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+
+            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            textField.setText(String.valueOf(truncatedDouble));
+
+            translateYProperty.setValue(truncatedDouble * SCALE);
+
+            this.addTranslationY((newValue.doubleValue() - oldValue.doubleValue())* SCALE);
+
+            writeTranslateY.apply(truncatedDouble * SCALE);
+        });
+
+        translationYSlider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(translationYSlider, Priority.ALWAYS);
+
+        translationYSection = new HBox(translationLabel, translationYSlider, textField);
+        translationYSection.setPadding(new Insets(10, 10, 10, 15));
+        translationYSection.setAlignment(Pos.CENTER_LEFT);
+        translationYSection.setMinHeight(30);
+        translationYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        translationYSection.setSpacing(15);
+
+    }
+
+
+    public double getTranslateX() {
+        return centerGroup.getTranslateX();
+    }
+
+    public double getTranslateY() {
+        return centerGroup.getTranslateY();
+    }
+
+
+    public void addTranslationX(double value) {
+        centerGroup.setTranslateX(getTranslateX() + value);
+    }
+
+    public void addTranslationY(double value) {
+        centerGroup.setTranslateY(getTranslateY() + value);
+    }
+
+
+
+    public Power(String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation,  Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {
         this.name = name;
         this.uuid = uuid;
 
@@ -91,13 +314,32 @@ public class Power implements CustomShape, ShapeWithVariables{
         if(!centerHasVariable){
 
         }
+
+        this.writeTranslateX = writeTranslateX;
+        this.writeTranslateY = writeTranslateY;
+
+        setUpTranslationYBox();
+        setUpTranslationXBox();
+
+    }
+
+    public Point2D getInitialTranslation(){
+        return new Point2D(writeTranslateX.apply(null), writeTranslateY.apply(null));
     }
 
     private Function<String, Double> proceedWhenDeletingFromThumbnail;
 
     public Power(Function<String, Double> proceedWhenDeletingFromThumbnail){
+        writeTranslateX = a -> 0.0;
+        writeTranslateY = a -> 0.0;
+
         uuid = UUID.randomUUID();
+
         setUpVerticalSection();
+
+        setUpTranslationYBox();
+        setUpTranslationXBox();
+
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
     }
 
@@ -175,6 +417,10 @@ public class Power implements CustomShape, ShapeWithVariables{
         leftLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         rightLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         customShapeLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+    }
+
+    public Group getCenterGroup() {
+        return centerGroup;
     }
 
     public Node getEditorVisualization() {
@@ -263,6 +509,14 @@ public class Power implements CustomShape, ShapeWithVariables{
     @Override
     public Pane getTranslationXSection() {
         return verticalSection;
+    }
+
+    public Pane getRealTranslationSection() {
+        VBox vBox = new VBox();
+        vBox.setSpacing(20);
+
+        vBox.getChildren().addAll(translationXSection, translationYSection);
+        return vBox;
     }
 
     private void setUpVerticalSection(){

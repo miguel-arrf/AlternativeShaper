@@ -57,6 +57,9 @@ public class BasicShape implements CustomShape {
     public final Function<Double, Double> writeTranslateX;
     public final Function<Double, Double> writeTranslateY;
 
+    public Function<String, String> writeTranslationXParametric;
+    public Function<String, String> writeTranslationYParametric;
+
     private Function<Pane, Double> proceedWhenDeleting;
     private Function<String, Double> proceedWhenDeletingFromThumbnail;
 
@@ -77,6 +80,20 @@ public class BasicShape implements CustomShape {
 
     private final HBox thumbnail = new HBox();
 
+    private boolean isParametricBasicShape = false;
+    private String verticalParametricTranslation = "";
+    private String horizontalParametricTranslation = "";
+    private HBox verticalParametricTranslationSection;
+    private HBox horizontalParametricTranslationSection;
+
+    public void setVerticalParametricTranslation(String verticalParametricTranslation) {
+        this.verticalParametricTranslation = verticalParametricTranslation;
+    }
+
+    public void setHorizontalParametricTranslation(String horizontalParametricTranslation) {
+        this.horizontalParametricTranslation = horizontalParametricTranslation;
+    }
+
     public void setShapeName(String shapeName) {
         this.shapeName = shapeName;
     }
@@ -95,6 +112,14 @@ public class BasicShape implements CustomShape {
 
     public Function<Double, Double> getWriteTranslateY() {
         return writeTranslateY;
+    }
+
+    public String getVerticalParametricTranslation() {
+        return verticalParametricTranslation;
+    }
+
+    public String getHorizontalParametricTranslation() {
+        return horizontalParametricTranslation;
     }
 
     public BasicShape(double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting) {
@@ -119,6 +144,41 @@ public class BasicShape implements CustomShape {
 
 
         setUpComponents();
+    }
+
+    public BasicShape(boolean isParametricBasicShape,Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting, String name) {
+        uuid = UUID.randomUUID();
+
+        this.proceedWhenDeleting = proceedWhenDeleting;
+
+        this.writeTranslateX = writeTranslateX;
+        this.writeTranslateY = writeTranslateY;
+
+        this.writeTranslationXParametric = parametricXTranslation;
+        this.writeTranslationYParametric = parametricYTranslation;
+
+        this.verticalParametricTranslation = parametricYTranslation.apply(null);
+        this.horizontalParametricTranslation = parametricXTranslation.apply(null);
+
+        this.shapeName = name;
+
+        this.width = width;
+        this.height = height;
+
+        this.color = color;
+
+        rectangle = new Pane();
+        rectangle.setPrefSize(width, height);
+
+        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+        Background background = new Background(backgroundFill);
+        rectangle.setBackground(background);
+
+        this.isParametricBasicShape = isParametricBasicShape;
+        setUpComponents();
+
+        setUpVerticalParametricTranslationSectionBox();
+        setUpHorizontalParametricTranslationSectionBox();
     }
 
     public BasicShape(double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting, String name) {
@@ -250,6 +310,14 @@ public class BasicShape implements CustomShape {
         return translationYSection;
     }
 
+    public HBox getHorizontalParametricTranslationSection() {
+        return horizontalParametricTranslationSection;
+    }
+
+    public HBox getVerticalParametricTranslationSection() {
+        return verticalParametricTranslationSection;
+    }
+
     public void setUpColorBox(){
         Label colorLabel = new Label("Color:");
         colorLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
@@ -269,6 +337,69 @@ public class BasicShape implements CustomShape {
         colorSection.setMinHeight(30);
 
         colorSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+    }
+
+    public void setUpHorizontalParametricTranslationSectionBox() {
+        Label translationLabel = new Label("Parametric translation X: ");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
+
+        TextField textField = new TextField(horizontalParametricTranslation);
+        textField.setPromptText(horizontalParametricTranslation);
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setAlignment(Pos.CENTER);
+
+        textField.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+                horizontalParametricTranslation = textField.getText();
+            }
+            writeTranslationXParametric.apply(textField.getText());
+        });
+
+        textField.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textField, Priority.ALWAYS);
+
+        horizontalParametricTranslationSection = new HBox(translationLabel, textField);
+        horizontalParametricTranslationSection.setPadding(new Insets(10, 10, 10, 15));
+        horizontalParametricTranslationSection.setAlignment(Pos.CENTER_LEFT);
+        horizontalParametricTranslationSection.setMinHeight(30);
+        horizontalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        horizontalParametricTranslationSection.setSpacing(20);
+
+    }
+
+    public void setUpVerticalParametricTranslationSectionBox() {
+        Label translationLabel = new Label("Parametric translation Y: ");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
+
+        TextField textField = new TextField(verticalParametricTranslation);
+        textField.setPromptText(verticalParametricTranslation);
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setAlignment(Pos.CENTER);
+
+        textField.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+                verticalParametricTranslation = textField.getText();
+            }
+            writeTranslationYParametric.apply(textField.getText());
+
+        });
+
+        textField.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textField, Priority.ALWAYS);
+
+        verticalParametricTranslationSection = new HBox(translationLabel, textField);
+        verticalParametricTranslationSection.setPadding(new Insets(10, 10, 10, 15));
+        verticalParametricTranslationSection.setAlignment(Pos.CENTER_LEFT);
+        verticalParametricTranslationSection.setMinHeight(30);
+        verticalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        verticalParametricTranslationSection.setSpacing(20);
+
     }
 
     public void setUpWidthBox() {
@@ -408,7 +539,7 @@ public class BasicShape implements CustomShape {
     }
 
     public void setUpTranslationXBox() {
-        Label translationLabel = new Label("Translation X:");
+        Label translationLabel = new Label(isParametricBasicShape ? "Temporary translation X: " : "Translation X: ");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
@@ -473,7 +604,8 @@ public class BasicShape implements CustomShape {
     }
 
     public void setUpTranslationYBox() {
-        Label translationLabel = new Label("Translation Y:");
+        System.out.println("isParametricBasicShape: " + isParametricBasicShape);
+        Label translationLabel = new Label(isParametricBasicShape ? "Temporary translation Y: " : "Translation Y: ");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);

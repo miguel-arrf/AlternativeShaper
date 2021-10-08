@@ -257,6 +257,47 @@ public class GridCanvas {
         return toReturn;
     }
 
+    public static Rectangle takeScreenshootWithRoundedCornersAndLoadTemporarily(ParametricCompositionShape compositionShape){
+        ArrayList<Node> nodesToThenAdd = new ArrayList<>(pane.getChildren());
+        ArrayList<BasicShape> basicShapesToThenAdd = new ArrayList<>(basicShapes);
+        Circle circleCopy = circle;
+        double xOriginTranslation = GridCanvas.xOriginTranslation;
+        double yOriginTranslation = GridCanvas.yOriginTranslation;
+        double initialTranslationXCircle = GridCanvas.initialTranslationXCircle;
+        double initialTranslationYCircle = GridCanvas.initialTranslationYCircle;
+        double horizontalOffset = GridCanvas.horizontalOffset;
+        double verticalOffset = GridCanvas.verticalOffset;
+
+        clearEverything();
+
+
+        compositionShape.getBasicShapes().forEach(GridCanvas::addShape);
+        Pane toAdd = new Pane();
+        compositionShape.getTeste(toAdd, true, 0,0);
+        System.out.println("tamanho de basic shapes: " + compositionShape.getBasicShapes().size());
+
+        addGroup(toAdd);
+
+        Rectangle toReturn = takeScreenshootWithRoundedCorners();
+
+
+        clearEverythingWithoutRedrawingGrid();
+        GridCanvas.circle = circleCopy;
+        GridCanvas.xOriginTranslation = xOriginTranslation;
+        GridCanvas.yOriginTranslation = yOriginTranslation;
+        GridCanvas.initialTranslationYCircle = initialTranslationYCircle;
+        GridCanvas.initialTranslationXCircle = initialTranslationXCircle;
+        GridCanvas.horizontalOffset = horizontalOffset;
+        GridCanvas.verticalOffset = verticalOffset;
+
+        basicShapes.addAll(basicShapesToThenAdd);
+        pane.getChildren().addAll(nodesToThenAdd);
+
+
+
+        return toReturn;
+    }
+
     public static Rectangle takeScreenshootWithRoundedCornersAndLoadTemporarily(NewCompositionShape compositionShape){
         ArrayList<Node> nodesToThenAdd = new ArrayList<>(pane.getChildren());
         ArrayList<BasicShape> basicShapesToThenAdd = new ArrayList<>(basicShapes);
