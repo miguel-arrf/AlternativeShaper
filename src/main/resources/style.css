@@ -34,7 +34,7 @@
 
 
 .menu-item .label:hover {
-    -fx-text-fill: #636e72;
+   /* -fx-text-fill: #636e72;*/
     -fx-background-color: transparent;
 }
 
@@ -55,6 +55,22 @@
     -fx-background-color: transparent;
 }
 
+
+
+
+
+#testeCoiso .context-menu {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-padding: 5;
+}
+
+#testeCoiso .menu-item:hover {
+     -fx-background-radius: 10;
+     -fx-border-radius: 10;
+     -fx-background-color: #dfe6e9;
+ }
 
 
 

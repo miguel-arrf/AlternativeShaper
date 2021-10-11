@@ -42,6 +42,8 @@ public class Orchestrator {
     private final ArrayList<ShapeRule> shapeRules = new ArrayList<>();
     private final ArrayList<Variable> variables = new ArrayList<>();
     private final ArrayList<Power> powerShapes = new ArrayList<>();
+    private final ArrayList<ParametricCompositionShape> parametricCompositionShapes = new ArrayList<>();
+
 
 
     public static int getSCALE() {
@@ -523,6 +525,12 @@ public class Orchestrator {
         saveFile();
     }
 
+    public void addAllParametricCompositionShapes(ArrayList<ParametricCompositionShape> parametricCompositionShapesToAdd){
+        parametricCompositionShapes.clear();
+        parametricCompositionShapes.addAll(parametricCompositionShapesToAdd);
+        saveFile();
+    }
+
     private JSONArray getBasicShapesJSON(){
         JSONArray list = new JSONArray();
 
@@ -586,6 +594,23 @@ public class Orchestrator {
             jsonObject.put("name", newCompositionShape.getShapeName());
             jsonObject.put("basicShapes", newCompositionShape.getBasicShapesJSON());
             jsonObject.put("compositionShapes", newCompositionShape.getCompositionShapesJSON());
+
+            list.add(jsonObject);
+        }
+
+        return list;
+    }
+
+    private JSONArray getParametricCompositionShapesJSON(){
+        JSONArray list = new JSONArray();
+
+        for(ParametricCompositionShape parametricCompositionShape : parametricCompositionShapes){
+            JSONObject jsonObject = new JSONObject();
+
+            jsonObject.put("id", parametricCompositionShape.getID().toString());
+            jsonObject.put("name", parametricCompositionShape.getShapeName());
+            jsonObject.put("basicShapes", parametricCompositionShape.getBasicShapesJSON());
+            jsonObject.put("compositionShapes", parametricCompositionShape.getCompositionShapesJSON());
 
             list.add(jsonObject);
         }
@@ -748,6 +773,7 @@ public class Orchestrator {
 
         jsonObject.put("basicShapes", getBasicShapesJSON());
         jsonObject.put("compositionShapes", getCompositionShapesJSON());
+        jsonObject.put("parametricCompositionShapes", getParametricCompositionShapesJSON());
         jsonObject.put("processes", getProcessesJSON());
         jsonObject.put("variables", getVariablesJSON());
         jsonObject.put("powerShapes", getPowerShapesJSON());

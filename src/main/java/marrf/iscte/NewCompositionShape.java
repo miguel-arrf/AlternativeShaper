@@ -196,6 +196,7 @@ public class NewCompositionShape implements CustomShape {
             jsonObject.put("translationX", basicShapesXTranslation.get(position).getValue());
             jsonObject.put("translationY", basicShapesYTranslation.get(position).getValue());
 
+
             array.add(jsonObject);
         });
 
@@ -571,7 +572,6 @@ public class NewCompositionShape implements CustomShape {
                     compositionShapesXTranslation.remove(xTranslationToRemove);
                     compositionShapesYTranslation.remove(yTranslationToRemove);
 
-                    //proceedWhenDeleting.apply(null);
                 });
 
                 addTo.setOnContextMenuRequested(contextMenuEvent -> {

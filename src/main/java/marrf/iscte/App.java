@@ -104,6 +104,10 @@ public class App extends Application {
 
             return "[" + customShape.getShapeName();
             //return "positions.toString();";
+        }else if(customShape instanceof ParametricCompositionShape){
+            inDragCustomShape = customShape;
+
+            return "[" + customShape.getShapeName();
         }else if(customShape instanceof Power){
             inDragCustomShape = customShape;
             return String.valueOf(powerArrayList.indexOf(customShape));
@@ -204,12 +208,13 @@ public class App extends Application {
                                 currentName.setText(basicShapeAdded.getShapeName());
 
                                 isCurrentSimple = false;
+                                selectedPower = null;
+                                selectedParametricCompositionShape = null;
 
                                 addCompositionShape(selectedCompositionShape, false);
                                 //addShape(basicShapeAdded, true);
 
-                                selectedPower = null;
-                                selectedParametricCompositionShape = null;
+
                             });
 
                         }else if (basicShapeAdded instanceof ParametricCompositionShape) {
@@ -340,24 +345,9 @@ public class App extends Application {
 
 
     private Pane getAddParametricCompositionShape(){
-        Image basicPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/plus.png")).toExternalForm());
-        ImageView basicPlusImageView = new ImageView(basicPlus);
-        basicPlusImageView.setSmooth(true);
-        basicPlusImageView.setPreserveRatio(true);
-        basicPlusImageView.setFitWidth(12);
 
-        Label complexShape = new Label("Add Parametric Shape");
-        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        complexShape.setTextFill(Color.web("#F2C94C"));
 
-        HBox complexShapeHBox = new HBox(basicPlusImageView, complexShape);
-        complexShapeHBox.setAlignment(Pos.CENTER);
-        complexShapeHBox.setSpacing(5);
-
-        VBox complexShapeVBox = new VBox(complexShapeHBox);
-        complexShapeVBox.setAlignment(Pos.CENTER);
-        complexShapeVBox.setStyle("-fx-background-color: #644832;-fx-background-radius: 20");
-        HBox.setHgrow(complexShapeVBox, Priority.ALWAYS);
+        HBox complexShapeVBox = getButtonWith_Label_Color_Image("Add Parametric Shape", "#644832", "#F2C94C", "plus.png");
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new Parametric composition shape!");
@@ -367,8 +357,7 @@ public class App extends Application {
 
             transformersBox.getChildren().clear();
 
-
-            selectedParametricCompositionShape = new ParametricCompositionShape(orchestrator, transformersBox, getProceedWhenDeletingCompositionShape(), teste -> {
+            selectedParametricCompositionShape = new ParametricCompositionShape(orchestrator, transformersBox, getProceedWhenDeletingParametricCompositionShape(), teste -> {
                 System.err.println("oh, here I am!");
                 newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
                 return null;
@@ -389,32 +378,7 @@ public class App extends Application {
     }
 
     public void addBasicAndComplexButtons(){
-
-        Image basicPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/plus.png")).toExternalForm());
-        ImageView basicPlusImageView = new ImageView(basicPlus);
-        basicPlusImageView.setSmooth(true);
-        basicPlusImageView.setPreserveRatio(true);
-        basicPlusImageView.setFitWidth(12);
-
-        Image complexPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/plus.png")).toExternalForm());
-        ImageView complexPlusImageView = new ImageView(complexPlus);
-        complexPlusImageView.setSmooth(true);
-        complexPlusImageView.setPreserveRatio(true);
-        complexPlusImageView.setFitWidth(12);
-
-
-        Label basicShape = new Label("Add Basic Shape");
-        basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        basicShape.setTextFill(Color.web("#56CCF2"));
-
-        HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
-        basicShapeHBox.setAlignment(Pos.CENTER);
-        basicShapeHBox.setSpacing(5);
-
-        VBox basicShapeVBox = new VBox(basicShapeHBox);
-        basicShapeVBox.setAlignment(Pos.CENTER);
-        basicShapeVBox.setStyle("-fx-background-color: #355765;-fx-background-radius: 20");
-        HBox.setHgrow(basicShapeVBox, Priority.ALWAYS);
+        HBox basicShapeVBox = getButtonWith_Label_Color_Image("Add Basic Shape", "#355765", "#56CCF2", "plus.png");
 
         basicShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new basic shape!");
@@ -436,23 +400,16 @@ public class App extends Application {
         });
 
 
-        Label complexShape = new Label("Add Composition Shape");
-        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
-        complexShape.setTextFill(Color.web("#F2C94C"));
 
-        HBox complexShapeHBox = new HBox(complexPlusImageView, complexShape);
-        complexShapeHBox.setAlignment(Pos.CENTER);
-        complexShapeHBox.setSpacing(5);
-
-        VBox complexShapeVBox = new VBox(complexShapeHBox);
-        complexShapeVBox.setAlignment(Pos.CENTER);
-        complexShapeVBox.setStyle("-fx-background-color: #644832;-fx-background-radius: 20");
-        HBox.setHgrow(complexShapeVBox, Priority.ALWAYS);
+        HBox complexShapeVBox = getButtonWith_Label_Color_Image("Add Composition Shape", "#644832", "#F2C94C", "plus.png");
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new composition shape!");
             GridCanvas.clearEverything();
             isCurrentSimple = false;
+            selectedParametricCompositionShape = null;
+            selectedPower = null;
+
             currentName.setText("complexDefault");
 
             transformersBox.getChildren().clear();
@@ -464,7 +421,6 @@ public class App extends Application {
                 return null;
             });
 
-            selectedPower = null;
 
             newCompositionShapes.add(selectedCompositionShape);
             sideBarThumbnails.add(selectedCompositionShape);
@@ -478,13 +434,53 @@ public class App extends Application {
         saveHB.setMinHeight(30);
 
 
-        HBox shapeAndProcessBox = new HBox(getShapeRuleButton(), getProcessButton());
-        shapeAndProcessBox.setSpacing(20);
 
-        HBox designViewerAndVariablesEditor = new HBox(getDesignViewer(), getVariableEditor());
+
+        /*HBox otherEditorsButton = getButtonWith_Label_Color_Image("Other editors", "#472953", "#ff8ad8", "plus.png");
+        otherEditorsButton.setMaxHeight(50);
+        otherEditorsButton.setPrefHeight(50);
+
+        CustomMenuItem shapeRuleEditorMenuItem = new CustomMenuItem(getShapeRuleButton());
+        CustomMenuItem processEditorMenuItem = new CustomMenuItem(getProcessButton());
+
+
+        ContextMenu contextMenuEditors = new ContextMenu();
+        contextMenuEditors.setId("testeCoiso");
+        contextMenuEditors.getItems().addAll(shapeRuleEditorMenuItem, processEditorMenuItem);
+
+        otherEditorsButton.setOnMouseClicked(mouseEvent -> contextMenuEditors.show(otherEditorsButton, mouseEvent.getScreenX(), mouseEvent.getScreenY()));
+
+
+
+
+        HBox shapeAndProcessBox = new HBox(otherEditorsButton);
+        shapeAndProcessBox.setSpacing(20);*/
+
+
+
+
+        HBox moreOptionsButton = getButtonWith_Label_Color_Image("More options", "#355765", "#56CCF2", "plus.png");
+        moreOptionsButton.setMaxHeight(50);
+        moreOptionsButton.setPrefHeight(50);
+
+        CustomMenuItem designViewerMenuItem = new CustomMenuItem(getDesignViewer());
+        CustomMenuItem variableEditorMenuItem = new CustomMenuItem(getVariableEditor());
+        CustomMenuItem shapeRuleEditorMenuItem = new CustomMenuItem(getShapeRuleButton());
+        CustomMenuItem processEditorMenuItem = new CustomMenuItem(getProcessButton());
+
+        ContextMenu contextMenu = new ContextMenu();
+        contextMenu.setId("testeCoiso");
+        contextMenu.getItems().addAll(shapeRuleEditorMenuItem, processEditorMenuItem, designViewerMenuItem, variableEditorMenuItem);
+
+        moreOptionsButton.setOnMouseClicked(mouseEvent -> contextMenu.show(moreOptionsButton, mouseEvent.getScreenX(), mouseEvent.getScreenY()));
+
+
+
+
+        HBox designViewerAndVariablesEditor = new HBox(moreOptionsButton);
         designViewerAndVariablesEditor.setSpacing(20);
 
-        VBox buttons = new VBox(saveHB,getAddParametricCompositionShape(), getAddPowerButton(), shapeAndProcessBox, getSeparator(),designViewerAndVariablesEditor, getSeparator());
+        VBox buttons = new VBox(saveHB,getAddParametricCompositionShape(), getAddPowerButton(), /*shapeAndProcessBox,*/ getSeparator(),designViewerAndVariablesEditor, getSeparator());
         buttons.setSpacing(15);
         buttons.setAlignment(Pos.CENTER);
 
@@ -509,6 +505,38 @@ public class App extends Application {
 
     }
 
+    public static HBox getButtonWith_Label_Color_Image(@NamedArg("label") String label, @NamedArg("background color") String backgroundColor,@NamedArg("label color") String labelColor, @NamedArg("image name") String imageLocation, @NamedArg("corner radius") int cornerRadius){
+        Image complexPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/" + imageLocation)).toExternalForm());
+        ImageView complexPlusImageView = new ImageView(complexPlus);
+        complexPlusImageView.setSmooth(true);
+        complexPlusImageView.setPreserveRatio(true);
+        complexPlusImageView.setFitWidth(16);
+
+        Label complexShape = new Label(label);
+        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        complexShape.setTextFill(Color.web(labelColor));
+
+        HBox complexShapeHBox = new HBox(complexPlusImageView, complexShape);
+        complexShapeHBox.setAlignment(Pos.CENTER);
+        complexShapeHBox.setSpacing(5);
+        complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius);
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
+
+        complexShapeHBox.setOnMouseEntered(mouseEvent -> {
+            complexShapeHBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: " + cornerRadius);
+        });
+
+        complexShapeHBox.setOnMouseExited(mouseEvent -> {
+            complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius);
+        });
+
+
+        complexShape.setMinHeight(30);
+
+        return complexShapeHBox;
+    }
+
     public static HBox getButtonWith_Label_Color_Image(@NamedArg("label") String label, @NamedArg("background color") String backgroundColor,@NamedArg("label color") String labelColor, @NamedArg("image name") String imageLocation){
         Image complexPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/" + imageLocation)).toExternalForm());
         ImageView complexPlusImageView = new ImageView(complexPlus);
@@ -525,6 +553,14 @@ public class App extends Application {
         complexShapeHBox.setSpacing(5);
         complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: 20");
         HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
+        complexShapeHBox.setOnMouseEntered(mouseEvent -> {
+            complexShapeHBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: 20");
+        });
+
+        complexShapeHBox.setOnMouseExited(mouseEvent -> {
+            complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: 20");
+        });
 
         complexShape.setMinHeight(30);
 
@@ -547,7 +583,7 @@ public class App extends Application {
 
 
     private Pane getProcessButton(){
-        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Processes editor", "#355C65", "#56CDF2", "process.png");
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Processes editor", "#355C65", "#56CDF2", "process.png", 10);
 
         complexShapeHBox.setMaxHeight(50);
         complexShapeHBox.setPrefHeight(50);
@@ -557,11 +593,15 @@ public class App extends Application {
             processesEditor.openPopup();
         });
 
+        complexShapeHBox.setPrefWidth(180);
+        complexShapeHBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
         return complexShapeHBox;
     }
 
     private Pane getShapeRuleButton(){
-        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Shape rules editor", "#472953", "#ff8ad8", "icons8-rules-96.png");
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Shape rules editor", "#472953", "#ff8ad8", "icons8-rules-96.png", 10);
 
         complexShapeHBox.setMaxHeight(50);
         complexShapeHBox.setPrefHeight(50);
@@ -575,11 +615,15 @@ public class App extends Application {
 
         });
 
+        complexShapeHBox.setPrefWidth(180);
+        complexShapeHBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
         return complexShapeHBox;
     }
 
     private Pane getDesignViewer(){
-        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Design Viewer", "#2A2953", "#8194F4", "editorViewerIcon.png");
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Design Viewer", "#2A2953", "#8194F4", "editorViewerIcon.png", 10);
 
         complexShapeHBox.setMaxHeight(50);
         complexShapeHBox.setPrefHeight(50);
@@ -589,6 +633,10 @@ public class App extends Application {
             designToProlog.openPopup();
 
         });
+
+        complexShapeHBox.setPrefWidth(180);
+        complexShapeHBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
 
         return complexShapeHBox;
     }
@@ -628,7 +676,7 @@ public class App extends Application {
     }
 
     private Pane getVariableEditor(){
-        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Variables Editor", "#5B4E2D", "#C6AA63", "variableIcon.png");
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Variables Editor", "#5B4E2D", "#C6AA63", "variableIcon.png", 10);
 
         complexShapeHBox.setMaxHeight(50);
         complexShapeHBox.setPrefHeight(50);
@@ -638,6 +686,10 @@ public class App extends Application {
             variablesEditor.openPopup();
 
         });
+
+        complexShapeHBox.setPrefWidth(180);
+        complexShapeHBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
 
         return complexShapeHBox;
     }
@@ -697,7 +749,15 @@ public class App extends Application {
         mainPanel.setPadding(new Insets(0,0,0,20));
         mainPanel.setSpacing(15);
 
-        mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),transformersBox, getSaveButtonSection());
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setContent(transformersBox);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: rgb(38,37,40); -fx-background-radius: 10; -fx-background: transparent");
+
+
+        mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),scrollPane, getSaveButtonSection());
 
         transformersBox.setSpacing(20);
 
@@ -786,7 +846,14 @@ public class App extends Application {
         mainPanel.setPadding(new Insets(0,0,0,20));
         mainPanel.setSpacing(15);
 
-        mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),transformersBox, getSaveButtonSection());
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setContent(transformersBox);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: rgb(38,37,40); -fx-background-radius: 10; -fx-background: transparent");
+
+        mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),scrollPane, getSaveButtonSection());
 
         transformersBox.setSpacing(20);
 
@@ -852,6 +919,43 @@ public class App extends Application {
 
     }
 
+    private void deleteParametricCompositionShape(String uuidToRemove){
+        //We are cleaning everything, but if the user is on a composition shape, we shouldn't... this way is easier tho.
+        ParametricCompositionShape temp = newParametricCompositionShapes.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
+        newParametricCompositionShapes.remove(temp);
+        GridCanvas.clearEverything();
+        transformersBox.getChildren().clear();
+        sideBarThumbnails.remove(temp);
+
+        System.err.println("basic shapes size: " + basicShapes.size());
+        if(basicShapes.size() == 0){
+            isCurrentSimple = true;
+            inDragCustomShape = null;
+            selectedPower = null;
+            selectedParametricCompositionShape = null;
+            selectedCompositionShape = null;
+            //Ads a basic shape when we delete the last one!
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+            addShape(toAdd);
+            basicShapesToSave.add(toAdd);
+            currentName.setText("defaultName");
+            sideBarThumbnails.add(toAdd);
+
+
+        }else{
+            isCurrentSimple = true;
+            inDragCustomShape = null;
+            selectedPower = null;
+            selectedCompositionShape =  null;
+            selectedParametricCompositionShape = null;
+
+            currentName.setText(basicShapesToSave.get(0).getShapeName());
+            addShape(basicShapesToSave.get(0));
+
+
+        }
+    }
+
     private void deleteCompositionShape(String uuidToRemove){
         //We are cleaning everything, but if the user is on a composition shape, we shouldn't... this way is easier tho.
         NewCompositionShape temp = newCompositionShapes.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
@@ -871,6 +975,8 @@ public class App extends Application {
             isCurrentSimple = true;
             inDragCustomShape = null;
             selectedPower = null;
+            selectedParametricCompositionShape = null;
+            selectedCompositionShape = null;
         }else{
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
@@ -878,6 +984,8 @@ public class App extends Application {
             isCurrentSimple = true;
             inDragCustomShape = null;
             selectedPower = null;
+            selectedCompositionShape =  null;
+            selectedParametricCompositionShape = null;
         }
     }
 
@@ -1003,6 +1111,17 @@ public class App extends Application {
                 deleteCompositionShapeFromShapeRule(uuidToRemove);
 
             }
+
+            return null;
+        };
+    }
+
+
+    private Function<String, Double> getProceedWhenDeletingParametricCompositionShape(){
+        return uuidToRemove -> {
+
+                deleteParametricCompositionShape(uuidToRemove);
+                //TODO: deleteCompositionShapeFromShapeRule(uuidToRemove);
 
             return null;
         };
@@ -1135,16 +1254,21 @@ public class App extends Application {
                         }
                     }else{
                         if(inDragCustomShape instanceof NewCompositionShape){
-                            if(!inDragCustomShape.getUUID().equals(selectedCompositionShape.getUUID())){
-                                System.out.println("I was dropped a composition shape");
 
-                                if(selectedParametricCompositionShape != null){
-                                    GridCanvas.addGroup(selectedParametricCompositionShape.addNewCompositionShape((NewCompositionShape) inDragCustomShape));
-
-                                }else if(selectedCompositionShape != null){
-                                    addCompositionShape((NewCompositionShape) inDragCustomShape, true);
+                            if(selectedCompositionShape != null){
+                                if(!inDragCustomShape.getUUID().equals(selectedCompositionShape.getUUID())) {
+                                    System.out.println("I was dropped a composition shape");
+                                        addCompositionShape((NewCompositionShape) inDragCustomShape, true);
                                 }
+                            }else if(selectedParametricCompositionShape != null){
+                                if(!inDragCustomShape.getUUID().equals(selectedParametricCompositionShape.getUUID())) {
+                                    GridCanvas.addGroup(selectedParametricCompositionShape.addNewCompositionShape((NewCompositionShape) inDragCustomShape));
+                                }
+                            }
 
+                        }else if(inDragCustomShape instanceof ParametricCompositionShape){
+                            if(selectedParametricCompositionShape != null){
+                                GridCanvas.addGroup(selectedParametricCompositionShape.addParametricCompositionShape((ParametricCompositionShape) inDragCustomShape));
                             }
                         }
 
@@ -1362,18 +1486,33 @@ public class App extends Application {
             //TODO This was added. Is there any problem? If the comp shapes were added when the app was loaded, it shouldn't be needed.
             orchestrator.addAllCompositionShapes(newCompositionShapes);
             orchestrator.addAllPowerShapes(powerArrayList);
+            orchestrator.addAllParametricCompositionShapes(newParametricCompositionShapes);
 
         }else if(selectedCompositionShape != null){
             selectedCompositionShape.setShapeName(currentName.getText());
             newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
+
             orchestrator.addAllCompositionShapes(newCompositionShapes);
             orchestrator.addAllPowerShapes(powerArrayList);
+            orchestrator.addAllParametricCompositionShapes(newParametricCompositionShapes);
+
 
         }else if(selectedPower != null){
             selectedPower.setShapeName(currentName.getText());
             orchestrator.addAllPowerShapes(powerArrayList);
             orchestrator.addAllCompositionShapes(newCompositionShapes);
+            orchestrator.addAllParametricCompositionShapes(newParametricCompositionShapes);
             powerArrayList.forEach(Power::redrawThumbnail);
+
+        }else if(selectedParametricCompositionShape != null){
+            selectedParametricCompositionShape.setShapeName(currentName.getText());
+
+            orchestrator.addAllParametricCompositionShapes(newParametricCompositionShapes);
+
+            orchestrator.addAllPowerShapes(powerArrayList);
+            orchestrator.addAllCompositionShapes(newCompositionShapes);
+
+            newParametricCompositionShapes.forEach(ParametricCompositionShape::redrawThumbnail);
         }
 
         orchestrator.printDesignTXT();

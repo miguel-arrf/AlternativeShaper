@@ -4,7 +4,6 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -59,7 +58,6 @@ public class ProcTemplate {
     }
 
     private static void setPaneStyle(Node node){
-        //node.setStyle("-fx-background-color: rgb(51,50,52); -fx-background-radius: 5px");
         node.setStyle("-fx-background-color: #333234; -fx-background-radius: 10px");
 
         node.setOnMouseEntered(mouseEvent -> {

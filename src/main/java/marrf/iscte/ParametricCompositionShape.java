@@ -42,6 +42,16 @@ public class ParametricCompositionShape implements CustomShape {
     private final ArrayList<Coiso<Double>> compositionShapesXTranslation = new ArrayList<>();
     private final ArrayList<Coiso<Double>> compositionShapesYTranslation = new ArrayList<>();
 
+    private final ArrayList<Coiso<String>> compositionShapesXParametricTranslation = new ArrayList<>();
+    private final ArrayList<Coiso<String>> compositionShapesYParametricTranslation = new ArrayList<>();
+
+    private final Map<String, ParametricCompositionShape> parametricCompositionShapesMap = new HashMap<>();
+    private final ArrayList<Coiso<Double>> parametricShapesXTranslation = new ArrayList<>();
+    private final ArrayList<Coiso<Double>> parametricShapesYTranslation = new ArrayList<>();
+
+    private final ArrayList<Coiso<String>> parametricShapesXParametricTranslation = new ArrayList<>();
+    private final ArrayList<Coiso<String>> parametricShapesYParametricTranslation = new ArrayList<>();
+
     private final ArrayList<Coiso<Double>> basicShapesXTranslation = new ArrayList<>();
     private final ArrayList<Coiso<Double>> basicShapesYTranslation = new ArrayList<>();
 
@@ -59,15 +69,23 @@ public class ParametricCompositionShape implements CustomShape {
     private Node selected;
     private Coiso<Double> selectedTranslationX;
     private Coiso<Double> selectedTranslationY;
+
+    private Coiso<String> selectedParametricXTranslation;
+    private Coiso<String> selectedParametricYTranslation;
     private Pane transformersBox;
     //Modifiers boxes
     private HBox translationXBox;
     private HBox translationYBox;
+
+    private HBox parametricTranslationXBox;
+    private HBox parametricTranslationYBox;
     //Deletion handlers
     private Function<String, Double> proceedWhenDeletingFromThumbnail;
     private Function<String, Double> proceedToRedrawWhenDeleting;
     private Function<Pane, Double> proceedWhenDeleting;
 
+
+    private boolean notParametric = false;
 
 
     public ParametricCompositionShape(Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
@@ -80,13 +98,57 @@ public class ParametricCompositionShape implements CustomShape {
         //setUpComponents();
     }
 
-
     public UUID getID() {
         return ID;
     }
 
+    public JSONArray getCompositionShapesJSON() {
+        JSONArray array = new JSONArray();
+
+        compositionShapeMap.forEach((id, compositionShape) -> {
+            JSONObject jsonObject = new JSONObject();
+
+            int position = 0;
+            for (Coiso information : compositionShapesXTranslation) {
+                if (information.getId().equals(id))
+                    position = compositionShapesXTranslation.indexOf(information);
+            }
+
+            jsonObject.put("id", compositionShape.getID().toString());
+            jsonObject.put("translationX", compositionShapesXTranslation.get(position).getValue());
+            jsonObject.put("translationY", compositionShapesYTranslation.get(position).getValue());
+
+            jsonObject.put("parametricTranslationX", compositionShapesXParametricTranslation.get(position).getValue());
+            jsonObject.put("parametricTranslationY", compositionShapesYParametricTranslation.get(position).getValue());
 
 
+            array.add(jsonObject);
+        });
+
+        return array;
+    }
+
+    public JSONArray getBasicShapesJSON() {
+        JSONArray array = new JSONArray();
+
+        basicShapesXTranslation.forEach(information -> {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("id", information.getId());
+
+            int position = basicShapesXTranslation.indexOf(information);
+
+            jsonObject.put("translationX", basicShapesXTranslation.get(position).getValue());
+            jsonObject.put("translationY", basicShapesYTranslation.get(position).getValue());
+
+            jsonObject.put("parametricTranslationX", basicShapesXParametricTranslation.get(position).getValue());
+            jsonObject.put("parametricTranslationY", basicShapesYParametricTranslation.get(position).getValue());
+
+
+            array.add(jsonObject);
+        });
+
+        return array;
+    }
 
     public BasicShape addBasicShape(String basicShapesID) {
         Coiso<Double> translationX = new Coiso<Double>(basicShapesID, 0.0);
@@ -103,7 +165,6 @@ public class ParametricCompositionShape implements CustomShape {
 
         return orchestrator.getCopyOfParametricBasicShape(basicShapesID,parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(basicShapesID));
     }
-
 
     public Power addPowerShape(String powerShapeID){
         Coiso<Double> translationX = new Coiso<Double>(powerShapeID, 0.0);
@@ -149,6 +210,10 @@ public class ParametricCompositionShape implements CustomShape {
 
     public void getTeste(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY) {
 
+        parametricCompositionShapesMap.forEach((id,shape) -> {
+            getTesteForSpecificParametric(toAdd, true, 0,0, id, shape);
+        });
+
         compositionShapeMap.forEach((newID, compositionShape) -> {
             Group addTo = new Group();
 
@@ -156,6 +221,9 @@ public class ParametricCompositionShape implements CustomShape {
 
             Coiso<Double> translationX = compositionShapesXTranslation.get(position);
             Coiso<Double> translationY = compositionShapesYTranslation.get(position);
+
+            Coiso<String> parametricTranslationX = compositionShapesXParametricTranslation.get(position);
+            Coiso<String> parametricTranslationY = compositionShapesYParametricTranslation.get(position);
 
             //Adding basic shapes
             compositionShape.getBasicShapes().forEach(basicShape -> {
@@ -218,6 +286,9 @@ public class ParametricCompositionShape implements CustomShape {
                     selectedTranslationX = translationX;
                     selectedTranslationY = translationY;
 
+                    selectedParametricXTranslation = parametricTranslationX;
+                    selectedParametricYTranslation = parametricTranslationY;
+
                     setUpComponents();
                     System.out.println("I've clicked on here. It should now be true!");
 
@@ -262,6 +333,9 @@ public class ParametricCompositionShape implements CustomShape {
 
         Coiso<Double> translationX = compositionShapesXTranslation.get(position);
         Coiso<Double> translationY = compositionShapesYTranslation.get(position);
+
+        Coiso<String> parametricTranslationX = compositionShapesXParametricTranslation.get(position);
+        Coiso<String> parametricTranslationY = compositionShapesYParametricTranslation.get(position);
 
         //Adding basic shapes
         compositionShape.getBasicShapes().forEach(basicShape -> {
@@ -330,6 +404,9 @@ public class ParametricCompositionShape implements CustomShape {
                 selectedTranslationX = translationX;
                 selectedTranslationY = translationY;
 
+                selectedParametricXTranslation = parametricTranslationX;
+                selectedParametricYTranslation = parametricTranslationY;
+
                 setUpComponents();
                 System.out.println("I've clicked on here. It should now be true!");
 
@@ -363,17 +440,151 @@ public class ParametricCompositionShape implements CustomShape {
 
     }
 
+    public void getTesteForSpecificParametric(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY, String newID, ParametricCompositionShape parametricCompositionShape) {
 
-    public Pane addNewCompositionShape(NewCompositionShape NewCompositionShape) {
+        toAdd.setPickOnBounds(false);
+        Group addTo = new Group();
+
+        int position = parametricShapesXTranslation.indexOf(parametricShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get());
+
+        Coiso<Double> translationX = parametricShapesXTranslation.get(position);
+        Coiso<Double> translationY = parametricShapesYTranslation.get(position);
+
+        Coiso<String> parametricTranslationX = parametricShapesXParametricTranslation.get(position);
+        Coiso<String> parametricTranslationY = parametricShapesYParametricTranslation.get(position);
+
+        //Adding basic shapes
+        parametricCompositionShape.getBasicShapes().forEach(basicShape -> {
+            double translateXBy = basicShape.getInitialTranslation().getX();
+            double translateYBy = basicShape.getHeight() + basicShape.getInitialTranslation().getY() * -1;
+
+            //Este é o translation X e Y final porque já não temos mais profundidade de composition shapes, visto que já é uma basic shape.
+            basicShape.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
+            basicShape.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
+
+            BasicShape copy = new BasicShape(basicShape.getWidth(), basicShape.getHeight(), basicShape.getFill(), basicShape.getWriteTranslateX(), basicShape.getWriteTranslateY(), basicShape.getProceedWhenDeleting());
+            copy.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
+            copy.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
+
+            Pane rectangle = copy.getRectangle();
+
+            addTo.getChildren().add(rectangle);
+        });
+
+        if (toAdd instanceof Pane) {
+            Pane toAddTemp = (Pane) toAdd;
+            toAddTemp.getChildren().add(addTo);
+        } else if (toAdd instanceof Group) {
+            Group toAddTemp = (Group) toAdd;
+            toAddTemp.getChildren().add(addTo);
+        }
+
+
+        parametricCompositionShape.getTeste(addTo, false, translationX.getValue() + upperTranslationX, translationY.getValue() + upperTranslationY);
+
+        if (addHover) {
+            Rectangle rectangle = new Rectangle(addTo.getLayoutBounds().getWidth() + 20, addTo.getLayoutBounds().getHeight() + 20);
+            rectangle.setArcWidth(10);
+            rectangle.setArcHeight(10);
+            rectangle.setFill(Color.web("rgba(255,255,255,0.2)"));
+            rectangle.setX(addTo.getLayoutBounds().getMinX() - 10);
+            rectangle.setY(addTo.getLayoutBounds().getMinY() - 10);
+
+
+            Label shapeName = new Label(parametricCompositionShape.getShapeName());
+            shapeName.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+            shapeName.setTextFill(Color.web("#BDBDBD"));
+            shapeName.setPadding(new Insets(4));
+            shapeName.setStyle("-fx-background-color:  rgba(255,255,255,0.3); -fx-background-radius: 15px;");
+
+            addTo.setOnMouseMoved(mouseEvent -> {
+                shapeName.setLayoutX(mouseEvent.getX() + 15);
+                shapeName.setLayoutY(mouseEvent.getY() + 15);
+            });
+
+
+
+            addTo.setOnMouseEntered(event -> {
+                addTo.getChildren().add(rectangle);
+                addTo.getChildren().add(shapeName);
+            });
+
+
+            addTo.setOnMouseExited(event -> {
+                addTo.getChildren().remove(rectangle);
+                addTo.getChildren().remove(shapeName);
+            });
+
+            addTo.setOnMouseClicked(event -> {
+                selected = addTo;
+                selectedTranslationX = translationX;
+                selectedTranslationY = translationY;
+
+                selectedParametricXTranslation = parametricTranslationX;
+                selectedParametricYTranslation = parametricTranslationY;
+
+                setUpComponents();
+                System.out.println("I've clicked on here. It should now be true!");
+
+                transformersBox.getChildren().clear();
+                transformersBox.getChildren().addAll(getTransformers());
+            });
+
+            ContextMenu contextMenu = new ContextMenu();
+            contextMenu.setId("betterMenuItem");
+
+            MenuItem menuItem = new MenuItem("Delete");
+            menuItem.setStyle("-fx-text-fill: red");
+            contextMenu.getItems().add(menuItem);
+
+            menuItem.setOnAction(actionEvent -> {
+                ((Pane) addTo.getParent()).getChildren().remove(addTo);
+                parametricCompositionShapesMap.remove(newID);
+                Coiso<Double> xTranslationToRemove = parametricShapesXTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
+                Coiso<Double> yTranslationToRemove = parametricShapesYTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
+                parametricShapesXTranslation.remove(xTranslationToRemove);
+                parametricShapesYTranslation.remove(yTranslationToRemove);
+
+            });
+
+            addTo.setOnContextMenuRequested(contextMenuEvent -> {
+                contextMenu.show(addTo, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+            });
+
+        }
+
+    }
+
+    public Pane addNewCompositionShape(NewCompositionShape newCompositionShape) {
         String id = UUID.randomUUID().toString();
 
-        compositionShapeMap.put(id, NewCompositionShape);
+        compositionShapeMap.put(id, newCompositionShape);
 
-        compositionShapesXTranslation.add(new Coiso<Double>(id, 0.0));
-        compositionShapesYTranslation.add(new Coiso<Double>(id, 0.0));
+        compositionShapesXTranslation.add(new Coiso<>(id, 0.0));
+        compositionShapesYTranslation.add(new Coiso<>(id, 0.0));
+
+        compositionShapesXParametricTranslation.add(new Coiso<>(id, ""));
+        compositionShapesYParametricTranslation.add(new Coiso<>(id, ""));
 
         Pane toAdd = new Pane();
-        getTesteForSpecific(toAdd, true, 0, 0, id, NewCompositionShape);
+        getTesteForSpecific(toAdd, true, 0, 0, id, newCompositionShape);
+
+        return toAdd;
+    }
+
+    public Pane addParametricCompositionShape(ParametricCompositionShape parametricCompositionShape){
+        String id = UUID.randomUUID().toString();
+
+        parametricCompositionShapesMap.put(id, parametricCompositionShape);
+
+        parametricShapesXTranslation.add(new Coiso<>(id, 0.0));
+        parametricShapesYTranslation.add(new Coiso<>(id, 0.0));
+
+        parametricShapesXParametricTranslation.add(new Coiso<>(id, ""));
+        parametricShapesYParametricTranslation.add(new Coiso<>(id, ""));
+
+        Pane toAdd = new Pane();
+        getTesteForSpecificParametric(toAdd, true, 0, 0, id, parametricCompositionShape);
 
         return toAdd;
     }
@@ -381,18 +592,78 @@ public class ParametricCompositionShape implements CustomShape {
     private void setUpComponents() {
         setUpTranslationXBox();
         setUpTranslationYBox();
+        setUpParametricTranslationXBox();
+        setUpParametricTranslationYBox();
     }
 
     public ArrayList<Node> getTransformers() {
         ArrayList<Node> toReturn = new ArrayList<>();
+        toReturn.add(parametricTranslationXBox);
+        toReturn.add(parametricTranslationYBox);
         toReturn.add(translationXBox);
         toReturn.add(translationYBox);
 
         return toReturn;
     }
 
+    private void setUpParametricTranslationXBox(){
+        Label translationLabel = new Label("Parametric translation X:");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
+
+        TextField textField = new TextField(selectedParametricXTranslation.getValue());
+        textField.setPromptText(selectedParametricXTranslation.getValue());
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setAlignment(Pos.CENTER);
+
+        textField.setOnKeyPressed(keyEvent -> {
+            selectedParametricXTranslation.setValue(textField.getText());
+        });
+
+        textField.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textField, Priority.ALWAYS);
+
+
+        parametricTranslationXBox = new HBox(translationLabel, textField);
+        parametricTranslationXBox.setPadding(new Insets(10, 10, 10, 15));
+        parametricTranslationXBox.setAlignment(Pos.CENTER_LEFT);
+        parametricTranslationXBox.setSpacing(20);
+        parametricTranslationXBox.setMinHeight(30);
+        parametricTranslationXBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+    }
+
+    private void setUpParametricTranslationYBox(){
+        Label translationLabel = new Label("Parametric translation Y:");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
+
+        TextField textField = new TextField(selectedParametricYTranslation.getValue());
+        textField.setPromptText(selectedParametricYTranslation.getValue());
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setAlignment(Pos.CENTER);
+
+        textField.setOnKeyPressed(keyEvent -> {
+                selectedParametricYTranslation.setValue(textField.getText());
+        });
+
+        textField.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textField, Priority.ALWAYS);
+
+
+        parametricTranslationYBox = new HBox(translationLabel, textField);
+        parametricTranslationYBox.setPadding(new Insets(10, 10, 10, 15));
+        parametricTranslationYBox.setAlignment(Pos.CENTER_LEFT);
+        parametricTranslationYBox.setSpacing(20);
+        parametricTranslationYBox.setMinHeight(30);
+        parametricTranslationYBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+    }
+
     private void setUpTranslationXBox() {
-        Label translationLabel = new Label("Translation X:");
+        Label translationLabel = new Label("Temporary translation X:");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
@@ -459,7 +730,7 @@ public class ParametricCompositionShape implements CustomShape {
     }
 
     private void setUpTranslationYBox() {
-        Label translationLabel = new Label("Translation Y:");
+        Label translationLabel = new Label("Temporary translation Y:");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
@@ -629,7 +900,7 @@ public class ParametricCompositionShape implements CustomShape {
         ContextMenu contextMenu = new ContextMenu();
         contextMenu.setId("betterMenuItem");
 
-        MenuItem menuItem = new MenuItem("Delete Composition Shape Item");
+        MenuItem menuItem = new MenuItem("Delete Parametric Composition Shape");
         menuItem.setStyle("-fx-text-fill: red");
         contextMenu.getItems().add(menuItem);
 
