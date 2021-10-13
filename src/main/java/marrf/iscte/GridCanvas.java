@@ -83,6 +83,22 @@ public class GridCanvas {
         pane.getChildren().add(basicShape);
     }
 
+    public static void addPowerShape(Power power){
+
+        double translateXBy = power.getInitialTranslation().getX() * -1;
+        double translateYBy = power.getInitialTranslation().getY() * -1;
+
+        Node toAdd = power.getEditorVisualization();
+
+        System.err.println("vou adicionar power shape!");
+        power.setTranslateX(circle.getCenterX() + circle.getTranslateX() - translateXBy);
+        power.setTranslateY(circle.getCenterY() + circle.getTranslateY() - translateYBy);
+
+
+        pane.getChildren().add(toAdd);
+        //basicShapes.add(basicShape);
+    }
+
     public static void addNode(Node basicShape){
         basicShape.setTranslateX(basicShape.getTranslateX() + circle.getCenterX() + circle.getTranslateX());
         basicShape.setTranslateY(basicShape.getTranslateY() + circle.getCenterY() + circle.getTranslateY());
@@ -270,7 +286,7 @@ public class GridCanvas {
 
         clearEverything();
 
-
+        compositionShape.getPowerShapes().forEach(GridCanvas::addPowerShape);
         compositionShape.getBasicShapes().forEach(GridCanvas::addShape);
         Pane toAdd = new Pane();
         compositionShape.getTeste(toAdd, true, 0,0);

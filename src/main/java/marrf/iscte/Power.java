@@ -87,6 +87,27 @@ public class Power implements CustomShape, ShapeWithVariables{
     public final DoubleProperty translateYProperty = new SimpleDoubleProperty(0.0);
 
 
+    public Function<String, String> writeTranslationXParametric;
+    public Function<String, String> writeTranslationYParametric;
+
+    private String verticalParametricTranslation = "";
+    private String horizontalParametricTranslation = "";
+    private HBox verticalParametricTranslationSection;
+    private HBox horizontalParametricTranslationSection;
+
+
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public Function<Double, Double> getWriteTranslateY() {
+        return writeTranslateY;
+    }
+
+    public Function<Double, Double> getWriteTranslateX() {
+        return writeTranslateX;
+    }
 
     public String getRightTranslation() {
         return rightTranslation;
@@ -144,6 +165,8 @@ public class Power implements CustomShape, ShapeWithVariables{
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
 
+
+        System.out.println("valor do initial translation na box x da power: " + getInitialTranslation());
         TextField textField = new TextField(String.valueOf(getInitialTranslation().getX() / SCALE));
         textField.setPromptText(String.valueOf(getInitialTranslation().getX() / SCALE));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
@@ -174,9 +197,6 @@ public class Power implements CustomShape, ShapeWithVariables{
             }
         });
 
-        //TODO: TextField should allow for 0.##, and slider only for 0.#.
-        //TODO: Height pane
-
         translationXSlider.setMajorTickUnit(0.1);
         translationXSlider.setMinorTickCount(0);
         translationXSlider.setSnapToTicks(true);
@@ -202,6 +222,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         translationXSection.setSpacing(20);
 
     }
+
 
     public void setUpTranslationYBox() {
         Label translationLabel = new Label("Translation Y:");
@@ -288,6 +309,13 @@ public class Power implements CustomShape, ShapeWithVariables{
         centerGroup.setTranslateY(getTranslateY() + value);
     }
 
+    public void setTranslateX(double value) {
+        centerGroup.setTranslateX(value);
+    }
+
+    public void setTranslateY(double value) {
+        centerGroup.setTranslateY(value);
+    }
 
 
     public Power(String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation,  Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {
@@ -320,6 +348,121 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         setUpTranslationYBox();
         setUpTranslationXBox();
+
+
+    }
+
+    public Power(Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {
+        this.name = name;
+        this.uuid = uuid;
+
+
+        this.writeTranslationXParametric = parametricXTranslation;
+        this.writeTranslationYParametric = parametricYTranslation;
+
+        this.verticalParametricTranslation = parametricYTranslation.apply(null);
+        this.horizontalParametricTranslation = parametricXTranslation.apply(null);
+
+        this.hasLeft = hasLeft;
+        this.hasRight = hasRight;
+
+        this.leftHasVariable = leftHasVariable;
+        this.rightHasVariable = rightHasVariable;
+        this.centerHasVariable = centerHasVariable;
+
+        this.rightVariable = rightVariable;
+        this.leftVariable = leftVariable;
+        this.centerVariable = centerVariable;
+
+        this.leftValue = leftValue;
+        this.rightValue = rightValue;
+
+        this.rightTranslation = rightTranslation;
+        this.leftTranslation = leftTranslation;
+
+        if(!centerHasVariable){
+
+        }
+
+        this.writeTranslateX = writeTranslateX;
+        this.writeTranslateY = writeTranslateY;
+
+        setUpTranslationYBox();
+        setUpTranslationXBox();
+
+        setUpVerticalParametricTranslationSectionBox();
+        setUpHorizontalParametricTranslationSectionBox();
+
+    }
+
+    public HBox getVerticalParametricTranslationSection() {
+        return verticalParametricTranslationSection;
+    }
+
+    public HBox getHorizontalParametricTranslationSection() {
+        return horizontalParametricTranslationSection;
+    }
+
+    public void setUpVerticalParametricTranslationSectionBox() {
+        Label translationLabel = new Label("Parametric translation Y: ");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
+
+        TextField textField = new TextField(verticalParametricTranslation);
+        textField.setPromptText(verticalParametricTranslation);
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setAlignment(Pos.CENTER);
+
+        textField.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+                verticalParametricTranslation = textField.getText() + keyEvent.getText();
+            }
+            writeTranslationYParametric.apply(textField.getText() + keyEvent.getText() );
+
+        });
+
+        textField.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textField, Priority.ALWAYS);
+
+        verticalParametricTranslationSection = new HBox(translationLabel, textField);
+        verticalParametricTranslationSection.setPadding(new Insets(10, 10, 10, 15));
+        verticalParametricTranslationSection.setAlignment(Pos.CENTER_LEFT);
+        verticalParametricTranslationSection.setMinHeight(30);
+        verticalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        verticalParametricTranslationSection.setSpacing(20);
+
+    }
+
+    public void setUpHorizontalParametricTranslationSectionBox() {
+        Label translationLabel = new Label("Parametric translation X: ");
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
+
+        TextField textField = new TextField(horizontalParametricTranslation);
+        textField.setPromptText(horizontalParametricTranslation);
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setAlignment(Pos.CENTER);
+
+        textField.setOnKeyPressed(keyEvent -> {
+            /*if (keyEvent.getCode().equals(KeyCode.ENTER)) {*/
+            horizontalParametricTranslation = textField.getText() + keyEvent.getText();
+            /*}*/
+            writeTranslationXParametric.apply(textField.getText() + keyEvent.getText());
+        });
+
+        textField.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textField, Priority.ALWAYS);
+
+        horizontalParametricTranslationSection = new HBox(translationLabel, textField);
+        horizontalParametricTranslationSection.setPadding(new Insets(10, 10, 10, 15));
+        horizontalParametricTranslationSection.setAlignment(Pos.CENTER_LEFT);
+        horizontalParametricTranslationSection.setMinHeight(30);
+        horizontalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        horizontalParametricTranslationSection.setSpacing(20);
 
     }
 
@@ -516,6 +659,14 @@ public class Power implements CustomShape, ShapeWithVariables{
         vBox.setSpacing(20);
 
         vBox.getChildren().addAll(translationXSection, translationYSection);
+        return vBox;
+    }
+
+    public Pane getParametricTranslationSection(){
+        VBox vBox = new VBox();
+        vBox.setSpacing(20);
+
+        vBox.getChildren().addAll(horizontalParametricTranslationSection, verticalParametricTranslationSection);
         return vBox;
     }
 

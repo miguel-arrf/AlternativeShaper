@@ -58,8 +58,13 @@ public class ParametricCompositionShape implements CustomShape {
     private final ArrayList<Coiso<String>> basicShapesXParametricTranslation = new ArrayList<>();
     private final ArrayList<Coiso<String>> basicShapesYParametricTranslation = new ArrayList<>();
 
+
     private final ArrayList<Coiso<Double>> powerShapesXTranslation = new ArrayList<>();
     private final ArrayList<Coiso<Double>> powerShapesYTranslation = new ArrayList<>();
+
+    private final ArrayList<Coiso<String>> powerShapesXParametricTranslation = new ArrayList<>();
+    private final ArrayList<Coiso<String>> powerShapesYParametricTranslation = new ArrayList<>();
+
 
     private final Orchestrator orchestrator;
     //Composition Shape Thumbnail
@@ -167,13 +172,39 @@ public class ParametricCompositionShape implements CustomShape {
     }
 
     public Power addPowerShape(String powerShapeID){
+        System.out.println("ó maluco, here i am");
         Coiso<Double> translationX = new Coiso<Double>(powerShapeID, 0.0);
         Coiso<Double> translationY = new Coiso<Double>(powerShapeID, 0.0);
+
+        Coiso<String> parametricXTranslation = new Coiso<String>(powerShapeID, "");
+        Coiso<String> parametricYTranslation = new Coiso<String>(powerShapeID, "");
+
+        powerShapesXParametricTranslation.add(parametricXTranslation);
+        powerShapesYParametricTranslation.add(parametricYTranslation);
 
         powerShapesXTranslation.add(translationX);
         powerShapesYTranslation.add(translationY);
 
-        return orchestrator.getCopyOfPowerShape(powerShapeID, translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(powerShapeID));
+        return orchestrator.getCopyOfParametricPowerShape(powerShapeID,parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(powerShapeID));
+    }
+
+    public ArrayList<Power> getPowerShapes() {
+        ArrayList<Power> basicShapes = new ArrayList<>();
+
+        powerShapesXTranslation.forEach(information -> {
+            int position = powerShapesXTranslation.indexOf(information);
+
+            Coiso<Double> translationX = powerShapesXTranslation.get(position);
+            Coiso<Double> translationY = powerShapesYTranslation.get(position);
+
+            Coiso<String> parametricXTranslation = powerShapesXParametricTranslation.get(position);
+            Coiso<String> parametricYTranslation = powerShapesYParametricTranslation.get(position);
+
+            basicShapes.add(orchestrator.getCopyOfParametricPowerShape(information.getId(),parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(information.getId())));
+        });
+
+
+        return basicShapes;
     }
 
     public ArrayList<BasicShape> getBasicShapes() {
@@ -213,6 +244,24 @@ public class ParametricCompositionShape implements CustomShape {
         parametricCompositionShapesMap.forEach((id,shape) -> {
             getTesteForSpecificParametric(toAdd, true, 0,0, id, shape);
         });
+
+        /*powerShapesXTranslation.forEach(powerShapeID -> {
+            int powerShapeXTranslationPosition = powerShapesXTranslation.indexOf(powerShapesXTranslation.stream().filter(p -> p.getId().equals(powerShapeID.getId())).findFirst().get());
+            Coiso<Double> powerShapeXTranslation = powerShapesXTranslation.get(powerShapeXTranslationPosition);
+            Coiso<Double> powerShapeYTranslation = powerShapesYTranslation.get(powerShapeXTranslationPosition);
+
+            Power copy = orchestrator.getCopyOfPowerShape(powerShapeID.getId(), powerShapeXTranslation.getConsumer(), powerShapeYTranslation.getConsumer(), getProceedWhenDeleting(powerShapeID.getId()));
+
+            if (toAdd instanceof Pane) {
+                Pane toAddTemp = (Pane) toAdd;
+                toAddTemp.getChildren().add(copy.getEditorVisualization());
+            } else if (toAdd instanceof Group) {
+                Group toAddTemp = (Group) toAdd;
+                toAddTemp.getChildren().add(copy.getEditorVisualization());
+            }
+
+
+        });*/
 
         compositionShapeMap.forEach((newID, compositionShape) -> {
             Group addTo = new Group();
@@ -452,6 +501,42 @@ public class ParametricCompositionShape implements CustomShape {
 
         Coiso<String> parametricTranslationX = parametricShapesXParametricTranslation.get(position);
         Coiso<String> parametricTranslationY = parametricShapesYParametricTranslation.get(position);
+
+        /*powerShapesXTranslation.forEach(powerShapeID -> {
+            int powerShapeXTranslationPosition = powerShapesXTranslation.indexOf(powerShapesXTranslation.stream().filter(p -> p.getId().equals(powerShapeID.getId())).findFirst().get());
+            Coiso<Double> powerShapeXTranslation = powerShapesXTranslation.get(powerShapeXTranslationPosition);
+            Coiso<Double> powerShapeYTranslation = powerShapesYTranslation.get(powerShapeXTranslationPosition);
+
+
+            double translateXBy = copy.getInitialTranslation().getX();
+            double translateYBy = copy.getInitialTranslation().getY() * -1;
+
+            Power copy = orchestrator.getCopyOfPowerShape(powerShapeID.getId(), powerShapeXTranslation.getConsumer(), powerShapeYTranslation.getConsumer(), getProceedWhenDeleting(powerShapeID.getId()));
+
+            copy.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
+            copy.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
+
+            addTo.getChildren().add(copy.getEditorVisualization());
+
+        });*/
+
+        parametricCompositionShape.getPowerShapes().forEach(power -> {
+            double translateXBy = power.getInitialTranslation().getX();
+            double translateYBy = power.getInitialTranslation().getY() * -1;
+
+
+            power.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
+            power.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
+
+            Power copy = orchestrator.getCopyOfPowerShape(power.getUuid().toString(), power.getWriteTranslateX(), power.getWriteTranslateY(), getProceedWhenDeleting(power.getUuid().toString()));
+
+            Node editor = copy.getEditorVisualization();
+
+            editor.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
+            editor.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
+
+            addTo.getChildren().add(editor);
+        });
 
         //Adding basic shapes
         parametricCompositionShape.getBasicShapes().forEach(basicShape -> {

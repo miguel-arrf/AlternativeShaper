@@ -222,7 +222,6 @@ public class App extends Application {
                                 System.out.println("I've clicked on a parametric composition shape thumbnail!");
                                 selectedParametricCompositionShape = (ParametricCompositionShape) basicShapeAdded;
 
-
                                 transformersBox.getChildren().clear();
 
                                 GridCanvas.clearEverything();
@@ -319,8 +318,10 @@ public class App extends Application {
     private void addParametricCompositionShape(ParametricCompositionShape compositionShape){
 
             //I've clicked on a thumbnail
-            compositionShape.getBasicShapes().forEach(this::addShape);
-            Pane toAdd = new Pane();
+        compositionShape.getBasicShapes().forEach(this::addShape);
+        compositionShape.getPowerShapes().forEach(this::addPowerShape);
+
+        Pane toAdd = new Pane();
             compositionShape.getTeste(toAdd, true, 0,0);
             System.out.println("tamanho de basic shapes: " + compositionShape.getBasicShapes().size());
 
@@ -723,13 +724,19 @@ public class App extends Application {
     }
 
     private void addPowerShape(Power power){
-        GridCanvas.addNode(power.getEditorVisualization());
+        GridCanvas.addPowerShape(power);
+        //GridCanvas.addNode(power.getEditorVisualization());
 
         if(selectedParametricCompositionShape != null){
             Group group = power.getCenterGroup();
             group.setOnMouseClicked(mouseEvent -> {
                 transformersBox.getChildren().clear();
-                transformersBox.getChildren().add(power.getRealTranslationSection());
+                if(selectedParametricCompositionShape != null){
+                    transformersBox.getChildren().addAll(power.getParametricTranslationSection(), power.getRealTranslationSection());
+                }else{
+                    transformersBox.getChildren().add(power.getRealTranslationSection());
+                }
+
             });
 
         }
@@ -1491,6 +1498,7 @@ public class App extends Application {
         }else if(selectedCompositionShape != null){
             selectedCompositionShape.setShapeName(currentName.getText());
             newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
+            newParametricCompositionShapes.forEach(ParametricCompositionShape::redrawThumbnail);
 
             orchestrator.addAllCompositionShapes(newCompositionShapes);
             orchestrator.addAllPowerShapes(powerArrayList);
@@ -1503,6 +1511,8 @@ public class App extends Application {
             orchestrator.addAllCompositionShapes(newCompositionShapes);
             orchestrator.addAllParametricCompositionShapes(newParametricCompositionShapes);
             powerArrayList.forEach(Power::redrawThumbnail);
+
+            newParametricCompositionShapes.forEach(ParametricCompositionShape::redrawThumbnail);
 
         }else if(selectedParametricCompositionShape != null){
             selectedParametricCompositionShape.setShapeName(currentName.getText());

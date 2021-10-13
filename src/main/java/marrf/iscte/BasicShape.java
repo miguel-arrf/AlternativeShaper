@@ -352,10 +352,10 @@ public class BasicShape implements CustomShape {
         textField.setAlignment(Pos.CENTER);
 
         textField.setOnKeyPressed(keyEvent -> {
-            if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-                horizontalParametricTranslation = textField.getText();
-            }
-            writeTranslationXParametric.apply(textField.getText());
+            /*if (keyEvent.getCode().equals(KeyCode.ENTER)) {*/
+                horizontalParametricTranslation = textField.getText() + keyEvent.getText();
+            /*}*/
+            writeTranslationXParametric.apply(textField.getText() + keyEvent.getText());
         });
 
         textField.setMaxWidth(Double.MAX_VALUE);
@@ -384,9 +384,9 @@ public class BasicShape implements CustomShape {
 
         textField.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-                verticalParametricTranslation = textField.getText();
+                verticalParametricTranslation = textField.getText() + keyEvent.getText();
             }
-            writeTranslationYParametric.apply(textField.getText());
+            writeTranslationYParametric.apply(textField.getText() + keyEvent.getText() );
 
         });
 
