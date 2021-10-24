@@ -35,6 +35,7 @@ import org.json.simple.JSONObject;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.function.Function;
@@ -611,7 +612,7 @@ public class App extends Application {
             /*ShapeRuleEditor shapeRuleEditor = new ShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
             shapeRuleEditor.openPopup();*/
 
-            NewShapeRuleEditor newShapeRuleEditor = new NewShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
+            NewShapeRuleEditor newShapeRuleEditor = new NewShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, newParametricCompositionShapes, powerArrayList, orchestrator);
             newShapeRuleEditor.openPopup();
 
         });
@@ -793,8 +794,21 @@ public class App extends Application {
         orchestrator.getVariablesFromFile(file);
     }
 
+    public void loadParametricShapes(File file){
+        ArrayList<ParametricCompositionShape> newCompositionShapeArrayList = orchestrator.getParametricShapesFromFile(file, transformersBox,getProceedWhenDeletingCompositionShape(), teste -> {
+            System.err.println("oh, here I am!");
+            newParametricCompositionShapes.forEach(ParametricCompositionShape::redrawThumbnail);
+            return null;
+        } );
+        newParametricCompositionShapes.addAll(newCompositionShapeArrayList);
+        sideBarThumbnails.addAll(newCompositionShapeArrayList);
+    }
+
     public void loadPowerShapes(File file){
-        orchestrator.getPowerShapesFromFile(file);
+        ArrayList<Power> newPowerShapesArrayList = orchestrator.getPowerShapesFromFile(file, getProceedWhenDeletingPowerShape());
+        powerArrayList.addAll(newPowerShapesArrayList);
+        sideBarThumbnails.addAll(newPowerShapesArrayList);
+        newPowerShapesArrayList.forEach(p -> p.redrawThumbnail());
     }
 
     public void loadProcesses(File file){

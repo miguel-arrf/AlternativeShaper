@@ -3,16 +3,14 @@ package marrf.iscte;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.TransferMode;
+import javafx.scene.input.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -156,8 +154,6 @@ public class Power implements CustomShape, ShapeWithVariables{
     public String getRightValue() {
         return rightValue;
     }
-
-
 
     public void setUpTranslationXBox() {
         Label translationLabel = new Label("Translation X:");
@@ -317,8 +313,16 @@ public class Power implements CustomShape, ShapeWithVariables{
         centerGroup.setTranslateY(value);
     }
 
+    public void setOnMouseClicked(EventHandler<? super MouseEvent> value) {
+        centerGroup.setOnMouseClicked(value);
+    }
 
-    public Power(String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation,  Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {
+    public void setOnDragDetected(EventHandler<? super MouseEvent> value) {
+        centerGroup.setOnDragDetected(value);
+    }
+
+
+    public Power(String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation,  Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<String, Double> proceedWhenDeletingFromThumbnail) {
         this.name = name;
         this.uuid = uuid;
 
@@ -349,7 +353,11 @@ public class Power implements CustomShape, ShapeWithVariables{
         setUpTranslationYBox();
         setUpTranslationXBox();
 
+        this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+        setUpVerticalSection();
 
+        setUpTranslationYBox();
+        setUpTranslationXBox();
     }
 
     public Power(Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {

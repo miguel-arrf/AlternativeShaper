@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Optional;
@@ -52,6 +53,10 @@ public class Orchestrator {
 
     public String getBasicShapeNameFromID(String id){
         return  basicShapes.stream().filter(p -> p.getUUID().toString().equals(id)).findFirst().get().getShapeName();
+    }
+
+    public String getPowerShapeNameFromID(String id){
+        return  powerShapes.stream().filter(p -> p.getUUID().toString().equals(id)).findFirst().get().getShapeName();
     }
 
     public Optional<BasicShape> existsBasicShapeWithID(String id) {
@@ -141,7 +146,7 @@ public class Orchestrator {
         return toReturn;
     }
 
-    public Power getCopyOfPowerShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting){
+    public Power getCopyOfPowerShape(String id, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<String, Double> proceedWhenDeleting){
         Power toReturn = null;
 
         Optional<Power> shape = powerShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
@@ -149,7 +154,7 @@ public class Orchestrator {
         if(shape.isPresent()){
             Power toCopyFrom = shape.get();
 
-            toReturn = new Power(toCopyFrom.getShapeName(), toCopyFrom.getUUID(), toCopyFrom.getHasLeft(), toCopyFrom.getHasRight(), toCopyFrom.getLeftHasVariable(), toCopyFrom.getRightHasVariable(), toCopyFrom.getCenterHasVariable(), toCopyFrom.getRightVariable(), toCopyFrom.getLeftVariable(), toCopyFrom.getCenterVariable(), toCopyFrom.getLeftValue(), toCopyFrom.getRightValue(), toCopyFrom.getRightTranslation(), toCopyFrom.getLeftTranslation(), writeTranslateX, writeTranslateY);
+            toReturn = new Power(toCopyFrom.getShapeName(), toCopyFrom.getUUID(), toCopyFrom.getHasLeft(), toCopyFrom.getHasRight(), toCopyFrom.getLeftHasVariable(), toCopyFrom.getRightHasVariable(), toCopyFrom.getCenterHasVariable(), toCopyFrom.getRightVariable(), toCopyFrom.getLeftVariable(), toCopyFrom.getCenterVariable(), toCopyFrom.getLeftValue(), toCopyFrom.getRightValue(), toCopyFrom.getRightTranslation(), toCopyFrom.getLeftTranslation(), writeTranslateX, writeTranslateY, proceedWhenDeleting);
         }
 
 
@@ -221,7 +226,7 @@ public class Orchestrator {
         }
     }
 
-    public void getPowerShapesFromFile(File file){
+    public ArrayList<Power> getPowerShapesFromFile(File file, Function<String, Double> proceedWhenDeletingFromThumbnail){
         JSONParser jsonParser = new JSONParser();
 
         try{
@@ -256,7 +261,7 @@ public class Orchestrator {
 
 
                 Power powerToAdd = new Power(name, id,hasLeft, hasRight, leftHasVariable, rightHasVariable, centerHasVariable, rightVariable, leftVariable, centerVariable, leftValue, rightValue, rightTranslation, leftTranslation,
-                        a -> 0.0, a -> 0.0);
+                        a -> 0.0, a -> 0.0, proceedWhenDeletingFromThumbnail);
                 powerShapes.add(powerToAdd);
 
             }
@@ -264,6 +269,76 @@ public class Orchestrator {
         }catch (Exception e){
             e.printStackTrace();
         }
+        return  powerShapes;
+    }
+
+    private ParametricCompositionShape getParametricCompositionShapeFromJSONObject(JSONObject newCompositionShapeJSON, VBox transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting){
+        System.out.println(newCompositionShapeJSON);
+
+        String name = (String) newCompositionShapeJSON.get("name");
+        UUID id = UUID.fromString((String) newCompositionShapeJSON.get("id"));
+
+        System.out.println("name: " + name);
+
+        //TODO There's no function being added to handle the thumbnail deletion nor other deletions...
+        ParametricCompositionShape newCompositionShape = new ParametricCompositionShape(this, transformersBox,name, id, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
+
+        JSONArray basicShapesList = (JSONArray) newCompositionShapeJSON.get("basicShapes");
+
+        basicShapesList.forEach(basicShapeObject -> {
+            JSONObject basicShapeJSON = (JSONObject) basicShapeObject;
+
+            String basicShapeID = (String) basicShapeJSON.get("id");
+            System.out.println("id: " + id + ", com: " + basicShapeJSON.get("translationX"));
+            double translationX = (double) basicShapeJSON.get("translationX");
+            double translationY = (double) basicShapeJSON.get("translationY");
+
+            String parametricX = (String) basicShapeJSON.get("parametricTranslationX");
+            String parametricY = (String) basicShapeJSON.get("parametricTranslationY");
+
+            newCompositionShape.addBasicShapeWithTranslation(basicShapeID, translationX, translationY, parametricX, parametricY);
+        });
+
+        JSONArray powerShapesList = (JSONArray) newCompositionShapeJSON.get("powerShapes");
+
+
+        powerShapesList.forEach(powerShapeObject -> {
+            JSONObject powerShapeJSON = (JSONObject) powerShapeObject;
+
+            String basicShapeID = (String) powerShapeJSON.get("id");
+            System.out.println("id: " + id + ", com: " + powerShapeJSON.get("translationX"));
+            double translationX = (double) powerShapeJSON.get("translationX");
+            double translationY = (double) powerShapeJSON.get("translationY");
+
+            String parametricX = (String) powerShapeJSON.get("parametricTranslationX");
+            String parametricY = (String) powerShapeJSON.get("parametricTranslationY");
+
+            newCompositionShape.addPowerShapeWithTranslation(basicShapeID, translationX, translationY, parametricX, parametricY);
+        });
+
+        JSONArray newCompositionShapesInnerList = (JSONArray) newCompositionShapeJSON.get("compositionShapes");
+        System.out.println("inner list:" + newCompositionShapesInnerList);
+        System.out.println("------");
+
+        newCompositionShapesInnerList.forEach(newCompositionShapeObject -> {
+            JSONObject newCompositionShapeInnerJSON = (JSONObject) newCompositionShapeObject;
+
+            String newCompositionShapeInnerID = (String) newCompositionShapeInnerJSON.get("id");
+            double translationX = (double) newCompositionShapeInnerJSON.get("translationX");
+            double translationY = (double) newCompositionShapeInnerJSON.get("translationY");
+
+            String parametricX = (String) newCompositionShapeInnerJSON.get("parametricTranslationX");
+            String parametricY = (String) newCompositionShapeInnerJSON.get("parametricTranslationY");
+
+
+            NewCompositionShape position = newCompositionShapes.stream().filter(p -> p.getID().toString().equals(newCompositionShapeInnerID)).findFirst().get();
+
+            System.out.println("translationX: " + translationX + ", Y: " + translationY + ", id: " + id);
+
+            newCompositionShape.addNewCompositionShapeWithTranslation(position, translationX, translationY, UUID.randomUUID().toString(), parametricX, parametricY);
+        });
+
+        return newCompositionShape;
     }
 
     private NewCompositionShape getNewCompositionShapeFromJSONObject(JSONObject newCompositionShapeJSON, VBox transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting){
@@ -311,6 +386,32 @@ public class Orchestrator {
         return newCompositionShape;
     }
 
+    public ArrayList<ParametricCompositionShape> getParametricShapesFromFile(File file, VBox transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting){
+        ArrayList<ParametricCompositionShape> newParametricCompositionShapes = new ArrayList<>();
+        ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
+
+
+        JSONParser jsonParser = new JSONParser();
+
+        try{
+            Object object = jsonParser.parse(new FileReader(file));
+            JSONObject jsonObject = (JSONObject) object;
+
+            JSONArray newCompositionShapesList = (JSONArray) jsonObject.get("parametricCompositionShapes");
+            Iterator<JSONObject> iterator =  newCompositionShapesList.iterator();
+
+            while (iterator.hasNext()){
+                JSONObject parametricShapeJSON = iterator.next();
+                newParametricCompositionShapes.add(getParametricCompositionShapeFromJSONObject(parametricShapeJSON, transformersBox, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting));
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return newParametricCompositionShapes;
+    }
+
     public void getShapeRulesFromFile(File file){
         JSONParser jsonParser = new JSONParser();
 
@@ -340,8 +441,8 @@ public class Orchestrator {
                     String boolCode = (String) shapeRuleJSON.get("boolCode");
 
                     shapeRuleToAdd = new BoolShapeShape(
-                            getNewCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
-                            getNewCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
+                            getParametricCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
+                            getParametricCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
                             id, name,
                             matched,
                             boolXML, boolCode,
@@ -355,8 +456,8 @@ public class Orchestrator {
                     String processCode = (String) shapeRuleJSON.get("processCode");
 
                     shapeRuleToAdd = new BoolShapeShapeProc(
-                            getNewCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
-                            getNewCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
+                            getParametricCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
+                            getParametricCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
                             id, name,
                             matched,
                             boolXML, boolCode,
@@ -368,8 +469,8 @@ public class Orchestrator {
                     String processCode = (String) shapeRuleJSON.get("processCode");
 
                     shapeRuleToAdd = new ShapeShapeProc(
-                            getNewCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
-                            getNewCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
+                            getParametricCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
+                            getParametricCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
                             id, name,
                             matched,
                             processXML, processCode,
@@ -378,8 +479,8 @@ public class Orchestrator {
                 }else if (type.equals("")){
 
                     shapeRuleToAdd = new ShapeShape(
-                            getNewCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
-                            getNewCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
+                            getParametricCompositionShapeFromJSONObject(leftShape, null, a -> 0.0, a -> 0.0),
+                            getParametricCompositionShapeFromJSONObject(rightShape, null, a -> 0.0, a -> 0.0),
                             id, name,
                             a -> 0.0, a -> 0.0);
                 }
@@ -620,14 +721,13 @@ public class Orchestrator {
         JSONArray list = new JSONArray();
 
         for(ParametricCompositionShape parametricCompositionShape : parametricCompositionShapes){
-            JSONObject jsonObject = new JSONObject();
-
-            jsonObject.put("id", parametricCompositionShape.getID().toString());
+            //JSONObject jsonObject = new JSONObject();
+            /*jsonObject.put("id", parametricCompositionShape.getID().toString());
             jsonObject.put("name", parametricCompositionShape.getShapeName());
             jsonObject.put("basicShapes", parametricCompositionShape.getBasicShapesJSON());
-            jsonObject.put("compositionShapes", parametricCompositionShape.getCompositionShapesJSON());
+            jsonObject.put("compositionShapes", parametricCompositionShape.getCompositionShapesJSON());*/
 
-            list.add(jsonObject);
+            list.add(parametricCompositionShape.getJSONObject());
         }
 
         return list;
@@ -637,7 +737,6 @@ public class Orchestrator {
         JSONArray list = new JSONArray();
 
         shapeRules.forEach(power -> list.add(power.getJSONObject()));
-
 
         return list;
     }
@@ -810,7 +909,6 @@ public class Orchestrator {
             e.printStackTrace();
         }
     }
-
 
     private String solveDependencies(String code){
         String toReturn = solveDependency(code, "existingproc");

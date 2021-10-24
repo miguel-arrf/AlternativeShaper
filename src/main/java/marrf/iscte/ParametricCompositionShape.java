@@ -27,15 +27,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import static marrf.iscte.App.NUMBER_COLUMNS_AND_ROWS;
 import static marrf.iscte.App.SCALE;
 import static marrf.iscte.BasicShape.colorToRGBString;
 import static marrf.iscte.BasicShape.getRelativeLuminance;
 
+@SuppressWarnings("unchecked")
 public class ParametricCompositionShape implements CustomShape {
 
     private final Map<String, NewCompositionShape> compositionShapeMap = new HashMap<>();
@@ -92,6 +93,16 @@ public class ParametricCompositionShape implements CustomShape {
 
     private boolean notParametric = false;
 
+    public ParametricCompositionShape(Boolean notParametric, Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
+        this.notParametric = notParametric;
+        this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+        this.proceedToRedrawWhenDeleting = proceedToRedrawWhenDeleting;
+
+        ID = UUID.randomUUID();
+        this.orchestrator = orchestrator;
+        this.transformersBox = transformersBox;
+        //setUpComponents();
+    }
 
     public ParametricCompositionShape(Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
@@ -101,6 +112,232 @@ public class ParametricCompositionShape implements CustomShape {
         this.orchestrator = orchestrator;
         this.transformersBox = transformersBox;
         //setUpComponents();
+    }
+
+    public ParametricCompositionShape(Orchestrator orchestrator, Pane transformersBox, String name, UUID id, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
+        this.name = name;
+        this.ID = id;
+
+        this.orchestrator = orchestrator;
+        this.transformersBox = transformersBox;
+        //setUpComponents();
+        this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+        this.proceedToRedrawWhenDeleting = proceedToRedrawWhenDeleting;
+    }
+
+    public void setProceedToRedrawWhenDeleting(Function<String, Double> proceedToRedrawWhenDeleting) {
+        this.proceedToRedrawWhenDeleting = proceedToRedrawWhenDeleting;
+    }
+
+    public void setProceedWhenDeletingFromThumbnail(Function<String, Double> proceedWhenDeletingFromThumbnail) {
+        this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+    }
+
+    public void setProceedWhenDeleting(Function<Pane, Double> proceedWhenDeleting) {
+        this.proceedWhenDeleting = proceedWhenDeleting;
+    }
+
+    public ParametricCompositionShape getCopy(){
+        ParametricCompositionShape toReturn = new ParametricCompositionShape(orchestrator, transformersBox, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
+
+        toReturn.notParametric = notParametric;
+        toReturn.name = name;
+        toReturn.compositionShapeMap.putAll(compositionShapeMap);
+        toReturn.parametricCompositionShapesMap.putAll(parametricCompositionShapesMap);
+
+        compositionShapesXTranslation.forEach(information -> toReturn.compositionShapesXTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        compositionShapesYTranslation.forEach(information -> toReturn.compositionShapesYTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        compositionShapesXParametricTranslation.forEach(information -> toReturn.compositionShapesXParametricTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        compositionShapesYParametricTranslation.forEach(information -> toReturn.compositionShapesYParametricTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+
+        parametricShapesXTranslation.forEach(information -> toReturn.parametricShapesXTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        parametricShapesYTranslation.forEach(information -> toReturn.parametricShapesYTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        parametricShapesXParametricTranslation.forEach(information -> toReturn.parametricShapesXParametricTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        parametricShapesYParametricTranslation.forEach(information -> toReturn.parametricShapesYParametricTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+
+
+        basicShapesXTranslation.forEach(information -> toReturn.basicShapesXTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        basicShapesYTranslation.forEach(information -> toReturn.basicShapesYTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        basicShapesXParametricTranslation.forEach(information -> toReturn.basicShapesXParametricTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        basicShapesYParametricTranslation.forEach(information -> toReturn.basicShapesYParametricTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+
+        powerShapesXTranslation.forEach(information -> toReturn.powerShapesXTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        powerShapesYTranslation.forEach(information -> toReturn.powerShapesYTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        powerShapesXParametricTranslation.forEach(information -> toReturn.powerShapesXParametricTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+        powerShapesYParametricTranslation.forEach(information -> toReturn.powerShapesYParametricTranslation.add(new Coiso<>(information.getId(), information.getValue())));
+
+
+        return toReturn;
+    }
+
+    public ArrayList<String> getCompositionShapesUUIDList() {
+        ArrayList<String> toReturn = new ArrayList<>();
+
+        compositionShapeMap.forEach((a,b) -> {
+            toReturn.add(b.getID().toString());
+        });
+
+        return toReturn;
+    }
+
+    public ArrayList<String> getBasicShapesUUIDList() {
+        ArrayList<String> toReturn = new ArrayList<>();
+
+        basicShapesXTranslation.forEach(information -> {
+            toReturn.add(information.getId());
+        });
+
+        return toReturn;
+    }
+
+    public void deleteBasicShape(String uuidToRemove) {
+        if (getBasicShapesUUIDList().stream().anyMatch(p -> p.equals(uuidToRemove))) {
+            Coiso<Double> basicShapeXTranslationToRemove = basicShapesXTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
+            Coiso<Double> basicShapeYTranslationToRemove = basicShapesYTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
+
+            basicShapesXTranslation.remove(basicShapeXTranslationToRemove);
+            basicShapesYTranslation.remove(basicShapeYTranslationToRemove);
+        }
+
+    }
+
+    public void deleteCompositionShape(String uuidToRemove){
+        //TODO If we delete a basic shape from a composition shape that
+        // only had it, and that composition shape is here, we should delete
+        // the parameters that were defined.
+        if (getCompositionShapesUUIDList().stream().anyMatch(p -> p.equals(uuidToRemove))) {
+
+            ArrayList<String> toRemove = new ArrayList<>();
+
+            compositionShapeMap.forEach((id, compositionShape) -> {
+                if(compositionShape.getID().toString().equals(uuidToRemove)){
+                    toRemove.add(id);
+                }
+            });
+
+            toRemove.forEach(compositionShapeMap::remove);
+
+            compositionShapesXTranslation.removeIf(p -> {
+                if(toRemove.stream().anyMatch(a -> a.equals(p.getId()))){
+                    return true;
+                }
+                return false;
+            });
+
+            compositionShapesYTranslation.removeIf(p -> {
+                if(toRemove.stream().anyMatch(a -> a.equals(p.getId()))){
+                    return true;
+                }
+                return false;
+            });
+
+            //Information compositionShapesXTranslationToRemove = compositionShapesXTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
+            //Information compositionShapesYTranslationToRemove = compositionShapesYTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
+
+            //compositionShapesXTranslation.remove(compositionShapesXTranslationToRemove);
+            //compositionShapesYTranslation.remove(compositionShapesYTranslationToRemove);
+
+        }
+    }
+
+    public void setTransformersBox(Pane transformersBox) {
+        this.transformersBox = transformersBox;
+    }
+
+    public Map<String, NewCompositionShape> getCompositionShapeMap() {
+        return compositionShapeMap;
+    }
+
+    public Map<String, ParametricCompositionShape> getParametricCompositionShapesMap() {
+        return parametricCompositionShapesMap;
+    }
+
+    public String getPrologRepresentation(boolean withFinalDot, boolean justInner){
+        StringBuilder toReturn = new StringBuilder();
+
+        if(!justInner){
+            toReturn.append("shapeComposition(").append(getShapeName()).append("[");
+        }
+
+        basicShapesXTranslation.forEach(information -> {
+            Coiso<Double> translationY = basicShapesYTranslation.stream().filter(inf -> inf.getId().equals(information.getId())).findFirst().get();
+
+            toReturn.append("s(").append(orchestrator.getBasicShapeNameFromID(information.getId()));
+            toReturn.append(",[1,0,0,0,1,0,").append(information.getValue()/SCALE).append(",").append(translationY.getValue()/SCALE).append(",1]");
+
+                toReturn.append("),");
+
+        });
+
+        powerShapesXTranslation.forEach(information -> {
+            Coiso<Double> translationY = powerShapesYTranslation.stream().filter(inf -> inf.getId().equals(information.getId())).findFirst().get();
+
+            toReturn.append("s(").append(orchestrator.getPowerShapeNameFromID(information.getId()));
+            toReturn.append(",[1,0,0,0,1,0,").append(information.getValue()/SCALE).append(",").append(translationY.getValue()/SCALE).append(",1]");
+
+                toReturn.append("),");
+
+        });
+
+        AtomicInteger added = new AtomicInteger();
+
+        parametricCompositionShapesMap.forEach((randomID, newCompositionShape) -> {
+
+            var translationX = parametricShapesXTranslation.stream().filter(translation -> translation.getId().equals(randomID)).findFirst().get();
+            var translationY = parametricShapesYTranslation.stream().filter(translation -> translation.getId().equals(randomID)).findFirst().get();
+
+            toReturn.append("s(").append(newCompositionShape.getShapeName());
+            toReturn.append(",[1,0,0,0,1,0,").append(translationX.getValue()).append(",").append(translationY.getValue()).append(",1]");
+
+
+                toReturn.append("),");
+
+            added.getAndIncrement();
+
+
+        });
+
+        compositionShapeMap.forEach((randomID, newCompositionShape) -> {
+
+            var translationX = compositionShapesXTranslation.stream().filter(translation -> translation.getId().equals(randomID)).findFirst().get();
+            var translationY = compositionShapesYTranslation.stream().filter(translation -> translation.getId().equals(randomID)).findFirst().get();
+
+            toReturn.append("s(").append(newCompositionShape.getShapeName());
+            toReturn.append(",[1,0,0,0,1,0,").append(translationX.getValue()).append(",").append(translationY.getValue()).append(",1]");
+
+
+                toReturn.append("),");
+
+            added.getAndIncrement();
+
+
+        });
+
+        if(!justInner){
+            toReturn.append(withFinalDot ? "])." : "])");
+        }
+
+
+        String string = toReturn.toString();
+        string = string.replaceAll("([,][,]+)", ",");
+        string = string.replaceAll("([,][)])", ")");
+        string = string.replaceAll("([,][]])", "]");
+
+
+        return string;
+    }
+
+    public JSONObject getJSONObject(){
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("id", getID().toString());
+        jsonObject.put("name", getShapeName());
+        jsonObject.put("basicShapes", getBasicShapesJSON());
+        jsonObject.put("powerShapes", getPowerShapesJSON());
+        jsonObject.put("compositionShapes", getCompositionShapesJSON());
+        jsonObject.put("parametricShapes", getParametricShapesJSON());
+
+        return jsonObject;
     }
 
     public UUID getID() {
@@ -125,6 +362,54 @@ public class ParametricCompositionShape implements CustomShape {
 
             jsonObject.put("parametricTranslationX", compositionShapesXParametricTranslation.get(position).getValue());
             jsonObject.put("parametricTranslationY", compositionShapesYParametricTranslation.get(position).getValue());
+
+
+            array.add(jsonObject);
+        });
+
+        return array;
+    }
+
+    public JSONArray getPowerShapesJSON(){
+        JSONArray array = new JSONArray();
+
+        powerShapesXTranslation.forEach(information -> {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("id", information.getId());
+
+            int position = powerShapesXTranslation.indexOf(information);
+
+            jsonObject.put("translationX", powerShapesXTranslation.get(position).getValue());
+            jsonObject.put("translationY", powerShapesYTranslation.get(position).getValue());
+
+            jsonObject.put("parametricTranslationX", powerShapesXParametricTranslation.get(position).getValue());
+            jsonObject.put("parametricTranslationY", powerShapesYParametricTranslation.get(position).getValue());
+
+            array.add(jsonObject);
+        });
+
+        return array;
+
+    }
+
+    public JSONArray getParametricShapesJSON(){
+        JSONArray array = new JSONArray();
+
+        parametricCompositionShapesMap.forEach((id, compositionShape) -> {
+            JSONObject jsonObject = new JSONObject();
+
+            int position = 0;
+            for (Coiso information : parametricShapesXTranslation) {
+                if (information.getId().equals(id))
+                    position = parametricShapesXTranslation.indexOf(information);
+            }
+
+            jsonObject.put("id", compositionShape.getID().toString());
+            jsonObject.put("translationX", parametricShapesXTranslation.get(position).getValue());
+            jsonObject.put("translationY", parametricShapesYTranslation.get(position).getValue());
+
+            jsonObject.put("parametricTranslationX", parametricShapesXParametricTranslation.get(position).getValue());
+            jsonObject.put("parametricTranslationY", parametricShapesYParametricTranslation.get(position).getValue());
 
 
             array.add(jsonObject);
@@ -171,6 +456,22 @@ public class ParametricCompositionShape implements CustomShape {
         return orchestrator.getCopyOfParametricBasicShape(basicShapesID,parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(basicShapesID));
     }
 
+    public BasicShape addBasicShapeWithTranslation(String basicShapesID, double xTranslation, double yTranslation, String parametricX, String parametricY) {
+        Coiso<Double> translationX = new Coiso<Double>(basicShapesID, xTranslation);
+        Coiso<Double> translationY = new Coiso<Double>(basicShapesID, yTranslation);
+
+        Coiso<String> parametricXTranslation = new Coiso<String>(basicShapesID, parametricX);
+        Coiso<String> parametricYTranslation = new Coiso<String>(basicShapesID, parametricY);
+
+        basicShapesXParametricTranslation.add(parametricXTranslation);
+        basicShapesYParametricTranslation.add(parametricYTranslation);
+
+        basicShapesXTranslation.add(translationX);
+        basicShapesYTranslation.add(translationY);
+
+        return orchestrator.getCopyOfParametricBasicShape(basicShapesID,parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(basicShapesID));
+    }
+
     public Power addPowerShape(String powerShapeID){
         System.out.println("ó maluco, here i am");
         Coiso<Double> translationX = new Coiso<Double>(powerShapeID, 0.0);
@@ -186,6 +487,23 @@ public class ParametricCompositionShape implements CustomShape {
         powerShapesYTranslation.add(translationY);
 
         return orchestrator.getCopyOfParametricPowerShape(powerShapeID,parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(powerShapeID));
+    }
+
+    public Power addPowerShapeWithTranslation(String powerShapeID,double xTranslation, double yTranslation, String parametricX, String parametricY){
+        Coiso<Double> translationX = new Coiso<Double>(powerShapeID, xTranslation);
+        Coiso<Double> translationY = new Coiso<Double>(powerShapeID, yTranslation);
+
+        Coiso<String> parametricXTranslation = new Coiso<String>(powerShapeID, parametricX);
+        Coiso<String> parametricYTranslation = new Coiso<String>(powerShapeID, parametricY);
+
+        powerShapesXParametricTranslation.add(parametricXTranslation);
+        powerShapesYParametricTranslation.add(parametricYTranslation);
+
+        powerShapesXTranslation.add(translationX);
+        powerShapesYTranslation.add(translationY);
+
+        return orchestrator.getCopyOfParametricPowerShape(powerShapeID,parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(powerShapeID));
+
     }
 
     public ArrayList<Power> getPowerShapes() {
@@ -239,29 +557,24 @@ public class ParametricCompositionShape implements CustomShape {
         };
     }
 
+    private Function<String, Double> getProceedWhenDeletingPowerShape(String basicShapeID) {
+        return a -> {
+            Coiso<Double> xTranslationToRemove = powerShapesXTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
+            Coiso<Double> yTranslationToRemove = powerShapesYTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
+            powerShapesXTranslation.remove(xTranslationToRemove);
+            powerShapesYTranslation.remove(yTranslationToRemove);
+            System.err.println("VIM AQUI PARA APAGAR!");
+            proceedToRedrawWhenDeleting.apply(null);
+            return null;
+        };
+    }
+
     public void getTeste(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY) {
 
         parametricCompositionShapesMap.forEach((id,shape) -> {
             getTesteForSpecificParametric(toAdd, true, 0,0, id, shape);
         });
 
-        /*powerShapesXTranslation.forEach(powerShapeID -> {
-            int powerShapeXTranslationPosition = powerShapesXTranslation.indexOf(powerShapesXTranslation.stream().filter(p -> p.getId().equals(powerShapeID.getId())).findFirst().get());
-            Coiso<Double> powerShapeXTranslation = powerShapesXTranslation.get(powerShapeXTranslationPosition);
-            Coiso<Double> powerShapeYTranslation = powerShapesYTranslation.get(powerShapeXTranslationPosition);
-
-            Power copy = orchestrator.getCopyOfPowerShape(powerShapeID.getId(), powerShapeXTranslation.getConsumer(), powerShapeYTranslation.getConsumer(), getProceedWhenDeleting(powerShapeID.getId()));
-
-            if (toAdd instanceof Pane) {
-                Pane toAddTemp = (Pane) toAdd;
-                toAddTemp.getChildren().add(copy.getEditorVisualization());
-            } else if (toAdd instanceof Group) {
-                Group toAddTemp = (Group) toAdd;
-                toAddTemp.getChildren().add(copy.getEditorVisualization());
-            }
-
-
-        });*/
 
         compositionShapeMap.forEach((newID, compositionShape) -> {
             Group addTo = new Group();
@@ -502,23 +815,6 @@ public class ParametricCompositionShape implements CustomShape {
         Coiso<String> parametricTranslationX = parametricShapesXParametricTranslation.get(position);
         Coiso<String> parametricTranslationY = parametricShapesYParametricTranslation.get(position);
 
-        /*powerShapesXTranslation.forEach(powerShapeID -> {
-            int powerShapeXTranslationPosition = powerShapesXTranslation.indexOf(powerShapesXTranslation.stream().filter(p -> p.getId().equals(powerShapeID.getId())).findFirst().get());
-            Coiso<Double> powerShapeXTranslation = powerShapesXTranslation.get(powerShapeXTranslationPosition);
-            Coiso<Double> powerShapeYTranslation = powerShapesYTranslation.get(powerShapeXTranslationPosition);
-
-
-            double translateXBy = copy.getInitialTranslation().getX();
-            double translateYBy = copy.getInitialTranslation().getY() * -1;
-
-            Power copy = orchestrator.getCopyOfPowerShape(powerShapeID.getId(), powerShapeXTranslation.getConsumer(), powerShapeYTranslation.getConsumer(), getProceedWhenDeleting(powerShapeID.getId()));
-
-            copy.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
-            copy.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
-
-            addTo.getChildren().add(copy.getEditorVisualization());
-
-        });*/
 
         parametricCompositionShape.getPowerShapes().forEach(power -> {
             double translateXBy = power.getInitialTranslation().getX();
@@ -528,7 +824,7 @@ public class ParametricCompositionShape implements CustomShape {
             power.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
             power.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
 
-            Power copy = orchestrator.getCopyOfPowerShape(power.getUuid().toString(), power.getWriteTranslateX(), power.getWriteTranslateY(), getProceedWhenDeleting(power.getUuid().toString()));
+            Power copy = orchestrator.getCopyOfPowerShape(power.getUuid().toString(), power.getWriteTranslateX(), power.getWriteTranslateY(), getProceedWhenDeletingPowerShape(power.getUuid().toString()));
 
             Node editor = copy.getEditorVisualization();
 
@@ -657,6 +953,21 @@ public class ParametricCompositionShape implements CustomShape {
         return toAdd;
     }
 
+    public Pane addNewCompositionShapeWithTranslation(NewCompositionShape newCompositionShape,double xTranslation, double yTranslation, String id, String parametricX, String parametricY) {
+        compositionShapeMap.put(id, newCompositionShape);
+
+        compositionShapesXTranslation.add(new Coiso<>(id, xTranslation));
+        compositionShapesYTranslation.add(new Coiso<>(id, yTranslation));
+
+        compositionShapesXParametricTranslation.add(new Coiso<>(id, parametricX));
+        compositionShapesYParametricTranslation.add(new Coiso<>(id, parametricY));
+
+        Pane toAdd = new Pane();
+        getTesteForSpecific(toAdd, true, xTranslation, yTranslation, id, newCompositionShape);
+
+        return toAdd;
+    }
+
     public Pane addParametricCompositionShape(ParametricCompositionShape parametricCompositionShape){
         String id = UUID.randomUUID().toString();
 
@@ -683,8 +994,10 @@ public class ParametricCompositionShape implements CustomShape {
 
     public ArrayList<Node> getTransformers() {
         ArrayList<Node> toReturn = new ArrayList<>();
-        toReturn.add(parametricTranslationXBox);
-        toReturn.add(parametricTranslationYBox);
+        if(!notParametric){
+            toReturn.add(parametricTranslationXBox);
+            toReturn.add(parametricTranslationYBox);
+        }
         toReturn.add(translationXBox);
         toReturn.add(translationYBox);
 
@@ -748,7 +1061,7 @@ public class ParametricCompositionShape implements CustomShape {
     }
 
     private void setUpTranslationXBox() {
-        Label translationLabel = new Label("Temporary translation X:");
+        Label translationLabel = new Label(notParametric ? "Translation X:" : "Temporary translation X:");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
@@ -815,7 +1128,7 @@ public class ParametricCompositionShape implements CustomShape {
     }
 
     private void setUpTranslationYBox() {
-        Label translationLabel = new Label("Temporary translation Y:");
+        Label translationLabel = new Label(notParametric? "Translation Y:" : "Temporary translation Y:");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);

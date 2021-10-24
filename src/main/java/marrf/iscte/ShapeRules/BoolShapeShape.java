@@ -1,9 +1,8 @@
 package marrf.iscte.ShapeRules;
 
 import javafx.scene.layout.Pane;
-import marrf.iscte.NewCompositionShape;
 import marrf.iscte.Orchestrator;
-import org.json.simple.JSONObject;
+import marrf.iscte.ParametricCompositionShape;
 
 import java.util.UUID;
 import java.util.function.Function;
@@ -15,7 +14,7 @@ public class BoolShapeShape extends ShapeRule{
         super(orchestrator, transformersBox,right, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
     }
 
-    public BoolShapeShape(NewCompositionShape leftShape, NewCompositionShape rightShape, UUID id, String name, boolean matched, String boolXML, String boolCode, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
+    public BoolShapeShape(ParametricCompositionShape leftShape, ParametricCompositionShape rightShape, UUID id, String name, boolean matched, String boolXML, String boolCode, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
         super( proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting, leftShape, rightShape);
 
         this.setId(id);

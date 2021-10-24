@@ -22,11 +22,11 @@ public class Variable {
     private boolean isClicked = false;
 
     private String name;
-    private Double value;
+    private String value;
 
     private VBox thumbnail = new VBox();
 
-    public Variable(String name, Double value){
+    public Variable(String name, String value){
         this.name = name;
         this.value = value;
     }
@@ -35,7 +35,7 @@ public class Variable {
         this.name = name;
     }
 
-    public void setValue(Double value) {
+    public void setValue(String value) {
         this.value = value;
     }
 
@@ -43,7 +43,7 @@ public class Variable {
         return name;
     }
 
-    public Double getValue() {
+    public String getValue() {
         return value;
     }
 
@@ -58,7 +58,7 @@ public class Variable {
         nameLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 12));
         nameLabel.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)")));
 
-        Label tagLabel = new Label(Double.toString(value));
+        Label tagLabel = new Label(value);
         tagLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 10));
         tagLabel.setPadding(new Insets(3));
         tagLabel.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)").darker()));

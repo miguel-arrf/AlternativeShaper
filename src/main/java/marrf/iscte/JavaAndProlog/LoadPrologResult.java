@@ -14,7 +14,7 @@ public class LoadPrologResult {
 
     void obterStringGrande() throws IOException{
 
-        File file = new File("C:\\Users\\mferr\\Downloads\\ProfessorFilipe\\AlternativeShaperProfessor\\shapes");
+        File file = new File("/Users/miguelferreira/Downloads/AlternativeShaper_HTML_Files/AlternativeShaperProfessor/shapes");
         File[] listOfFiles = file.listFiles();
 
         permitido = new ArrayList<>();
@@ -30,17 +30,12 @@ public class LoadPrologResult {
 
         if (null == string) {
 
-            string= Files.readString(new File("C:\\Users\\mferr\\Downloads\\AlternativeShaper_HTML_Files\\prologResult.txt").toPath());
+            string= Files.readString(new File("/Users/miguelferreira/Downloads/AlternativeShaper_HTML_Files/prologResult.txt").toPath());
 
         }
     }
 
     public static void main(String[] args) throws IOException {
-
-
-
-
-
         LoadPrologResult textos = new LoadPrologResult();
 
         textos.obterStringGrande();

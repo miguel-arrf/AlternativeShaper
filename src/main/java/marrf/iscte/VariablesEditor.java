@@ -88,7 +88,7 @@ public class VariablesEditor {
         selectedVariable.addListener((observableValue, variable, t1) -> {
             if(t1 != null){
                 nameTextField.setText(t1.getName());
-                valueTextField.setText(Double.toString(t1.getValue()));
+                valueTextField.setText(t1.getValue());
                 leftEditor.getChildren().remove(saveOrEditButton);
                 saveOrEditButton =  App.getButtonWith_Label_Color("Update Variable", "#5B6535", "#DCF256");
                 leftEditor.getChildren().add(saveOrEditButton);
@@ -102,7 +102,7 @@ public class VariablesEditor {
                     orchestrator.getVariables().forEach(Variable::setUnClicked);
 
                     t1.setName(nameTextField.getText());
-                    t1.setValue(Double.parseDouble(valueTextField.getText()));
+                    t1.setValue(valueTextField.getText());
                     t1.getThumbnail();
 
                     selectedVariable.set(null);
@@ -129,7 +129,7 @@ public class VariablesEditor {
         return mouseEvent -> {
             orchestrator.getVariables().forEach(Variable::setUnClicked);
 
-            Variable toAdd = new Variable(nameTextField.getText(), Double.parseDouble(valueTextField.getText()));
+            Variable toAdd = new Variable(nameTextField.getText(), valueTextField.getText());
             if(orchestrator.canAddVariable(toAdd)){
                 orchestrator.addVariable(toAdd);
                 resetTextFields();

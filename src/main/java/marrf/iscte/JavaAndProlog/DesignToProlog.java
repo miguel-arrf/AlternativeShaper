@@ -13,11 +13,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.stage.Modality;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import marrf.iscte.App;
-import marrf.iscte.GridCanvas;
 import marrf.iscte.PortableGridCanvas;
 import marrf.iscte.StartMenu;
 import org.jpl7.Atom;
@@ -38,7 +35,7 @@ import static marrf.iscte.PortableGridCanvas.DOUBLE_NUMBER_COLUMNS_AND_ROWS;
 
 public class DesignToProlog {
 
-    private static int SCALE = 40;
+    private static final int SCALE = 40;
 
     private final Stage stage = new Stage();
     private final Scene scene;
@@ -200,8 +197,7 @@ public class DesignToProlog {
         for (Coordenadas c : coordenadas) {
             String nomeShape = c.getTipo();
             nomeShape = nomeShape.substring(1);
-            System.out.println("file:///C:\\Users\\mferr\\Downloads\\ProfessorFilipe\\AlternativeShaperProfessor\\shapes\\" + nomeShape + ".gif");
-            Image image = new Image("file:///C:\\Users\\mferr\\Downloads\\ProfessorFilipe\\AlternativeShaperProfessor\\shapes\\" + nomeShape + ".gif");
+            Image image = new Image("file:/Users/miguelferreira/Downloads/AlternativeShaper_HTML_Files/AlternativeShaperProfessor/shapes/" + nomeShape + ".gif");
 
             addImage(group, image, c);
 
@@ -261,8 +257,6 @@ public class DesignToProlog {
         pane.heightProperty().addListener((observable, oldValue, newValue) -> anchorPane.setPrefHeight(newValue.doubleValue()));
 
         pane.setStyle("-fx-background-radius: 20; -fx-background-color: #333234; -fx-border-color: #4F4F4F; -fx-border-radius: 20;");
-
-
 
         try{
 

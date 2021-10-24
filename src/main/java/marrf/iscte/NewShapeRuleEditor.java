@@ -22,6 +22,7 @@ import javafx.util.Duration;
 import marrf.iscte.ShapeRules.*;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,6 +45,9 @@ public class NewShapeRuleEditor {
 
     private final ArrayList<NewCompositionShape> newCompositionShapes;
     private final ArrayList<BasicShape> basicShapes;
+    private final ArrayList<Power> powerShapes;
+    private final ArrayList<ParametricCompositionShape> parametricCompositionShapes;
+
     private final Orchestrator orchestrator;
 
     private final ArrayList<ShapeRule> shapeRules;
@@ -70,8 +74,10 @@ public class NewShapeRuleEditor {
     private HBox shapeRulesPanel;
 
 
-    public NewShapeRuleEditor(Scene scene, ArrayList<NewCompositionShape> newCompositionShapes, ArrayList<BasicShape> basicShapes, Orchestrator orchestrator){
+    public NewShapeRuleEditor(Scene scene, ArrayList<NewCompositionShape> newCompositionShapes, ArrayList<BasicShape> basicShapes, ArrayList<ParametricCompositionShape> parametricCompositionShapes, ArrayList<Power> powerShapes, Orchestrator orchestrator){
         this.scene = scene;
+        this.parametricCompositionShapes = parametricCompositionShapes;
+        this.powerShapes = powerShapes;
         this.newCompositionShapes = newCompositionShapes;
         this.basicShapes = basicShapes;
         this.orchestrator = orchestrator;
@@ -251,6 +257,37 @@ public class NewShapeRuleEditor {
 
         });
 
+        getPowerShapesStringArray().forEach(p -> {
+            Label basicShapeLabel = new Label(p);
+            basicShapeLabel.setPadding(new Insets(5));
+            basicShapeLabel.setStyle("-fx-background-color: #703636; -fx-background-radius: 10");
+            basicShapeLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
+            basicShapeLabel.setTextFill(Color.WHITE);
+
+            basicShapeLabel.setOnMouseEntered(mouseEvent -> basicShapeLabel.setStyle("-fx-background-color: #F96767; -fx-background-radius: 10"));
+
+            basicShapeLabel.setOnMouseExited(mouseEvent -> basicShapeLabel.setStyle("-fx-background-color: #703636; -fx-background-radius: 10"));
+
+            basicShapeLabel.setOnMouseClicked(mouseEvent -> {
+                Power originalBasicShape = powerShapes.stream().filter(a -> a.getShapeName().equals(p)).findFirst().get();
+
+                //UUID toPut = UUID.randomUUID();
+
+                Power shapeToAdd = smallGridCanvas.getCompositionShape().addPowerShape(originalBasicShape.getUUID().toString());
+                shapeToAdd.setOnMouseClicked(mouseEvent1 -> {
+                    toAddTo.getChildren().clear();
+                    toAddTo.getChildren().addAll(shapeToAdd.getRealTranslationSection());
+                });
+
+                smallGridCanvas.addPowerShape(shapeToAdd);
+
+            });
+
+            horizontal.getChildren().add(basicShapeLabel);
+            basicShapeLabel.setMinWidth(Region.USE_PREF_SIZE);
+
+        });
+
         getCompositionShapesStringArray().forEach(p -> {
             Label compositionShapeLabel = new Label(p);
             compositionShapeLabel.setPadding(new Insets(5));
@@ -274,6 +311,29 @@ public class NewShapeRuleEditor {
 
         });
 
+
+        getParametricShapesStringArray().forEach(p -> {
+            Label compositionShapeLabel = new Label(p);
+            compositionShapeLabel.setPadding(new Insets(5));
+            compositionShapeLabel.setStyle("-fx-background-color: #5F3670; -fx-background-radius: 10");
+            compositionShapeLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
+            compositionShapeLabel.setTextFill(Color.WHITE);
+
+            compositionShapeLabel.setOnMouseEntered(mouseEvent -> compositionShapeLabel.setStyle("-fx-background-color: #F967A8; -fx-background-radius: 10"));
+
+            compositionShapeLabel.setOnMouseExited(mouseEvent -> compositionShapeLabel.setStyle("-fx-background-color: #5F3670; -fx-background-radius: 10"));
+
+            compositionShapeLabel.setOnMouseClicked(mouseEvent -> {
+                ParametricCompositionShape originalCompositionShape = parametricCompositionShapes.stream().filter( a -> a.getShapeName().equals(p)).findFirst().get();
+
+                smallGridCanvas.addGroupParametric(smallGridCanvas.getCompositionShape().addParametricCompositionShape(originalCompositionShape), originalCompositionShape);
+
+            });
+
+            horizontal.getChildren().add(compositionShapeLabel);
+            compositionShapeLabel.setMinWidth(Region.USE_PREF_SIZE);
+
+        });
 
 
         scrollPane.setContent(horizontal);
@@ -338,6 +398,18 @@ public class NewShapeRuleEditor {
         return toReturn;
     }
 
+    private ArrayList<String> getPowerShapesStringArray(){
+        ArrayList<String> toReturn = new ArrayList<>();
+        powerShapes.forEach(p -> toReturn.add(p.getShapeName()));
+        return toReturn;
+    }
+
+    private ArrayList<String> getParametricShapesStringArray(){
+        ArrayList<String> toReturn = new ArrayList<>();
+        parametricCompositionShapes.forEach(p -> toReturn.add(p.getShapeName()));
+        return toReturn;
+    }
+
     private Pane getArrowPane(){
         VBox vBox = new VBox();
         vBox.setAlignment(Pos.CENTER);
@@ -357,10 +429,30 @@ public class NewShapeRuleEditor {
         return vBox;
     }
 
-    public static String getShapesJSON(ArrayList<BasicShape> basicShapes, ArrayList<NewCompositionShape> newCompositionShapes){
+    public static String getShapesJSON(ArrayList<BasicShape> basicShapes, ArrayList<NewCompositionShape> newCompositionShapes, ArrayList<Power> powerShapes, ArrayList<ParametricCompositionShape> parametricCompositionShapes){
         StringBuilder toReturn = new StringBuilder();
 
         basicShapes.forEach(basicShape -> {
+            toReturn.append("[\n");
+
+            toReturn.append("\"").append(basicShape.getShapeName()).append("\",\n");
+            toReturn.append("\"").append(basicShape.getShapeName()).append("\"\n");
+
+            toReturn.append("],\n");
+
+        });
+
+        powerShapes.forEach(basicShape -> {
+            toReturn.append("[\n");
+
+            toReturn.append("\"").append(basicShape.getShapeName()).append("\",\n");
+            toReturn.append("\"").append(basicShape.getShapeName()).append("\"\n");
+
+            toReturn.append("],\n");
+
+        });
+
+        parametricCompositionShapes.forEach(basicShape -> {
             toReturn.append("[\n");
 
             toReturn.append("\"").append(basicShape.getShapeName()).append("\",\n");
@@ -421,7 +513,7 @@ public class NewShapeRuleEditor {
                     "      \"type\": \"field_dropdown\",\n" +
                     "      \"name\": \"NAME\",\n" +
                     "      \"options\": [\n" +
-                    "       " + getShapesJSON(basicShapes, newCompositionShapes) +
+                    "       " + getShapesJSON(basicShapes, newCompositionShapes, powerShapes, parametricCompositionShapes) +
                     "      ]\n" +
                     "    }\n" +
                     "  ],\n" +
@@ -708,7 +800,7 @@ public class NewShapeRuleEditor {
 
         Pane toAdd = new Pane();
         shapeRule.getLeftShapeCopy().getTeste(toAdd, true, 0,0);
-        leftGrid.addGroup(toAdd, shapeRule.getLeftShapeCopy());
+        leftGrid.addGroupParametric(toAdd, shapeRule.getLeftShapeCopy());
 
 
         shapeRule.getRightShapeCopy().getBasicShapes().forEach(shape -> {
@@ -725,27 +817,9 @@ public class NewShapeRuleEditor {
 
         Pane toAddRight = new Pane();
         shapeRule.getRightShapeCopy().getTeste(toAddRight, true, 0,0);
-        rightGrid.addGroup(toAddRight, shapeRule.getRightShapeCopy());
+        rightGrid.addGroupParametric(toAddRight, shapeRule.getRightShapeCopy());
 
 
-
-/*        shapeRule.getRightCompositionShapes().forEach(newCompositionShape -> {
-            Pane toAddRight = new Pane();
-            NewCompositionShape toPut = newCompositionShape.getPaneWithBasicAndCompositionShapes(toAddRight, true, 0,0, rightTranslationSection);
-
-            toPut.setProceedWhenDeleting(a -> {
-                if(rightTranslationSection.getChildren().contains(toPut.getTranslationXSection())){
-                    rightTranslationSection.getChildren().removeAll(toPut.getTranslationXSection(), toPut.getTranslationYSection());
-                }
-
-                rightGrid.removeCompositionShapeFromList(newCompositionShape);
-
-                return 0.0;}
-            );
-
-            rightGrid.addGroup(toAddRight, newCompositionShape);
-        });
-        */
 
     }
 

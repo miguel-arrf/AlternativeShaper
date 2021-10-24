@@ -44,7 +44,7 @@ public class BasicShape implements CustomShape {
     private static final double SCALE = 40.0;
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
     private final Point2D translationOffset = new Point2D(0, 0); //-20 -60
-    private UUID uuid;
+    private final UUID uuid;
     private final Pane rectangle;
     private boolean isSelected = false;
 

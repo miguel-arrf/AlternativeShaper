@@ -23,16 +23,14 @@ public class SmallGridCanvas {
 
     private Circle circle;
 
-    private ArrayList<BasicShape> addedBasicShapes = new ArrayList<>();
-    private ArrayList<NewCompositionShape> addedNewCompositionShapes = new ArrayList<>();
 
-    private NewCompositionShape compositionShape;
+    private ParametricCompositionShape compositionShape;
 
-    public void setCompositionShape(NewCompositionShape compositionShape) {
+    public void setCompositionShape(ParametricCompositionShape compositionShape) {
         this.compositionShape = compositionShape;
     }
 
-    public NewCompositionShape getCompositionShape() {
+    public ParametricCompositionShape getCompositionShape() {
         return compositionShape;
     }
 
@@ -121,32 +119,37 @@ public class SmallGridCanvas {
         double translateXBy = basicShape.getInitialTranslation().getX() * -1;
         double translateYBy = basicShape.getHeight() * basicShape.scaleYProperty().get() + basicShape.getInitialTranslation().getY() * -1;
 
-        //translateXBy = 0;
-        //translateYBy = basicShape.getHeight();
 
         basicShape.setTranslateX(circle.getCenterX() + circle.getTranslateX() - translateXBy);
         basicShape.setTranslateY(circle.getCenterY() + circle.getTranslateY() - translateYBy);
 
         Node toAdd = basicShape.getExtendedRectangle();
 
-        //basicShape.addTranslationX(basicShape.getInitialTranslation().getX());
-        //basicShape.translateXProperty.setValue(basicShape.getInitialTranslation().getX());
-        //basicShape.writeTranslateX.apply(basicShape.getInitialTranslation().getX());
-
         pane.getChildren().add(toAdd);
 
         toAdd.setId("shape:" + uuid.toString());
 
-        addedBasicShapes.add(basicShape);
     }
 
-    public void removeBasicShapeFromList(BasicShape toRemove){
-        addedBasicShapes.remove(toRemove);
+    public void addPowerShape(Power power){
+
+        double translateXBy = power.getInitialTranslation().getX() * -1;
+        double translateYBy = power.getInitialTranslation().getY() * -1;
+
+        Node toAdd = power.getEditorVisualization();
+
+        System.err.println("vou adicionar power shape!");
+        power.setTranslateX(circle.getCenterX() + circle.getTranslateX() - translateXBy);
+        power.setTranslateY(circle.getCenterY() + circle.getTranslateY() - translateYBy);
+
+
+        pane.getChildren().add(toAdd);
+        //basicShapes.add(basicShape);
+        toAdd.setId("shape:" + power.getUuid().toString());
+
     }
 
-    public void removeCompositionShapeFromList(NewCompositionShape toRemove){
-        addedNewCompositionShapes.remove(toRemove);
-    }
+
 
     public void removeShapeWithID(UUID id){
         pane.getChildren().removeIf( p -> {
@@ -159,13 +162,18 @@ public class SmallGridCanvas {
 
     }
 
+    public void addGroupParametric(Pane basicShape, ParametricCompositionShape compositionShape) {
+        basicShape.setTranslateX(basicShape.getTranslateX() + circle.getCenterX() + circle.getTranslateX());
+        basicShape.setTranslateY(basicShape.getTranslateY() + circle.getCenterY() + circle.getTranslateY());
+        basicShape.setId("shape");
+        pane.getChildren().add(basicShape);
+    }
+
     public void addGroup(Pane basicShape, NewCompositionShape compositionShape) {
         basicShape.setTranslateX(basicShape.getTranslateX() + circle.getCenterX() + circle.getTranslateX());
         basicShape.setTranslateY(basicShape.getTranslateY() + circle.getCenterY() + circle.getTranslateY());
         basicShape.setId("shape");
         pane.getChildren().add(basicShape);
-
-        addedNewCompositionShapes.add(compositionShape);
     }
 
 
@@ -184,7 +192,6 @@ public class SmallGridCanvas {
 
     public void clearEverything(){
         redraw();
-        addedBasicShapes.clear();
         //compositionShapes.clear();
     }
 
