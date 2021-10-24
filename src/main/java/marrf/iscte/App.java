@@ -662,7 +662,7 @@ public class App extends Application {
 
             transformersBox.getChildren().clear();
 
-            Power power = new Power(getProceedWhenDeletingPowerShape());
+            Power power = new Power(null/*getProceedWhenDeletingPowerShape()*/);
             addPowerShape(power);
             selectedPower = power;
             selectedCompositionShape = null;

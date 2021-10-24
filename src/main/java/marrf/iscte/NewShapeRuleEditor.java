@@ -778,12 +778,21 @@ public class NewShapeRuleEditor {
         shapeRule.getRightShape().setTransformersBox(rightTranslationSection);
         shapeRule.getLeftShape().setTransformersBox(leftTranslationSection);
 
-
         shapeRule.setRightShapeCopy(shapeRule.getRightShape().getCopy());
         shapeRule.setLeftShapeCopy(shapeRule.getLeftShape().getCopy());
 
         leftGrid.setCompositionShape(shapeRule.getLeftShapeCopy());
         rightGrid.setCompositionShape(shapeRule.getRightShapeCopy());
+
+
+        shapeRule.getLeftShapeCopy().getPowerShapes().forEach(shape -> {
+            shape.setOnMouseClicked(mouseEvent1 -> {
+                leftTranslationSection.getChildren().clear();
+                leftTranslationSection.getChildren().addAll(shape.getRealTranslationSection());
+            });
+
+            leftGrid.addPowerShape(shape);
+        });
 
 
         shapeRule.getLeftShapeCopy().getBasicShapes().forEach(shape -> {
@@ -794,8 +803,6 @@ public class NewShapeRuleEditor {
             });
 
             leftGrid.addShape(shape, UUID.randomUUID());
-
-
         });
 
         Pane toAdd = new Pane();
@@ -804,16 +811,23 @@ public class NewShapeRuleEditor {
 
 
         shapeRule.getRightShapeCopy().getBasicShapes().forEach(shape -> {
-
             shape.setOnMouseClicked(mouseEvent1 -> {
                 rightTranslationSection.getChildren().clear();
                 rightTranslationSection.getChildren().addAll(shape.getTranslationXSection(), shape.getTranslationYSection());
             });
 
             rightGrid.addShape(shape, UUID.randomUUID());
-
-
         });
+
+        shapeRule.getRightShapeCopy().getPowerShapes().forEach(shape -> {
+            shape.setOnMouseClicked(mouseEvent1 -> {
+                rightTranslationSection.getChildren().clear();
+                rightTranslationSection.getChildren().addAll(shape.getRealTranslationSection());
+            });
+
+            rightGrid.addPowerShape(shape);
+        });
+
 
         Pane toAddRight = new Pane();
         shapeRule.getRightShapeCopy().getTeste(toAddRight, true, 0,0);
@@ -1029,8 +1043,6 @@ public class NewShapeRuleEditor {
     private void selectTheFirstProcess(){
         currentShapeRule = shapeRules.get(0);
         nameTextField.setText(currentShapeRule.getShapeRuleName());
-
-
 
         loadShapeRule();
     }

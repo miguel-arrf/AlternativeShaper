@@ -360,10 +360,11 @@ public class Power implements CustomShape, ShapeWithVariables{
         setUpTranslationXBox();
     }
 
-    public Power(Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY) {
+    public Power(Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Node, Double> proceedWhenDeleting) {
         this.name = name;
         this.uuid = uuid;
 
+        this.proceedWhenDeleting = proceedWhenDeleting;
 
         this.writeTranslationXParametric = parametricXTranslation;
         this.writeTranslationYParametric = parametricYTranslation;
@@ -479,6 +480,7 @@ public class Power implements CustomShape, ShapeWithVariables{
     }
 
     private Function<String, Double> proceedWhenDeletingFromThumbnail;
+    private Function<Node, Double> proceedWhenDeleting;
 
     public Power(Function<String, Double> proceedWhenDeletingFromThumbnail){
         writeTranslateX = a -> 0.0;
@@ -622,6 +624,32 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         centerGroup.setTranslateX(0);
         centerGroup.setTranslateY(0);
+
+
+
+        if(proceedWhenDeleting != null){
+            ContextMenu contextMenu = new ContextMenu();
+            contextMenu.setId("betterMenuItem");
+
+            MenuItem menuItem = new MenuItem("Delete");
+            menuItem.setStyle("-fx-text-fill: red");
+            contextMenu.getItems().add(menuItem);
+
+            menuItem.setOnAction(actionEvent -> {
+                System.err.println("VOU APAGAR AQUI!");
+
+                proceedWhenDeleting.apply(centerGroup);
+                ((Pane) centerGroup.getParent()).getChildren().remove(centerGroup);
+            });
+
+            centerGroup.setOnContextMenuRequested(contextMenuEvent -> {
+                contextMenu.show(centerGroup, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+            });
+
+        }
+
+
+
         return centerGroup;
     }
 
@@ -1138,7 +1166,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         ContextMenu contextMenu = new ContextMenu();
         contextMenu.setId("betterMenuItem");
 
-        MenuItem menuItem = new MenuItem("Delete Composition Shape Item");
+        MenuItem menuItem = new MenuItem("Delete Power Shape Item");
         menuItem.setStyle("-fx-text-fill: red");
         contextMenu.getItems().add(menuItem);
 

@@ -486,7 +486,7 @@ public class ParametricCompositionShape implements CustomShape {
         powerShapesXTranslation.add(translationX);
         powerShapesYTranslation.add(translationY);
 
-        return orchestrator.getCopyOfParametricPowerShape(powerShapeID,parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(powerShapeID));
+        return orchestrator.getCopyOfParametricPowerShape(powerShapeID,parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeletingPowerShape_Novo(powerShapeID));
     }
 
     public Power addPowerShapeWithTranslation(String powerShapeID,double xTranslation, double yTranslation, String parametricX, String parametricY){
@@ -502,7 +502,7 @@ public class ParametricCompositionShape implements CustomShape {
         powerShapesXTranslation.add(translationX);
         powerShapesYTranslation.add(translationY);
 
-        return orchestrator.getCopyOfParametricPowerShape(powerShapeID,parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(powerShapeID));
+        return orchestrator.getCopyOfParametricPowerShape(powerShapeID,parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeletingPowerShape_Novo(powerShapeID));
 
     }
 
@@ -518,7 +518,7 @@ public class ParametricCompositionShape implements CustomShape {
             Coiso<String> parametricXTranslation = powerShapesXParametricTranslation.get(position);
             Coiso<String> parametricYTranslation = powerShapesYParametricTranslation.get(position);
 
-            basicShapes.add(orchestrator.getCopyOfParametricPowerShape(information.getId(),parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(information.getId())));
+            basicShapes.add(orchestrator.getCopyOfParametricPowerShape(information.getId(),parametricXTranslation.getConsumer(), parametricYTranslation.getConsumer(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeletingPowerShape_Novo(information.getId())));
         });
 
 
@@ -558,6 +558,19 @@ public class ParametricCompositionShape implements CustomShape {
     }
 
     private Function<String, Double> getProceedWhenDeletingPowerShape(String basicShapeID) {
+        return a -> {
+            Coiso<Double> xTranslationToRemove = powerShapesXTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
+            Coiso<Double> yTranslationToRemove = powerShapesYTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
+            powerShapesXTranslation.remove(xTranslationToRemove);
+            powerShapesYTranslation.remove(yTranslationToRemove);
+            System.err.println("VIM AQUI PARA APAGAR!");
+            proceedToRedrawWhenDeleting.apply(null);
+            return null;
+        };
+    }
+
+
+    private Function<Node, Double> getProceedWhenDeletingPowerShape_Novo(String basicShapeID) {
         return a -> {
             Coiso<Double> xTranslationToRemove = powerShapesXTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
             Coiso<Double> yTranslationToRemove = powerShapesYTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();

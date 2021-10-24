@@ -1,6 +1,7 @@
 package marrf.iscte;
 
 import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
@@ -131,7 +132,7 @@ public class Orchestrator {
         return toReturn;
     }
 
-    public Power getCopyOfParametricPowerShape(String id,Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting){
+    public Power getCopyOfParametricPowerShape(String id,Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Node, Double> proceedWhenDeleting){
         Power toReturn = null;
 
         Optional<Power> shape = powerShapes.stream().filter(s -> s.getUUID().toString().equals(id)).findFirst();
@@ -139,9 +140,8 @@ public class Orchestrator {
         if(shape.isPresent()){
             Power toCopyFrom = shape.get();
 
-            toReturn = new Power(parametricXTranslation, parametricYTranslation,  toCopyFrom.getShapeName(), toCopyFrom.getUUID(), toCopyFrom.getHasLeft(), toCopyFrom.getHasRight(), toCopyFrom.getLeftHasVariable(), toCopyFrom.getRightHasVariable(), toCopyFrom.getCenterHasVariable(), toCopyFrom.getRightVariable(), toCopyFrom.getLeftVariable(), toCopyFrom.getCenterVariable(), toCopyFrom.getLeftValue(), toCopyFrom.getRightValue(), toCopyFrom.getRightTranslation(), toCopyFrom.getLeftTranslation(), writeTranslateX, writeTranslateY);
+            toReturn = new Power(parametricXTranslation, parametricYTranslation,  toCopyFrom.getShapeName(), toCopyFrom.getUUID(), toCopyFrom.getHasLeft(), toCopyFrom.getHasRight(), toCopyFrom.getLeftHasVariable(), toCopyFrom.getRightHasVariable(), toCopyFrom.getCenterHasVariable(), toCopyFrom.getRightVariable(), toCopyFrom.getLeftVariable(), toCopyFrom.getCenterVariable(), toCopyFrom.getLeftValue(), toCopyFrom.getRightValue(), toCopyFrom.getRightTranslation(), toCopyFrom.getLeftTranslation(), writeTranslateX, writeTranslateY, proceedWhenDeleting);
         }
-
 
         return toReturn;
     }
@@ -214,7 +214,7 @@ public class Orchestrator {
                 JSONObject processJSON = iterator.next();
 
                 String name = (String) processJSON.get("name");
-                Double value = (Double) processJSON.get("value");
+                String value = (String) processJSON.get("value");
 
                 Variable variableToAdd = new Variable(name, value);
                 variables.add(variableToAdd);
@@ -337,6 +337,8 @@ public class Orchestrator {
 
             newCompositionShape.addNewCompositionShapeWithTranslation(position, translationX, translationY, UUID.randomUUID().toString(), parametricX, parametricY);
         });
+
+        //TODO we are not adding parametric shapes inside other parametric shapes!
 
         return newCompositionShape;
     }
@@ -591,6 +593,7 @@ public class Orchestrator {
             e.printStackTrace();
         }
 
+        this.newCompositionShapes.addAll(newCompositionShapes);
         return newCompositionShapes;
     }
 

@@ -142,7 +142,6 @@ public class BasicShape implements CustomShape {
         Background background = new Background(backgroundFill);
         rectangle.setBackground(background);
 
-
         setUpComponents();
     }
 
