@@ -143,7 +143,7 @@ public class StartMenu extends Application {
     }
 
     private void getBasicShape(){
-        Image basicPlus = new Image(App.class.getResource("/icons/plus.png").toExternalForm());
+        Image basicPlus = new Image(App.class.getResource("/icons/icons8-plus-math-96.png").toExternalForm());
         ImageView basicPlusImageView = new ImageView(basicPlus);
         basicPlusImageView.setSmooth(true);
         basicPlusImageView.setPreserveRatio(true);

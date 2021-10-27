@@ -1,5 +1,5 @@
 <component name="ArtifactManager">
-  <artifact type="jar" name="alternativeShaper:jar">
+  <artifact type="jar" build-on-make="true" name="alternativeShaper:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/alternativeShaper_jar</output-path>
     <root id="archive" name="alternativeShaper.jar">
       <element id="directory" name="META-INF">

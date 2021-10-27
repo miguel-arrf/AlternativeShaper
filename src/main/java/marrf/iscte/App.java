@@ -16,6 +16,7 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Dragboard;
@@ -349,7 +350,10 @@ public class App extends Application {
     private Pane getAddParametricCompositionShape(){
 
 
-        HBox complexShapeVBox = getButtonWith_Label_Color_Image("Add Parametric Shape", "#644832", "#F2C94C", "plus.png");
+        HBox complexShapeVBox = getButtonWith_Label_Color_Image("Parametric Shape", "#644832", "#F2C94C", "icons8-plus-math-96.png", 10);
+
+        complexShapeVBox.setMaxHeight(50);
+        complexShapeVBox.setPrefHeight(50);
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new Parametric composition shape!");
@@ -372,15 +376,15 @@ public class App extends Application {
             sideBarThumbnails.add(selectedParametricCompositionShape);
         });
 
-        complexShapeVBox.setMaxHeight(50);
-        complexShapeVBox.setPrefHeight(50);
-        complexShapeVBox.setMinHeight(30);
+        complexShapeVBox.setPrefWidth(180);
+        complexShapeVBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(complexShapeVBox, Priority.ALWAYS);
 
         return  complexShapeVBox;
     }
 
     public void addBasicAndComplexButtons(){
-        HBox basicShapeVBox = getButtonWith_Label_Color_Image("Add Basic Shape", "#355765", "#56CCF2", "plus.png");
+        HBox basicShapeVBox = getButtonWith_Label_Color_Image("Add Basic Shape", "#355765", "#56CCF2", "icons8-plus-math-96.png");
 
         basicShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new basic shape!");
@@ -403,7 +407,7 @@ public class App extends Application {
 
 
 
-        HBox complexShapeVBox = getButtonWith_Label_Color_Image("Add Composition Shape", "#644832", "#F2C94C", "plus.png");
+        HBox complexShapeVBox = getButtonWith_Label_Color_Image("Add Composition Shape", "#644832", "#F2C94C", "icons8-plus-math-96.png");
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new composition shape!");
@@ -438,30 +442,28 @@ public class App extends Application {
 
 
 
-        /*HBox otherEditorsButton = getButtonWith_Label_Color_Image("Other editors", "#472953", "#ff8ad8", "plus.png");
-        otherEditorsButton.setMaxHeight(50);
-        otherEditorsButton.setPrefHeight(50);
+        HBox parametricShapes = getButtonWith_Label_Color_Image("Parametric Shapes", "#472953", "#ff8ad8", "icons8-chevron-down-96.png", 10);
+        parametricShapes.setMaxHeight(50);
+        parametricShapes.setPrefHeight(50);
 
-        CustomMenuItem shapeRuleEditorMenuItem = new CustomMenuItem(getShapeRuleButton());
-        CustomMenuItem processEditorMenuItem = new CustomMenuItem(getProcessButton());
+        CustomMenuItem powerShapeMenuItem = new CustomMenuItem(getAddPowerButton());
+        CustomMenuItem compositionShapeEditorMenuItem = new CustomMenuItem(getAddParametricCompositionShape());
 
+        ContextMenu contextMenuParametric = new ContextMenu();
+        contextMenuParametric.setId("testeCoiso");
+        contextMenuParametric.getItems().addAll(compositionShapeEditorMenuItem, powerShapeMenuItem);
 
-        ContextMenu contextMenuEditors = new ContextMenu();
-        contextMenuEditors.setId("testeCoiso");
-        contextMenuEditors.getItems().addAll(shapeRuleEditorMenuItem, processEditorMenuItem);
+        parametricShapes.setOnMouseClicked(mouseEvent -> contextMenuParametric.show(parametricShapes, mouseEvent.getScreenX(), mouseEvent.getScreenY()));
 
-        otherEditorsButton.setOnMouseClicked(mouseEvent -> contextMenuEditors.show(otherEditorsButton, mouseEvent.getScreenX(), mouseEvent.getScreenY()));
-
-
-
-
-        HBox shapeAndProcessBox = new HBox(otherEditorsButton);
-        shapeAndProcessBox.setSpacing(20);*/
+        HBox parametricShapesMenu = new HBox(parametricShapes);
+        parametricShapesMenu.setSpacing(20);
 
 
 
 
-        HBox moreOptionsButton = getButtonWith_Label_Color_Image("More options", "#355765", "#56CCF2", "plus.png");
+
+
+        HBox moreOptionsButton = getButtonWith_Label_Color_Image("More options", "#355765", "#56CCF2", "icons8-chevron-down-96.png", 10, -0.5);
         moreOptionsButton.setMaxHeight(50);
         moreOptionsButton.setPrefHeight(50);
 
@@ -476,13 +478,11 @@ public class App extends Application {
 
         moreOptionsButton.setOnMouseClicked(mouseEvent -> contextMenu.show(moreOptionsButton, mouseEvent.getScreenX(), mouseEvent.getScreenY()));
 
-
-
-
         HBox designViewerAndVariablesEditor = new HBox(moreOptionsButton);
         designViewerAndVariablesEditor.setSpacing(20);
 
-        VBox buttons = new VBox(saveHB,getAddParametricCompositionShape(), getAddPowerButton(), /*shapeAndProcessBox,*/ getSeparator(),designViewerAndVariablesEditor, getSeparator());
+
+        VBox buttons = new VBox(saveHB,/*getAddParametricCompositionShape(), getAddPowerButton(),*/ /*shapeAndProcessBox,*/ parametricShapesMenu, getSeparator(),designViewerAndVariablesEditor, getSeparator());
         buttons.setSpacing(15);
         buttons.setAlignment(Pos.CENTER);
 
@@ -538,6 +538,49 @@ public class App extends Application {
 
         return complexShapeHBox;
     }
+
+
+    public static HBox getButtonWith_Label_Color_Image(@NamedArg("label") String label, @NamedArg("background color") String backgroundColor,@NamedArg("label color") String labelColor, @NamedArg("image name") String imageLocation, @NamedArg("corner radius") int cornerRadius, double hue){
+        Image complexPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/" + imageLocation)).toExternalForm());
+        ImageView complexPlusImageView = new ImageView(complexPlus);
+        complexPlusImageView.setSmooth(true);
+        complexPlusImageView.setPreserveRatio(true);
+        complexPlusImageView.setFitWidth(16);
+
+        ColorAdjust colorAdjust = new ColorAdjust();
+        colorAdjust.setHue(hue);
+        complexPlusImageView.setEffect(colorAdjust);
+
+        Label complexShape = new Label(label);
+        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        complexShape.setTextFill(Color.web(labelColor));
+
+        HBox complexShapeHBox = new HBox(complexPlusImageView, complexShape);
+        complexShapeHBox.setAlignment(Pos.CENTER);
+        complexShapeHBox.setSpacing(5);
+        complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius);
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
+
+        complexShapeHBox.setOnMouseEntered(mouseEvent -> {
+            complexShapeHBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: " + cornerRadius);
+        });
+
+        complexShapeHBox.setOnMouseExited(mouseEvent -> {
+            complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius);
+        });
+
+
+        complexShape.setMinHeight(30);
+
+        return complexShapeHBox;
+    }
+
+
+
+
+
+
 
     public static HBox getButtonWith_Label_Color_Image(@NamedArg("label") String label, @NamedArg("background color") String backgroundColor,@NamedArg("label color") String labelColor, @NamedArg("image name") String imageLocation){
         Image complexPlus = new Image(Objects.requireNonNull(App.class.getResource("/icons/" + imageLocation)).toExternalForm());
@@ -644,7 +687,7 @@ public class App extends Application {
     }
 
     private Pane getAddPowerButton(){
-        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Add Power", "#2A2953", "#8194F4", "editorViewerIcon.png");
+        HBox complexShapeHBox = getButtonWith_Label_Color_Image("Power", "#2A2953", "#8194F4", "editorViewerIcon.png", 10);
 
         complexShapeHBox.setMaxHeight(50);
         complexShapeHBox.setPrefHeight(50);
@@ -673,6 +716,10 @@ public class App extends Application {
             transformersBox.getChildren().add(power.getTranslationXSection());
 
         });
+
+        complexShapeHBox.setPrefWidth(180);
+        complexShapeHBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
 
         return complexShapeHBox;
     }
@@ -1448,21 +1495,13 @@ public class App extends Application {
     }
 
     private Pane getSaveButtonSection(){
-        Label saveLabel = new Label("Save");
-        saveLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 20));
-        saveLabel.setTextFill(Color.web("#6FCF97"));
+        HBox saveHB = getButtonWith_Label_Color_Image("Save", "#3C5849", "#6FCF97", "icons8-save-96.png", 20);
 
-        HBox saveHB = new HBox(saveLabel);
         saveHB.setPadding(new Insets(10));
         saveHB.setAlignment(Pos.CENTER);
         saveHB.setMaxHeight(50);
         saveHB.setPrefHeight(50);
 
-        saveHB.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 20");
-
-        saveHB.setOnMouseEntered(event -> saveHB.setStyle("-fx-background-color: #078D55;-fx-background-radius: 20"));
-
-        saveHB.setOnMouseExited(event -> saveHB.setStyle("-fx-background-color: #3C5849;-fx-background-radius: 20"));
 
         saveHB.setOnMouseClicked(mouseEvent -> saveCurrentShape());
 
