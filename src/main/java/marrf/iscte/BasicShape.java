@@ -20,6 +20,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import org.apache.commons.lang3.SystemUtils;
 
 import javax.imageio.ImageIO;
@@ -37,6 +38,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static marrf.iscte.App.getButtonWith_Label_Color_Image;
 import static marrf.iscte.App.horizontalGrower;
 
 public class BasicShape implements CustomShape {
@@ -66,12 +68,15 @@ public class BasicShape implements CustomShape {
     private HBox widthSection;
     private HBox heightSection;
     private HBox colorSection;
+    private HBox imageSection;
 
     private HBox translationXSection;
     private HBox translationYSection;
 
     private double width;
     private double height;
+
+    private Image selectedImage;
 
     private Color color;
     private String shapeName = "defaultName";
@@ -92,6 +97,14 @@ public class BasicShape implements CustomShape {
 
     public void setHorizontalParametricTranslation(String horizontalParametricTranslation) {
         this.horizontalParametricTranslation = horizontalParametricTranslation;
+    }
+
+    public Image getSelectedImage() {
+        return selectedImage;
+    }
+
+    public Color getColor() {
+        return color;
     }
 
     public void setShapeName(String shapeName) {
@@ -122,7 +135,7 @@ public class BasicShape implements CustomShape {
         return horizontalParametricTranslation;
     }
 
-    public BasicShape(double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting) {
+    public BasicShape(double width, double height, Color color,Image selectedImage, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting) {
         uuid = UUID.randomUUID();
 
         this.proceedWhenDeleting = proceedWhenDeleting;
@@ -134,18 +147,25 @@ public class BasicShape implements CustomShape {
         this.height = height;
 
         this.color = color;
+        this.selectedImage = selectedImage;
 
         rectangle = new Pane();
         rectangle.setPrefSize(width, height);
 
-        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
-        Background background = new Background(backgroundFill);
-        rectangle.setBackground(background);
+        if (selectedImage != null){
+            BackgroundImage backgroundImage = new BackgroundImage(selectedImage, BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
+            Background background = new Background(backgroundImage);
+            rectangle.setBackground(background);
+        }else{
+            BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+            Background background = new Background(backgroundFill);
+            rectangle.setBackground(background);
+        }
 
         setUpComponents();
     }
 
-    public BasicShape(boolean isParametricBasicShape,Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting, String name) {
+    public BasicShape(boolean isParametricBasicShape,Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, double width, double height, Color color, Image selectedImage, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting, String name) {
         uuid = UUID.randomUUID();
 
         this.proceedWhenDeleting = proceedWhenDeleting;
@@ -165,13 +185,20 @@ public class BasicShape implements CustomShape {
         this.height = height;
 
         this.color = color;
+        this.selectedImage = selectedImage;
 
         rectangle = new Pane();
         rectangle.setPrefSize(width, height);
 
-        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
-        Background background = new Background(backgroundFill);
-        rectangle.setBackground(background);
+        if (selectedImage != null){
+            BackgroundImage backgroundImage = new BackgroundImage(selectedImage, BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
+            Background background = new Background(backgroundImage);
+            rectangle.setBackground(background);
+        }else{
+            BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+            Background background = new Background(backgroundFill);
+            rectangle.setBackground(background);
+        }
 
         this.isParametricBasicShape = isParametricBasicShape;
         setUpComponents();
@@ -180,7 +207,7 @@ public class BasicShape implements CustomShape {
         setUpHorizontalParametricTranslationSectionBox();
     }
 
-    public BasicShape(double width, double height, Color color, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting, String name) {
+    public BasicShape(double width, double height, Color color, Image selectedImage,  Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Pane, Double> proceedWhenDeleting, String name) {
         uuid = UUID.randomUUID();
 
         this.proceedWhenDeleting = proceedWhenDeleting;
@@ -194,13 +221,20 @@ public class BasicShape implements CustomShape {
         this.height = height;
 
         this.color = color;
+        this.selectedImage = selectedImage;
 
         rectangle = new Pane();
         rectangle.setPrefSize(width, height);
 
-        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
-        Background background = new Background(backgroundFill);
-        rectangle.setBackground(background);
+        if (selectedImage != null){
+            BackgroundImage backgroundImage = new BackgroundImage(selectedImage, BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
+            Background background = new Background(backgroundImage);
+            rectangle.setBackground(background);
+        }else{
+            BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+            Background background = new Background(backgroundFill);
+            rectangle.setBackground(background);
+        }
 
 
         setUpComponents();
@@ -210,7 +244,7 @@ public class BasicShape implements CustomShape {
         return new Point2D(writeTranslateX.apply(null), writeTranslateY.apply(null));
     }
 
-    public BasicShape(double width, double height, Color color, Function<String, Double> proceedWhenDeletingFromThumbnail) {
+    public BasicShape(double width, double height, Color color,Image selectedImage, Function<String, Double> proceedWhenDeletingFromThumbnail) {
         uuid = UUID.randomUUID();
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
 
@@ -218,6 +252,7 @@ public class BasicShape implements CustomShape {
         this.height = height;
 
         this.color = color;
+        this.selectedImage = selectedImage;
 
         rectangle = new Pane();
         rectangle.setPrefSize(width, height);
@@ -225,19 +260,27 @@ public class BasicShape implements CustomShape {
         writeTranslateX = a -> 0.0;
         writeTranslateY = a -> 0.0;
 
-        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
-        Background background = new Background(backgroundFill);
-        rectangle.setBackground(background);
+        if (selectedImage != null){
+            BackgroundImage backgroundImage = new BackgroundImage(selectedImage, BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
+            Background background = new Background(backgroundImage);
+            rectangle.setBackground(background);
+        }else{
+            BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+            Background background = new Background(backgroundFill);
+            rectangle.setBackground(background);
+        }
+
         setUpComponents();
     }
 
-    public BasicShape(double width, double height, Color color) {
+    public BasicShape(double width, double height, Color color, Image selectedImage) {
         uuid = UUID.randomUUID();
 
         this.width = width;
         this.height = height;
 
         this.color = color;
+        this.selectedImage = selectedImage;
 
         rectangle = new Pane();
         rectangle.setPrefSize(width, height);
@@ -245,13 +288,20 @@ public class BasicShape implements CustomShape {
         writeTranslateX = a -> 0.0;
         writeTranslateY = a -> 0.0;
 
-        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
-        Background background = new Background(backgroundFill);
-        rectangle.setBackground(background);
+        if (selectedImage != null){
+            BackgroundImage backgroundImage = new BackgroundImage(selectedImage, BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
+            Background background = new Background(backgroundImage);
+            rectangle.setBackground(background);
+        }else{
+            BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+            Background background = new Background(backgroundFill);
+            rectangle.setBackground(background);
+        }
+
         setUpComponents();
     }
 
-    public BasicShape(double width, double height, Color color, UUID id, String name){
+    public BasicShape(double width, double height, Color color, Image selectedImage, UUID id, String name){
         uuid = id;
         shapeName = name;
 
@@ -259,6 +309,7 @@ public class BasicShape implements CustomShape {
         this.height = height;
 
         this.color = color;
+        this.selectedImage = selectedImage;
 
         rectangle = new Pane();
         rectangle.setPrefSize(width, height);
@@ -266,9 +317,16 @@ public class BasicShape implements CustomShape {
         writeTranslateX = a -> 0.0;
         writeTranslateY = a -> 0.0;
 
-        BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
-        Background background = new Background(backgroundFill);
-        rectangle.setBackground(background);
+        if (selectedImage != null){
+            BackgroundImage backgroundImage = new BackgroundImage(selectedImage, BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
+            Background background = new Background(backgroundImage);
+            rectangle.setBackground(background);
+        }else{
+            BackgroundFill backgroundFill = new BackgroundFill(color, new CornerRadii(0), new Insets(0));
+            Background background = new Background(backgroundFill);
+            rectangle.setBackground(background);
+        }
+
         setUpComponents();
     }
 
@@ -291,6 +349,10 @@ public class BasicShape implements CustomShape {
 
     public HBox getWidthSection() {
         return widthSection;
+    }
+
+    public HBox getImageSection() {
+        return imageSection;
     }
 
     public HBox getColorSection(){
@@ -328,14 +390,48 @@ public class BasicShape implements CustomShape {
             Background background = new Background(backgroundFill);
             rectangle.setBackground(background);
             color = newValue;
+            selectedImage = null;
         });
 
         colorSection = new HBox(colorLabel, horizontalGrower(),colorPicker);
         colorSection.setPadding(new Insets(10, 10, 10, 15));
         colorSection.setAlignment(Pos.CENTER_LEFT);
-        colorSection.setMinHeight(30);
+        colorSection.setMinHeight(50);
 
-        colorSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        colorSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
+        HBox.setHgrow(colorSection, Priority.ALWAYS);
+
+    }
+
+    public void setUpImageBox(){
+        Label colorLabel = new Label("Image:");
+        colorLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        colorLabel.setTextFill(Color.web("#BDBDBD"));
+
+        FileChooser fileChooser = new FileChooser();
+
+        Pane selectImage = getButtonWith_Label_Color_Image("Select Image", "#355C65", "#56CDF2", "process.png", 10);
+        selectImage.setOnMouseClicked(event -> {
+            File file = fileChooser.showOpenDialog(selectImage.getParent().getScene().getWindow());
+            if (file != null){
+                System.out.println("we have a file!: " + file.toURI().toString());
+                Image image = new Image(file.toURI().toString());
+                BackgroundImage backgroundImage = new BackgroundImage(image, BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
+                Background background = new Background(backgroundImage);
+                rectangle.setBackground(background);
+                color = null;
+                selectedImage = image;
+            }
+        });
+
+
+        imageSection = new HBox(colorLabel, horizontalGrower(),selectImage);
+        imageSection.setPadding(new Insets(10, 10, 10, 15));
+        imageSection.setAlignment(Pos.CENTER_LEFT);
+        imageSection.setMinHeight(30);
+
+        imageSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
+        HBox.setHgrow(imageSection, Priority.ALWAYS);
     }
 
     public void setUpHorizontalParametricTranslationSectionBox() {
@@ -364,7 +460,7 @@ public class BasicShape implements CustomShape {
         horizontalParametricTranslationSection.setPadding(new Insets(10, 10, 10, 15));
         horizontalParametricTranslationSection.setAlignment(Pos.CENTER_LEFT);
         horizontalParametricTranslationSection.setMinHeight(30);
-        horizontalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        horizontalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         horizontalParametricTranslationSection.setSpacing(20);
 
     }
@@ -396,7 +492,7 @@ public class BasicShape implements CustomShape {
         verticalParametricTranslationSection.setPadding(new Insets(10, 10, 10, 15));
         verticalParametricTranslationSection.setAlignment(Pos.CENTER_LEFT);
         verticalParametricTranslationSection.setMinHeight(30);
-        verticalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        verticalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         verticalParametricTranslationSection.setSpacing(20);
 
     }
@@ -467,7 +563,7 @@ public class BasicShape implements CustomShape {
         widthSection.setMinHeight(30);
         widthSection.setSpacing(20);
 
-        widthSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        widthSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
 
     }
 
@@ -534,7 +630,7 @@ public class BasicShape implements CustomShape {
         heightSection.setMinHeight(30);
         heightSection.setSpacing(20);
 
-        heightSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        heightSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
     }
 
     public void setUpTranslationXBox() {
@@ -597,7 +693,7 @@ public class BasicShape implements CustomShape {
         translationXSection.setPadding(new Insets(10, 10, 10, 15));
         translationXSection.setAlignment(Pos.CENTER_LEFT);
         translationXSection.setMinHeight(30);
-        translationXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        translationXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         translationXSection.setSpacing(20);
 
     }
@@ -665,7 +761,7 @@ public class BasicShape implements CustomShape {
         translationYSection.setPadding(new Insets(10, 10, 10, 15));
         translationYSection.setAlignment(Pos.CENTER_LEFT);
         translationYSection.setMinHeight(30);
-        translationYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        translationYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         translationYSection.setSpacing(15);
 
     }
@@ -725,7 +821,13 @@ public class BasicShape implements CustomShape {
     }
 
     public Pane getThumbnail(Supplier<String> toPutIntoDragbord, Supplier<CustomShape> supplier) {
-        String colorString = colorToRGBString(this.color);
+        Color colorToUse;
+        if (this.color == null){
+            colorToUse = Color.web("rgb(79,79,79)");
+        }else{
+            colorToUse = this.color;
+        }
+        String colorString = colorToRGBString(colorToUse);
 
 
         boolean wasSelected = isStrokeOn();
@@ -774,13 +876,13 @@ public class BasicShape implements CustomShape {
 
         Label nameLabel = new Label(getShapeName());
         nameLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 12));
-        nameLabel.setTextFill(getRelativeLuminance(color));
+        nameLabel.setTextFill(getRelativeLuminance(colorToUse));
 
         Label tagLabel = new Label("Basic Shape");
         tagLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 10));
         tagLabel.setPadding(new Insets(3));
-        tagLabel.setTextFill(getRelativeLuminance(this.color.darker()));
-        tagLabel.setStyle("-fx-background-color: " + colorToRGBString(this.color.darker()) + "; -fx-background-radius: 3");
+        tagLabel.setTextFill(getRelativeLuminance(colorToUse.darker()));
+        tagLabel.setStyle("-fx-background-color: " + colorToRGBString(colorToUse.darker()) + "; -fx-background-radius: 3");
 
         nameAndTagVBox.getChildren().addAll(nameLabel, tagLabel);
 
@@ -807,7 +909,7 @@ public class BasicShape implements CustomShape {
 
         DropShadow dropShadow = new DropShadow();
         dropShadow.setRadius(10.0);
-        dropShadow.setColor(color.darker());
+        dropShadow.setColor(colorToUse.darker());
 
         thumbnail.setEffect(dropShadow);
 
@@ -815,6 +917,7 @@ public class BasicShape implements CustomShape {
     }
 
     public static Color getRelativeLuminance(Color color){
+
         double red = getNewValue(color.getRed());
         double green = getNewValue(color.getGreen());
         double blue = getNewValue(color.getBlue());
@@ -853,7 +956,7 @@ public class BasicShape implements CustomShape {
         strokeShowing = true;
     }
 
-    private void temporarilyTurnOffStroke() {
+    public void temporarilyTurnOffStroke() {
         rectangle.setStyle("");
 
         strokeShowing = false;
@@ -964,6 +1067,7 @@ public class BasicShape implements CustomShape {
         setUpHeightBox();
         setUpWidthBox();
         setUpColorBox();
+        setUpImageBox();
 
         setUpTranslationXBox();
         setUpTranslationYBox();

@@ -111,7 +111,7 @@ public class Orchestrator {
         if(shape.isPresent()){
             BasicShape toCopyFrom = shape.get();
 
-            toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY, proceedWhenDeleting, toCopyFrom.getShapeName());
+            toReturn = new BasicShape(toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), toCopyFrom.getSelectedImage(), writeTranslateX, writeTranslateY, proceedWhenDeleting, toCopyFrom.getShapeName());
         }
 
 
@@ -126,7 +126,7 @@ public class Orchestrator {
         if(shape.isPresent()){
             BasicShape toCopyFrom = shape.get();
 
-            toReturn = new BasicShape(true,parametricXTranslation, parametricYTranslation, toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), writeTranslateX, writeTranslateY, proceedWhenDeleting, toCopyFrom.getShapeName());
+            toReturn = new BasicShape(true,parametricXTranslation, parametricYTranslation, toCopyFrom.getWidth(), toCopyFrom.getHeight(), toCopyFrom.getFill(), toCopyFrom.getSelectedImage(), writeTranslateX, writeTranslateY, proceedWhenDeleting, toCopyFrom.getShapeName());
         }
 
         return toReturn;
@@ -619,7 +619,8 @@ public class Orchestrator {
                 UUID id = UUID.fromString((String) basicShapeJSON.get("id"));
 
                 //TODO There's no function being added to handle the thumbnail deletion nor other deletions...
-                BasicShape basicShape = new BasicShape(width, height, Color.web(color), id, name);
+                //TODO
+                BasicShape basicShape = new BasicShape(width, height, Color.web(color), null, id, name);
                 basicShapes.add(basicShape);
             }
 
@@ -658,7 +659,7 @@ public class Orchestrator {
 
             jsonObject.put("id", basicShape.getUUID().toString());
             jsonObject.put("basic", "true");
-            jsonObject.put("color", basicShape.getFill().toString());
+            jsonObject.put("color", basicShape.getFill() != null ? basicShape.getFill().toString() : basicShape.getSelectedImage().getUrl());
             jsonObject.put("width", basicShape.getWidth());
             jsonObject.put("height", basicShape.getHeight());
             jsonObject.put("name", basicShape.getShapeName());
@@ -834,10 +835,20 @@ public class Orchestrator {
         toReturn.append("]).");
 
         basicShapes.forEach(basicShape -> {
-            Rectangle toExport = new Rectangle(basicShape.getWidth(), basicShape.getHeight());
-            toExport.setFill(basicShape.getFill());
+            //Rectangle toExport = new Rectangle(basicShape.getWidth(), basicShape.getHeight());
+            //toExport.setFill(basicShape.getFill());
+            Pane toExport = basicShape.getRectangle();
+
+            if (basicShape.isSelected()){
+                basicShape.temporarilyTurnOffStroke();
+            }
 
             WritableImage image = toExport.snapshot(new SnapshotParameters(), null);
+
+            if (basicShape.isSelected()){
+                basicShape.turnOnStroke();
+            }
+
             try {
                 File toSave = new File(path + "/shapes/" + basicShape.getShapeName() + ".gif");
 

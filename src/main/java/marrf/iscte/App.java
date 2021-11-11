@@ -65,6 +65,7 @@ public class App extends Application {
 
     private final BooleanProperty firstBasicShapeWasSaved = new SimpleBooleanProperty(false);
     private VBox mainPanel;
+    private HBox topToolbar;
     private final VBox transformersBox = new VBox();
     private final ObservableList<CustomShape> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
 
@@ -352,8 +353,6 @@ public class App extends Application {
 
         HBox complexShapeVBox = getButtonWith_Label_Color_Image("Parametric Shape", "#644832", "#F2C94C", "icons8-plus-math-96.png", 10);
 
-        complexShapeVBox.setMaxHeight(50);
-        complexShapeVBox.setPrefHeight(50);
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new Parametric composition shape!");
@@ -384,7 +383,7 @@ public class App extends Application {
     }
 
     public void addBasicAndComplexButtons(){
-        HBox basicShapeVBox = getButtonWith_Label_Color_Image("Add Basic Shape", "#355765", "#56CCF2", "icons8-plus-math-96.png");
+        HBox basicShapeVBox = getButtonWith_Label_Color_Image("Basic Shape", "#355765", "#56CCF2", "icons8-plus-math-96.png");
 
         basicShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new basic shape!");
@@ -398,7 +397,7 @@ public class App extends Application {
 
             transformersBox.getChildren().clear();
 
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc5"), getProceedWhenDeleting());
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc5"), null, getProceedWhenDeleting());
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
             selectedCompositionShape = null;
@@ -407,7 +406,7 @@ public class App extends Application {
 
 
 
-        HBox complexShapeVBox = getButtonWith_Label_Color_Image("Add Composition Shape", "#644832", "#F2C94C", "icons8-plus-math-96.png");
+        HBox complexShapeVBox = getButtonWith_Label_Color_Image("Composition Shape", "#644832", "#F2C94C", "icons8-plus-math-96.png");
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
             System.out.println("I want to add a new composition shape!");
@@ -432,19 +431,12 @@ public class App extends Application {
             sideBarThumbnails.add(selectedCompositionShape);
         });
 
-        HBox saveHB = new HBox(basicShapeVBox, complexShapeVBox);
-        saveHB.setSpacing(20);
-        saveHB.setAlignment(Pos.CENTER);
-        saveHB.setMaxHeight(50);
-        saveHB.setPrefHeight(50);
-        saveHB.setMinHeight(30);
+        HBox basicShapeAndComplex = new HBox(basicShapeVBox, complexShapeVBox);
+        basicShapeAndComplex.setSpacing(20);
+        basicShapeAndComplex.setAlignment(Pos.CENTER);
 
 
-
-
-        HBox parametricShapes = getButtonWith_Label_Color_Image("Parametric Shapes", "#472953", "#ff8ad8", "icons8-chevron-down-96.png", 10);
-        parametricShapes.setMaxHeight(50);
-        parametricShapes.setPrefHeight(50);
+        HBox parametricShapes = getButtonWith_Label_Color_Image("Parametric Shapes", "#472953", "#ff8ad8", "icons8-chevron-down-96.png");
 
         CustomMenuItem powerShapeMenuItem = new CustomMenuItem(getAddPowerButton());
         CustomMenuItem compositionShapeEditorMenuItem = new CustomMenuItem(getAddParametricCompositionShape());
@@ -464,8 +456,6 @@ public class App extends Application {
 
 
         HBox moreOptionsButton = getButtonWith_Label_Color_Image("More options", "#355765", "#56CCF2", "icons8-chevron-down-96.png", 10, -0.5);
-        moreOptionsButton.setMaxHeight(50);
-        moreOptionsButton.setPrefHeight(50);
 
         CustomMenuItem designViewerMenuItem = new CustomMenuItem(getDesignViewer());
         CustomMenuItem variableEditorMenuItem = new CustomMenuItem(getVariableEditor());
@@ -481,13 +471,16 @@ public class App extends Application {
         HBox designViewerAndVariablesEditor = new HBox(moreOptionsButton);
         designViewerAndVariablesEditor.setSpacing(20);
 
-
-        VBox buttons = new VBox(saveHB,/*getAddParametricCompositionShape(), getAddPowerButton(),*/ /*shapeAndProcessBox,*/ parametricShapesMenu, getSeparator(),designViewerAndVariablesEditor, getSeparator());
+        HBox buttons = new HBox(basicShapeAndComplex, parametricShapesMenu,designViewerAndVariablesEditor);
         buttons.setSpacing(15);
-        buttons.setAlignment(Pos.CENTER);
 
-        Pane toAdd = getSeparator();
+        firstBasicShapeWasSaved.addListener((observable, oldValue, newValue) -> {
+            if(newValue){
+                topToolbar.getChildren().add(buttons);
+            }
+        });
 
+        /*
         firstBasicShapeWasSaved.addListener((observableValue, aBoolean, t1) -> {
             if(t1){
                 for(int i = 0; i < mainPanel.getChildren().size(); i++){
@@ -503,6 +496,8 @@ public class App extends Application {
                 mainPanel.getChildren().remove(saveHB);
             }
         });
+
+         */
 
 
     }
@@ -535,6 +530,8 @@ public class App extends Application {
 
 
         complexShape.setMinHeight(30);
+        complexShapeHBox.setPadding(new Insets(0, 5, 0, 5));
+
 
         return complexShapeHBox;
     }
@@ -572,6 +569,7 @@ public class App extends Application {
 
 
         complexShape.setMinHeight(30);
+        complexShapeHBox.setPadding(new Insets(0, 10, 0, 10));
 
         return complexShapeHBox;
     }
@@ -596,18 +594,19 @@ public class App extends Application {
         HBox complexShapeHBox = new HBox(complexPlusImageView, complexShape);
         complexShapeHBox.setAlignment(Pos.CENTER);
         complexShapeHBox.setSpacing(5);
-        complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: 20");
+        complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: 10");
         HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
 
         complexShapeHBox.setOnMouseEntered(mouseEvent -> {
-            complexShapeHBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: 20");
+            complexShapeHBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: 10");
         });
 
         complexShapeHBox.setOnMouseExited(mouseEvent -> {
-            complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: 20");
+            complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: 10");
         });
 
         complexShape.setMinHeight(30);
+        complexShapeHBox.setPadding(new Insets(0, 10, 0, 10));
 
         return complexShapeHBox;
     }
@@ -630,9 +629,6 @@ public class App extends Application {
     private Pane getProcessButton(){
         HBox complexShapeHBox = getButtonWith_Label_Color_Image("Processes editor", "#355C65", "#56CDF2", "process.png", 10);
 
-        complexShapeHBox.setMaxHeight(50);
-        complexShapeHBox.setPrefHeight(50);
-
         complexShapeHBox.setOnMouseClicked(event -> {
             ProcessesEditor processesEditor = new ProcessesEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
             processesEditor.openPopup();
@@ -648,8 +644,6 @@ public class App extends Application {
     private Pane getShapeRuleButton(){
         HBox complexShapeHBox = getButtonWith_Label_Color_Image("Shape rules editor", "#472953", "#ff8ad8", "icons8-rules-96.png", 10);
 
-        complexShapeHBox.setMaxHeight(50);
-        complexShapeHBox.setPrefHeight(50);
 
         complexShapeHBox.setOnMouseClicked(event -> {
             /*ShapeRuleEditor shapeRuleEditor = new ShapeRuleEditor(scene, newCompositionShapes, basicShapesToSave, orchestrator);
@@ -670,8 +664,6 @@ public class App extends Application {
     private Pane getDesignViewer(){
         HBox complexShapeHBox = getButtonWith_Label_Color_Image("Design Viewer", "#2A2953", "#8194F4", "editorViewerIcon.png", 10);
 
-        complexShapeHBox.setMaxHeight(50);
-        complexShapeHBox.setPrefHeight(50);
 
         complexShapeHBox.setOnMouseClicked(event -> {
             DesignToProlog designToProlog = new DesignToProlog(scene);
@@ -689,8 +681,6 @@ public class App extends Application {
     private Pane getAddPowerButton(){
         HBox complexShapeHBox = getButtonWith_Label_Color_Image("Power", "#2A2953", "#8194F4", "editorViewerIcon.png", 10);
 
-        complexShapeHBox.setMaxHeight(50);
-        complexShapeHBox.setPrefHeight(50);
 
 
         complexShapeHBox.setOnMouseClicked(event -> {
@@ -727,8 +717,6 @@ public class App extends Application {
     private Pane getVariableEditor(){
         HBox complexShapeHBox = getButtonWith_Label_Color_Image("Variables Editor", "#5B4E2D", "#C6AA63", "variableIcon.png", 10);
 
-        complexShapeHBox.setMaxHeight(50);
-        complexShapeHBox.setPrefHeight(50);
 
         complexShapeHBox.setOnMouseClicked(event -> {
             VariablesEditor variablesEditor = new VariablesEditor(scene, orchestrator);
@@ -759,7 +747,11 @@ public class App extends Application {
                 transformersBox.getChildren().clear();
 
                 if(isCurrentSimple){
-                    transformersBox.getChildren().addAll(tempBasicShape.getWidthSection(), tempBasicShape.getHeightSection(), tempBasicShape.getColorSection());
+                    HBox colorAndImageSection = new HBox(tempBasicShape.getColorSection(), tempBasicShape.getImageSection());
+                    colorAndImageSection.setSpacing(10);
+                    HBox.setHgrow(colorAndImageSection, Priority.ALWAYS);
+
+                    transformersBox.getChildren().addAll(tempBasicShape.getWidthSection(), tempBasicShape.getHeightSection(), colorAndImageSection);
                 }else{
                     if(selectedParametricCompositionShape != null){
                         transformersBox.getChildren().addAll(tempBasicShape.getHorizontalParametricTranslationSection(), tempBasicShape.getVerticalParametricTranslationSection(), tempBasicShape.getTranslationXSection(), tempBasicShape.getTranslationYSection());
@@ -892,7 +884,7 @@ public class App extends Application {
             sideBarThumbnails.addAll(basicShapes);
             firstBasicShapeWasSaved.setValue(true);
         }else{
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"));
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), null);
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
         }
@@ -905,6 +897,15 @@ public class App extends Application {
         finishSetup();
 
         this.scene = scene;
+
+        topToolbar = new HBox();
+        topToolbar.setStyle("-fx-background-color: #333234; -fx-background-radius: 10");
+        topToolbar.setAlignment(Pos.CENTER_LEFT);
+        topToolbar.setPadding(new Insets(10));
+        topToolbar.setSpacing(15);
+        topToolbar.setPrefHeight(50);
+
+        BorderPane.setMargin(topToolbar, new Insets(0, 0, 25, 0));
 
         mainPanel = new VBox();
         mainPanel.setMaxWidth(500);
@@ -921,7 +922,7 @@ public class App extends Application {
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color: rgb(38,37,40); -fx-background-radius: 10; -fx-background: transparent");
 
-        mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),scrollPane, getSaveButtonSection());
+        mainPanel.getChildren().addAll(getNameSection(),scrollPane, getSaveButtonSection());
 
         transformersBox.setSpacing(20);
 
@@ -938,8 +939,14 @@ public class App extends Application {
         borderPane.setRight(mainPanel);
         borderPane.setCenter(sceneStackPane);
 
+        ScrollPane shapesScrollPane = getScrollPane();
+        BorderPane.setMargin(shapesScrollPane, new Insets(0,25,0,0));
+        borderPane.setLeft(shapesScrollPane);
 
-        BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+        borderPane.setTop(topToolbar);
+
+
+        BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), null, getProceedWhenDeleting());
         addShape(toAdd);
         basicShapesToSave.add(toAdd);
 
@@ -1003,7 +1010,7 @@ public class App extends Application {
             selectedParametricCompositionShape = null;
             selectedCompositionShape = null;
             //Ads a basic shape when we delete the last one!
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"),null, getProceedWhenDeleting());
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
             currentName.setText("defaultName");
@@ -1034,7 +1041,7 @@ public class App extends Application {
 
         if(basicShapes.size() == 0){
             //Ads a basic shape when we delete the last one!
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), null, getProceedWhenDeleting());
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
             currentName.setText("defaultName");
@@ -1130,7 +1137,7 @@ public class App extends Application {
 
         if(basicShapes.size() == 0){
             //Ads a basic shape when we delete the last one!
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), getProceedWhenDeleting());
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), null, getProceedWhenDeleting());
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
             currentName.setText("defaultName");
@@ -1238,7 +1245,7 @@ public class App extends Application {
         pane.setMinWidth(300);
 
         VBox.setVgrow(pane, Priority.ALWAYS);
-        pane.setStyle("-fx-background-color: #333234; -fx-background-radius: 20");
+        pane.setStyle("-fx-background-color: #333234; -fx-background-radius: 10");
 
         Pane grid = gridCanvas.getGrid(pane);
         grid.setClip(getCustomRectangleClip(pane));
@@ -1382,16 +1389,16 @@ public class App extends Application {
     }
 
     public static Shape getTopLeftArc(){
-        Rectangle rectangle = new Rectangle(20,20);
-        rectangle.setTranslateX(20);
+        Rectangle rectangle = new Rectangle(10,10);
+        rectangle.setTranslateX(10);
         rectangle.setFill(Color.YELLOW);
 
         Arc arc = new Arc();
 
-        arc.setCenterX(20);
-        arc.setCenterY(20);
-        arc.setRadiusX(20);
-        arc.setRadiusY(20);
+        arc.setCenterX(10);
+        arc.setCenterY(10);
+        arc.setRadiusX(10);
+        arc.setRadiusY(10);
         arc.setStartAngle(360);
         arc.setLength(90);
         arc.setType(ArcType.ROUND);
@@ -1404,12 +1411,12 @@ public class App extends Application {
     public static void getAnchorPaneClip(AnchorPane anchorPane, String color){
         Shape topLeft = getTopLeftArc();
         topLeft.setFill(Color.web(color));
-        topLeft.setTranslateX(-20);
+        topLeft.setTranslateX(-10);
         topLeft.setTranslateY(0);
 
         Shape bottomLeft = getTopLeftArc();
         bottomLeft.setRotate(-90);
-        bottomLeft.setTranslateX(-20);
+        bottomLeft.setTranslateX(-10);
         bottomLeft.setFill(Color.web(color));
 
         Shape topRight = getTopLeftArc();
@@ -1478,7 +1485,7 @@ public class App extends Application {
         nameHB.setMaxHeight(30);
         nameHB.setSpacing(10);
 
-        nameHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        nameHB.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
 
         this.nameSection = nameHB;
 
@@ -1495,7 +1502,7 @@ public class App extends Application {
     }
 
     private Pane getSaveButtonSection(){
-        HBox saveHB = getButtonWith_Label_Color_Image("Save", "#3C5849", "#6FCF97", "icons8-save-96.png", 20);
+        HBox saveHB = getButtonWith_Label_Color_Image("Save", "#3C5849", "#6FCF97", "icons8-save-96.png", 10);
 
         saveHB.setPadding(new Insets(10));
         saveHB.setAlignment(Pos.CENTER);
@@ -1520,25 +1527,13 @@ public class App extends Application {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("id", currentRectangle.getUUID().toString());
             jsonObject.put("basic", "true");
-            jsonObject.put("color", currentRectangle.getFill().toString());
+            jsonObject.put("color", currentRectangle.getFill() == null ? currentRectangle.getSelectedImage().getUrl() : currentRectangle.getColor().toString());
             jsonObject.put("width", currentRectangle.getWidth());
             jsonObject.put("height", currentRectangle.getHeight());
             jsonObject.put("name", currentName.getText());
 
-            try{
-                FileWriter fileWriter = new FileWriter("C:\\Users\\mferr\\Downloads\\objetos\\test.json");
-                System.out.println("vou escrever: " + jsonObject.toJSONString());
-                fileWriter.append("\n");
-                fileWriter.append(jsonObject.toJSONString());
-                fileWriter.flush();
-                fileWriter.close();
-
-                firstBasicShapeWasSaved.setValue(true);
-                sideBarThumbnails.add(currentRectangle);
-            }catch (IOException e){
-                firstBasicShapeWasSaved.setValue(false);
-                e.printStackTrace();
-            }
+            firstBasicShapeWasSaved.setValue(true);
+            sideBarThumbnails.add(currentRectangle);
 
             orchestrator.addAllBasicShapes(basicShapesToSave);
 

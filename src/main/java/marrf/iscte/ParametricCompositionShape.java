@@ -721,7 +721,7 @@ public class ParametricCompositionShape implements CustomShape {
             basicShape.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
             basicShape.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
 
-            BasicShape copy = new BasicShape(basicShape.getWidth(), basicShape.getHeight(), basicShape.getFill(), basicShape.getWriteTranslateX(), basicShape.getWriteTranslateY(), basicShape.getProceedWhenDeleting());
+            BasicShape copy = new BasicShape(basicShape.getWidth(), basicShape.getHeight(), basicShape.getFill(), basicShape.getSelectedImage(), basicShape.getWriteTranslateX(), basicShape.getWriteTranslateY(), basicShape.getProceedWhenDeleting());
             copy.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
             copy.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
 
@@ -856,7 +856,7 @@ public class ParametricCompositionShape implements CustomShape {
             basicShape.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
             basicShape.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
 
-            BasicShape copy = new BasicShape(basicShape.getWidth(), basicShape.getHeight(), basicShape.getFill(), basicShape.getWriteTranslateX(), basicShape.getWriteTranslateY(), basicShape.getProceedWhenDeleting());
+            BasicShape copy = new BasicShape(basicShape.getWidth(), basicShape.getHeight(), basicShape.getFill(), basicShape.getSelectedImage(), basicShape.getWriteTranslateX(), basicShape.getWriteTranslateY(), basicShape.getProceedWhenDeleting());
             copy.setTranslateX(translationX.getValue() + translateXBy + upperTranslationX);
             copy.setTranslateY(translationY.getValue() - translateYBy + upperTranslationY);
 

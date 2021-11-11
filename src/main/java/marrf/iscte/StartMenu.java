@@ -61,7 +61,7 @@ public class StartMenu extends Application {
         HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
         basicShapeHBox.setAlignment(Pos.CENTER);
         basicShapeHBox.setSpacing(5);
-        basicShapeHBox.setStyle("-fx-background-color: #472953;-fx-background-radius: 20");
+        basicShapeHBox.setStyle("-fx-background-color: #472953;-fx-background-radius: 10");
         basicShapeHBox.setPrefHeight(30);
 
         basicShapeHBox.setOnMouseClicked(event -> {
@@ -109,7 +109,7 @@ public class StartMenu extends Application {
         HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
         basicShapeHBox.setAlignment(Pos.CENTER);
         basicShapeHBox.setSpacing(5);
-        basicShapeHBox.setStyle("-fx-background-color: #644832;-fx-background-radius: 20");
+        basicShapeHBox.setStyle("-fx-background-color: #644832;-fx-background-radius: 10");
         basicShapeHBox.setPrefHeight(30);
 
         basicShapeHBox.setOnMouseClicked(event -> {
@@ -156,7 +156,7 @@ public class StartMenu extends Application {
         basicShapePane = new HBox(basicPlusImageView, basicShape);
         basicShapePane.setAlignment(Pos.CENTER);
         basicShapePane.setSpacing(5);
-        basicShapePane.setStyle("-fx-background-color: #355765;-fx-background-radius: 20");
+        basicShapePane.setStyle("-fx-background-color: #355765;-fx-background-radius: 10");
         basicShapePane.setPrefHeight(30);
 
         basicShapePane.setOnMouseClicked(event -> {
@@ -191,7 +191,7 @@ public class StartMenu extends Application {
         loadFilePane = new HBox(basicPlusImageView, basicShape);
         loadFilePane.setAlignment(Pos.CENTER);
         loadFilePane.setSpacing(5);
-        loadFilePane.setStyle("-fx-background-color: #35654f;-fx-background-radius: 20");
+        loadFilePane.setStyle("-fx-background-color: #35654f;-fx-background-radius: 10");
         loadFilePane.setPrefHeight(30);
 
         loadFilePane.setOnMouseClicked(event -> {
