@@ -409,6 +409,8 @@ public class BasicShape implements CustomShape {
         colorLabel.setTextFill(Color.web("#BDBDBD"));
 
         FileChooser fileChooser = new FileChooser();
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Image files (*.jpg, .*png)", "*.jpg","*.png");
+        fileChooser.getExtensionFilters().add(extFilter);
 
         Pane selectImage = getButtonWith_Label_Color_Image("Select Image", "#355C65", "#56CDF2", "process.png", 10);
         selectImage.setOnMouseClicked(event -> {

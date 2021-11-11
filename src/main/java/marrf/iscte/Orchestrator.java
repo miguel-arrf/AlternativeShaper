@@ -3,6 +3,7 @@ package marrf.iscte;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -618,9 +619,19 @@ public class Orchestrator {
                 String name = (String) basicShapeJSON.get("name");
                 UUID id = UUID.fromString((String) basicShapeJSON.get("id"));
 
+                Image image = null;
+                Color colorToSend = null;
+                if(color.contains(".jpg") || color.contains(".png")){
+                    //It is an image
+                    image = new Image(color);
+                    color = null;
+                }else{
+                    colorToSend = Color.web(color);
+                }
+
                 //TODO There's no function being added to handle the thumbnail deletion nor other deletions...
                 //TODO
-                BasicShape basicShape = new BasicShape(width, height, Color.web(color), null, id, name);
+                BasicShape basicShape = new BasicShape(width, height, colorToSend, image, id, name);
                 basicShapes.add(basicShape);
             }
 
