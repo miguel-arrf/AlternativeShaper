@@ -1,5 +1,6 @@
 package marrf.iscte;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -409,6 +410,7 @@ public class NewCompositionShape implements CustomShape {
                 rectangle.setFill(Color.web("rgba(255,255,255,0.2)"));
                 rectangle.setX(addTo.getLayoutBounds().getMinX() - 10);
                 rectangle.setY(addTo.getLayoutBounds().getMinY() - 10);
+                rectangle.setId("backgroundSize");
 
 
                 Label shapeName = new Label(compositionShape.getShapeName());
@@ -582,6 +584,74 @@ public class NewCompositionShape implements CustomShape {
 
     }
 
+    public static double getMinimumTranslationX(Node node, double minimumValue){
+        if(node instanceof Group){
+            Group group = (Group) node;
+            for(Node groupNode: group.getChildren()){
+                if(!(groupNode instanceof Group)){
+                    if(groupNode.getTranslateX() < minimumValue){
+                        minimumValue = groupNode.getTranslateX();
+                    }
+                }else{
+                    minimumValue = getMinimumTranslationX(groupNode, minimumValue);
+                }
+            }
+        }
+
+        return minimumValue;
+    }
+
+    public static double getMaximumTranslationX(Node node, double minimumValue){
+        if(node instanceof Group){
+            Group group = (Group) node;
+            for(Node groupNode: group.getChildren()){
+                if(!(groupNode instanceof Group)){
+                    if(groupNode.getTranslateX() + groupNode.getLayoutBounds().getWidth() > minimumValue){
+                        minimumValue = groupNode.getTranslateX() + groupNode.getLayoutBounds().getWidth();
+                    }
+                }else{
+                    minimumValue = getMaximumTranslationX(groupNode, minimumValue);
+                }
+
+            }
+        }
+
+        return minimumValue;
+    }
+
+    public static double getMinimumTranslationY(Node node, double minimumValue){
+        if(node instanceof Group){
+            Group group = (Group) node;
+            for(Node groupNode: group.getChildren()){
+                if(!(groupNode instanceof Group)){
+                    if(groupNode.getTranslateY() < minimumValue){
+                        minimumValue = groupNode.getTranslateY();
+                    }
+                }else{
+                    minimumValue = getMinimumTranslationY(groupNode, minimumValue);
+                }
+            }
+        }
+
+        return minimumValue;
+    }
+
+    public static double getMaximumTranslationY(Node node, double minimumValue){
+        if(node instanceof Group){
+            Group group = (Group) node;
+            for(Node groupNode: group.getChildren()){
+                if(!(groupNode instanceof Group)){
+                    if(groupNode.getTranslateY() + groupNode.getLayoutBounds().getHeight() > minimumValue){
+                        minimumValue = groupNode.getTranslateY() + groupNode.getLayoutBounds().getHeight();
+                    }
+                }else{
+                    minimumValue = getMaximumTranslationY(groupNode, minimumValue);
+                }
+            }
+        }
+
+        return minimumValue;
+    }
 
     public Pane addNewCompositionShape(NewCompositionShape NewCompositionShape) {
         String id = UUID.randomUUID().toString();
@@ -591,8 +661,28 @@ public class NewCompositionShape implements CustomShape {
         compositionShapesXTranslation.add(new Information(id, 0.0));
         compositionShapesYTranslation.add(new Information(id, 0.0));
 
+        //Aqui tenho que fazer a translação necessária para que fique no zero zero!
+
         Pane toAdd = new Pane();
         getTesteForSpecific(toAdd, true, 0, 0, id, NewCompositionShape);
+
+
+        return toAdd;
+    }
+
+    public Pane addNewCompositionShape(NewCompositionShape NewCompositionShape, boolean withHover) {
+        String id = UUID.randomUUID().toString();
+
+        compositionShapeMap.put(id, NewCompositionShape);
+
+        compositionShapesXTranslation.add(new Information(id, 0.0));
+        compositionShapesYTranslation.add(new Information(id, 0.0));
+
+        //Aqui tenho que fazer a translação necessária para que fique no zero zero!
+
+        Pane toAdd = new Pane();
+        getTesteForSpecific(toAdd, withHover, 0, 0, id, NewCompositionShape);
+
 
         return toAdd;
     }
@@ -686,7 +776,7 @@ public class NewCompositionShape implements CustomShape {
         translationXBox.setAlignment(Pos.CENTER_LEFT);
         translationXBox.setSpacing(20);
         translationXBox.setMinHeight(30);
-        translationXBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        translationXBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
     }
 
     private void setUpTranslationYBox() {
@@ -695,8 +785,8 @@ public class NewCompositionShape implements CustomShape {
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
 
-        TextField textField = new TextField(String.valueOf(selectedTranslationY.getValue() / SCALE));
-        textField.setPromptText(String.valueOf(selectedTranslationY.getValue() / SCALE));
+        TextField textField = new TextField(String.valueOf(-selectedTranslationY.getValue() / SCALE));
+        textField.setPromptText(String.valueOf(-selectedTranslationY.getValue() / SCALE));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(60);
@@ -707,7 +797,7 @@ public class NewCompositionShape implements CustomShape {
         Slider translationYSlider = new Slider();
         translationYSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
         translationYSlider.setMin(- NUMBER_COLUMNS_AND_ROWS);
-        translationYSlider.setValue(tempTranslationY.getValue() / SCALE);
+        translationYSlider.setValue(-tempTranslationY.getValue() / SCALE);
 
         textField.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode().equals(KeyCode.ENTER)) {
@@ -738,8 +828,8 @@ public class NewCompositionShape implements CustomShape {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            tempTranslationY.setValue(truncatedDouble * SCALE);
-            selected.setTranslateY(selected.getTranslateY() + (newValue.doubleValue() - oldValue.doubleValue()) * SCALE); ;
+            tempTranslationY.setValue(truncatedDouble * -SCALE);
+            selected.setTranslateY(selected.getTranslateY() + (newValue.doubleValue() - oldValue.doubleValue()) * -SCALE); ;
         });
 
         translationYSlider.setMaxWidth(Double.MAX_VALUE);
@@ -750,7 +840,7 @@ public class NewCompositionShape implements CustomShape {
         translationYBox.setPadding(new Insets(10, 10, 10, 15));
         translationYBox.setAlignment(Pos.CENTER_LEFT);
         translationYBox.setMinHeight(40);
-        translationYBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        translationYBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
     }
 
     private Slider getSlider(Information informationToUpdate, Consumer<Double> consumer, Consumer<Double> textFieldConsumer) {

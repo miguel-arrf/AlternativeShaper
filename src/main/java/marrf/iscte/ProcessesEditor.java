@@ -113,9 +113,9 @@ public class ProcessesEditor {
     }
 
     private File setUpFiles(String fileName){
-        Path htmlOriginal = Paths.get(Orchestrator.htmlFolder + fileName + ".html");
+        Path htmlOriginal = Paths.get(Orchestrator.path + "/" + fileName + ".html");
 
-        File directory = new File(Orchestrator.htmlFolder);
+        File directory = new File(Orchestrator.path + "/");
         for (File childrenFile : directory.listFiles()){
             if(childrenFile.getName().contains("Copied_")){
                 childrenFile.delete();
@@ -124,7 +124,7 @@ public class ProcessesEditor {
 
         int randomNum = ThreadLocalRandom.current().nextInt(0, 100 + 1);
 
-        Path htmlCopied = Paths.get(Orchestrator.htmlFolder + fileName + "Copied"+ "_" + randomNum + ".html");
+        Path htmlCopied = Paths.get(Orchestrator.path + "/" + fileName + "Copied"+ "_" + randomNum + ".html");
 
         try{
             Files.copy(htmlOriginal, htmlCopied, StandardCopyOption.REPLACE_EXISTING);
@@ -134,8 +134,8 @@ public class ProcessesEditor {
             Files.write(htmlCopied, fileContentJS.getBytes());
 
 
-            Path original = Paths.get(Orchestrator.htmlFolder + "scripts/myBlocks.js" );
-            Path copied = Paths.get(Orchestrator.htmlFolder + "scripts/myBlocksCopied.js" );
+            Path original = Paths.get(Orchestrator.path + "/" + "scripts/myBlocks.js" );
+            Path copied = Paths.get(Orchestrator.path + "/" + "scripts/myBlocksCopied.js" );
 
             Files.copy(original, copied, StandardCopyOption.REPLACE_EXISTING);
 

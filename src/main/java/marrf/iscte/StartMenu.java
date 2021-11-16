@@ -36,7 +36,6 @@ public class StartMenu extends Application {
     private HBox loadFilePane;
 
     private boolean fileDirectoryChoosen = false;
-    private boolean htmlDirectoryChoosen = false;
 
 
     private Effect getDarkerEffect(){
@@ -45,54 +44,6 @@ public class StartMenu extends Application {
         colorAdjust.setBrightness(-0.3);
 
         return colorAdjust;
-    }
-
-    private Pane getSelectHTMLFolder(){
-        Image basicPlus = new Image(App.class.getResource("/icons/icons8-select-none-96.png").toExternalForm());
-        ImageView basicPlusImageView = new ImageView(basicPlus);
-        basicPlusImageView.setSmooth(true);
-        basicPlusImageView.setPreserveRatio(true);
-        basicPlusImageView.setFitWidth(18);
-
-        Label basicShape = new Label("Select HTML Folder");
-        basicShape.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
-        basicShape.setTextFill(Color.web("#F967A8"));
-
-        HBox basicShapeHBox = new HBox(basicPlusImageView, basicShape);
-        basicShapeHBox.setAlignment(Pos.CENTER);
-        basicShapeHBox.setSpacing(5);
-        basicShapeHBox.setStyle("-fx-background-color: #472953;-fx-background-radius: 10");
-        basicShapeHBox.setPrefHeight(30);
-
-        basicShapeHBox.setOnMouseClicked(event -> {
-            System.out.println("Select Save Folder button was pressed.");
-
-            DirectoryChooser fileChooser = new DirectoryChooser();
-            File selectFile = fileChooser.showDialog(primaryStage);
-
-            if(selectFile != null){
-                System.out.println("new html folder: " + selectFile.getPath());
-                Orchestrator.htmlFolder = selectFile.getPath() + "/";
-
-                htmlDirectoryChoosen = true;
-
-                if(fileDirectoryChoosen){
-                    basicShapePane.setEffect(null);
-                    loadFilePane.setEffect(null);
-                }
-
-            }else{
-                fileDirectoryChoosen = false;
-                basicShapePane.setEffect(getDarkerEffect());
-                loadFilePane.setEffect(getDarkerEffect());
-            }
-
-        });
-
-        HBox.setHgrow(basicShapeHBox, Priority.ALWAYS);
-        basicShapeHBox.setMinHeight(45);
-
-        return basicShapeHBox;
     }
 
     private Pane getSelectFolder(){
@@ -113,7 +64,6 @@ public class StartMenu extends Application {
         basicShapeHBox.setPrefHeight(30);
 
         basicShapeHBox.setOnMouseClicked(event -> {
-            System.out.println("Select Save Folder button was pressed.");
 
             DirectoryChooser directoryChooser = new DirectoryChooser();
             File selectFile = directoryChooser.showDialog(primaryStage);
@@ -123,10 +73,9 @@ public class StartMenu extends Application {
                 Orchestrator.path = selectFile.getPath();
                 fileDirectoryChoosen = true;
 
-                if(htmlDirectoryChoosen){
-                    basicShapePane.setEffect(null);
-                    loadFilePane.setEffect(null);
-                }
+                basicShapePane.setEffect(null);
+                loadFilePane.setEffect(null);
+
 
             }else{
                 fileDirectoryChoosen = false;
@@ -245,7 +194,7 @@ public class StartMenu extends Application {
         var horizontalPanel = new HBox(basicShapePane, loadFilePane);
         horizontalPanel.setSpacing(20);
 
-        var verticalPanel = new VBox(title, subTitle,verticalGrower(), horizontalPanel, getSelectFolder(), getSelectHTMLFolder());
+        var verticalPanel = new VBox(title, subTitle,verticalGrower(), horizontalPanel, getSelectFolder());
         verticalPanel.setSpacing(20);
         verticalPanel.setPadding(new Insets(30,20,20,20));
 
@@ -274,8 +223,8 @@ public class StartMenu extends Application {
         iconImageView.setFitWidth(208);
 
         var verticalPanel = new VBox(iconImageView);
-        verticalPanel.setMaxHeight(314);
-        verticalPanel.setMinHeight(314);
+        verticalPanel.setMaxHeight(260);
+        verticalPanel.setMinHeight(260);
         verticalPanel.setStyle("-fx-background-color: #333234");
         verticalPanel.setAlignment(Pos.CENTER);
 
@@ -301,7 +250,7 @@ public class StartMenu extends Application {
         mainPanel.setAlignment(Pos.TOP_CENTER);
         mainPanel.setStyle("-fx-background-color: #262528");
 
-        scene = new Scene(mainPanel, 377, 650);
+        scene = new Scene(mainPanel, 377, 560);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
         scene.setFill(Color.web("#262528"));
 

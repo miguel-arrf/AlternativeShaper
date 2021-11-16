@@ -1,5 +1,6 @@
 package marrf.iscte;
 
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -32,6 +33,7 @@ import java.util.function.Supplier;
 import static marrf.iscte.App.SCALE;
 import static marrf.iscte.BasicShape.colorToRGBString;
 import static marrf.iscte.BasicShape.getRelativeLuminance;
+import static marrf.iscte.NewCompositionShape.*;
 
 public class Power implements CustomShape, ShapeWithVariables{
 
@@ -64,6 +66,8 @@ public class Power implements CustomShape, ShapeWithVariables{
     private final Label leftLabel = new Label(leftVariable);
     private final Label customShapeLabel = new Label(centerVariable);
 
+    private final Orchestrator orchestrator;
+
     private CustomShape customShape;
 
     private final HBox thumbnail = new HBox();
@@ -93,7 +97,9 @@ public class Power implements CustomShape, ShapeWithVariables{
     private HBox verticalParametricTranslationSection;
     private HBox horizontalParametricTranslationSection;
 
-
+    private CustomShape selectedCustomShape;
+    private double selectedCustomShapeWidth;
+    private double selectedCustomShapeHeight;
 
     public UUID getUuid() {
         return uuid;
@@ -226,8 +232,8 @@ public class Power implements CustomShape, ShapeWithVariables{
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
 
-        TextField textField = new TextField((String.valueOf(getInitialTranslation().getY() / SCALE)));
-        textField.setPromptText((String.valueOf(getInitialTranslation().getY() / SCALE)));
+        TextField textField = new TextField((String.valueOf(-getInitialTranslation().getY() / SCALE)));
+        textField.setPromptText((String.valueOf(-getInitialTranslation().getY() / SCALE)));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(60);
@@ -236,7 +242,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         Slider translationYSlider = new Slider();
         translationYSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
         translationYSlider.setMin(- NUMBER_COLUMNS_AND_ROWS);
-        translationYSlider.setValue(getInitialTranslation().getY() / SCALE);
+        translationYSlider.setValue(-getInitialTranslation().getY() / SCALE);
 
         translationYSlider.setMajorTickUnit(0.1);
         translationYSlider.setMinorTickCount(0);
@@ -270,9 +276,9 @@ public class Power implements CustomShape, ShapeWithVariables{
 
             translateYProperty.setValue(truncatedDouble * SCALE);
 
-            this.addTranslationY((newValue.doubleValue() - oldValue.doubleValue())* SCALE);
+            this.addTranslationY((newValue.doubleValue() - oldValue.doubleValue())* -SCALE);
 
-            writeTranslateY.apply(truncatedDouble * SCALE);
+            writeTranslateY.apply(truncatedDouble * -SCALE);
         });
 
         translationYSlider.setMaxWidth(Double.MAX_VALUE);
@@ -322,12 +328,14 @@ public class Power implements CustomShape, ShapeWithVariables{
     }
 
 
-    public Power(String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation,  Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<String, Double> proceedWhenDeletingFromThumbnail) {
+    public Power(String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation,  Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<String, Double> proceedWhenDeletingFromThumbnail, Orchestrator orchestrator) {
         this.name = name;
         this.uuid = uuid;
 
         this.hasLeft = hasLeft;
         this.hasRight = hasRight;
+
+        this.orchestrator = orchestrator;
 
         this.leftHasVariable = leftHasVariable;
         this.rightHasVariable = rightHasVariable;
@@ -360,7 +368,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         setUpTranslationXBox();
     }
 
-    public Power(Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Node, Double> proceedWhenDeleting) {
+    public Power(Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Node, Double> proceedWhenDeleting, Orchestrator orchestrator) {
         this.name = name;
         this.uuid = uuid;
 
@@ -371,6 +379,8 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         this.verticalParametricTranslation = parametricYTranslation.apply(null);
         this.horizontalParametricTranslation = parametricXTranslation.apply(null);
+
+        this.orchestrator = orchestrator;
 
         this.hasLeft = hasLeft;
         this.hasRight = hasRight;
@@ -482,11 +492,13 @@ public class Power implements CustomShape, ShapeWithVariables{
     private Function<String, Double> proceedWhenDeletingFromThumbnail;
     private Function<Node, Double> proceedWhenDeleting;
 
-    public Power(Function<String, Double> proceedWhenDeletingFromThumbnail){
+    public Power(Function<String, Double> proceedWhenDeletingFromThumbnail, Orchestrator orchestrator){
         writeTranslateX = a -> 0.0;
         writeTranslateY = a -> 0.0;
 
         uuid = UUID.randomUUID();
+
+        this.orchestrator = orchestrator;
 
         setUpVerticalSection();
 
@@ -494,6 +506,41 @@ public class Power implements CustomShape, ShapeWithVariables{
         setUpTranslationXBox();
 
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+    }
+
+    private void getRightGroup(double translationX, double translationY){
+        System.out.println("translation x hehe: " + translationX);
+        Circle firstRightCircle = new Circle();
+        firstRightCircle.setRadius(3);
+        firstRightCircle.setFill(Color.web("#B2B2B2"));
+        firstRightCircle.setTranslateX(translationX + 9 );
+        firstRightCircle.setTranslateY(- translationY / 2.0);
+
+
+        Circle secondRightCircle = new Circle();
+        secondRightCircle.setRadius(3);
+        secondRightCircle.setFill(Color.web("#999999"));
+        secondRightCircle.setTranslateX(translationX + 20 );
+        secondRightCircle.setTranslateY(- translationY / 2.0);
+
+        Circle thirdRightCircle = new Circle();
+        thirdRightCircle.setRadius(3);
+        thirdRightCircle.setFill(Color.web("#737373"));
+        thirdRightCircle.setTranslateX(translationX + 31 );
+        thirdRightCircle.setTranslateY(- translationY / 2.0);
+
+        VBox addRight = new VBox();
+        addRight.setPrefSize(translationX, translationY);
+        addRight.setTranslateX(translationX + SCALE);
+        addRight.setTranslateY(- translationY);
+        addRight.setStyle(getDashStyle());
+
+        addRight.getChildren().add(rightLabel);
+        addRight.setAlignment(Pos.CENTER);
+
+        rightGroup.getChildren().clear();
+        rightGroup.getChildren().addAll(firstRightCircle, secondRightCircle, thirdRightCircle, addRight);
+
     }
 
     private void getRightGroup(){
@@ -529,13 +576,46 @@ public class Power implements CustomShape, ShapeWithVariables{
         rightGroup.getChildren().addAll(firstRightCircle, secondRightCircle, thirdRightCircle, addRight);
     }
 
+    private void getLeftGroup(double translationX, double translationY){
+        Circle firstLeftCircle = new Circle();
+        firstLeftCircle.setRadius(3);
+        firstLeftCircle.setFill(Color.web("#B2B2B2"));
+        firstLeftCircle.setTranslateY(- (translationY + 9) );
+        firstLeftCircle.setTranslateX( translationX / 2.0);
+
+
+        Circle secondLeftCircle = new Circle();
+        secondLeftCircle.setRadius(3);
+        secondLeftCircle.setFill(Color.web("#999999"));
+        secondLeftCircle.setTranslateY( - (translationY + 20) );
+        secondLeftCircle.setTranslateX( translationX / 2.0);
+
+        Circle thirdLeftCircle = new Circle();
+        thirdLeftCircle.setRadius(3);
+        thirdLeftCircle.setFill(Color.web("#737373"));
+        thirdLeftCircle.setTranslateY(- (translationY + 31) );
+        thirdLeftCircle.setTranslateX( translationX / 2.0);
+
+
+        VBox addLeft = new VBox();
+        addLeft.setPrefSize(translationX, translationY);
+        addLeft.setTranslateY(- translationY  * 2 - SCALE);
+        addLeft.setStyle(getDashStyle());
+
+        addLeft.getChildren().add(leftLabel);
+        addLeft.setAlignment(Pos.CENTER);
+
+        leftGroup.getChildren().clear();
+        leftGroup.getChildren().addAll(firstLeftCircle, secondLeftCircle, thirdLeftCircle, addLeft);
+
+    }
+
     private void getLeftGroup(){
         Circle firstLeftCircle = new Circle();
         firstLeftCircle.setRadius(3);
         firstLeftCircle.setFill(Color.web("#B2B2B2"));
         firstLeftCircle.setTranslateY(- (SCALE + 9) );
         firstLeftCircle.setTranslateX( SCALE / 2.0);
-
 
         Circle secondLeftCircle = new Circle();
         secondLeftCircle.setRadius(3);
@@ -576,15 +656,124 @@ public class Power implements CustomShape, ShapeWithVariables{
         return centerGroup;
     }
 
+    private void removeShapeFromCenterShapeAndAddVariableShapeLabel(){
+        centerShape.getChildren().clear();
+
+        VBox toPut = new VBox(customShapeLabel);
+        toPut.setAlignment(Pos.CENTER);
+        toPut.setPrefSize(SCALE, SCALE);
+        toPut.setStyle("-fx-background-color: #B2B2B2; -fx-background-radius: 6px;");
+        centerShape.getChildren().add(toPut);
+        centerShape.setTranslateY(-SCALE);
+        getRightGroup();
+        getLeftGroup();
+    }
+
+    private void updateBoxesAndTranslations(){
+        centerShape.getChildren().clear();
+
+        if(selectedCustomShape instanceof BasicShape){
+            setUpBasicShapeOnCenterGroup();
+        }else if(selectedCustomShape instanceof NewCompositionShape){
+            setUpCompositionShapeOnCenterGroup();
+        }
+    }
+
+    public void setUpBasicShapeOnCenterGroup(BasicShape dropped){
+
+        this.selectedCustomShape = dropped;
+        setUpBasicShapeOnCenterGroup();
+    }
+
+    public void setUpBasicShapeOnCenterGroup(){
+        BasicShape dropped = (BasicShape) selectedCustomShape;
+
+        NewCompositionShape.Information translationX = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
+        NewCompositionShape.Information translationY = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
+
+        BasicShape toUse = orchestrator.getCopyOfBasicShape(dropped.getUUID().toString(), translationX.getConsumer(), translationY.getConsumer(), null);
+        centerShape.getChildren().add(toUse.getRectangle());
+
+        selectedCustomShapeWidth = toUse.getWidth();
+        selectedCustomShapeHeight = toUse.getHeight();
+        centerShape.setTranslateY(-selectedCustomShapeHeight);
+        getRightGroup(selectedCustomShapeWidth, selectedCustomShapeHeight);
+        getLeftGroup(selectedCustomShapeWidth, selectedCustomShapeHeight);
+    }
+
+    public void setUpCompositionShapeOnCenterGroup(){
+        System.err.println("HERE I AM!");
+        centerShape.setTranslateY(0);
+        centerShape.setTranslateX(0);
+
+
+        NewCompositionShape dropped = (NewCompositionShape) selectedCustomShape;
+        Pane toAdd;
+        NewCompositionShape newCompositionShape = new NewCompositionShape(orchestrator, new VBox(), teste -> null, teste -> null);
+        toAdd = newCompositionShape.addNewCompositionShape(dropped, false);
+
+        double maximumTranslationX = -1000;
+        double minimumTranslationX = 10000;
+        double maximumTranslationY = -1000;
+        double minimumTranslationY = 10000;
+
+        for(Node node: toAdd.getChildren()){
+            maximumTranslationX  = getMaximumTranslationX(node, maximumTranslationX);
+            minimumTranslationX = getMinimumTranslationX(node, minimumTranslationX);
+            maximumTranslationY = getMaximumTranslationY(node, maximumTranslationY);
+            minimumTranslationY = getMinimumTranslationY(node, minimumTranslationY);
+        }
+        System.out.println("old minimum translationY: " + minimumTranslationY + ", old maximum translationY: " + maximumTranslationY);
+
+        toAdd.setTranslateX(toAdd.getTranslateX() - minimumTranslationX);
+
+        centerShape.getChildren().add(toAdd);
+
+        toAdd.layout();
+        centerShape.layout();
+
+        double finalMinimumTranslationX = minimumTranslationX;
+        double finalMinimumTranslationY = minimumTranslationY;
+        Platform.runLater(() -> {
+            double newMaximumX = -1000;
+            double newMaximumY = -1000;
+            for(Node node: toAdd.getChildren()){
+                newMaximumX  = getMaximumTranslationX(node, newMaximumX);
+                newMaximumY = getMaximumTranslationY(node, newMaximumY);
+            }
+            System.out.println("new minimum translationY: " + finalMinimumTranslationY +", new maximum translationY: " + newMaximumY);
+            toAdd.setTranslateY(toAdd.getTranslateY() - newMaximumY);
+            double width = Math.abs(finalMinimumTranslationX - newMaximumX);
+
+
+            double height = Math.abs(finalMinimumTranslationY) + Math.abs(newMaximumY);
+
+            //getRightGroup(width, toAdd.getBoundsInParent().getHeight());
+            //getLeftGroup(width, toAdd.getBoundsInParent().getHeight());
+            getRightGroup(width, height);
+            getLeftGroup(width, height);
+
+        });
+
+    }
+
     public Node getEditorVisualization() {
         setUpLabels();
 
-        centerShape = new VBox();
-        centerShape.setPrefSize(SCALE, SCALE);
-        centerShape.setStyle("-fx-background-color: #B2B2B2; -fx-background-radius: 6px;");
-        centerShape.setTranslateY(-SCALE);
+        VBox toPut = new VBox();
+        toPut.setPrefSize(SCALE, SCALE);
+        toPut.setStyle("-fx-background-color: #B2B2B2; -fx-background-radius: 6px;");
+
+        centerShape = new VBox(toPut);
+
         centerShape.getChildren().add(customShapeLabel);
         centerShape.setAlignment(Pos.CENTER);
+
+        if(selectedCustomShape != null && selectedCustomShape instanceof BasicShape){
+            addSelectedCustomShapeToCenterShape();
+        }else{
+            centerShape.setTranslateY(-SCALE);
+        }
 
         centerShape.setOnDragOver(dragEvent -> {
             Dragboard db = dragEvent.getDragboard();
@@ -610,6 +799,15 @@ public class Power implements CustomShape, ShapeWithVariables{
 
                 customShape = App.inDragCustomShape;
                 customShapeLabel.setText(customShape.getShapeName());
+
+                centerShape.getChildren().clear();
+                if(customShape instanceof BasicShape){
+                    setUpBasicShapeOnCenterGroup((BasicShape) customShape);
+                }else if(customShape instanceof NewCompositionShape){
+                    this.selectedCustomShape = customShape;
+                    setUpCompositionShapeOnCenterGroup();
+                }
+
                 customShapeSelected.set(true);
                 centerHasVariable = false;
 
@@ -617,13 +815,31 @@ public class Power implements CustomShape, ShapeWithVariables{
             dragEvent.consume();
         });
 
-        getRightGroup();
-        getLeftGroup();
-
         setUpCenterGroup();
 
-        centerGroup.setTranslateX(0);
-        centerGroup.setTranslateY(0);
+        if (selectedCustomShape != null){
+            centerShape.getChildren().clear();
+
+            System.out.println("centerShape.getLayoutBounds().getWidth(): " + centerShape.getLayoutBounds().getWidth());
+
+
+            if(selectedCustomShape instanceof NewCompositionShape){
+                setUpCompositionShapeOnCenterGroup();
+            }else{
+                setUpBasicShapeOnCenterGroup();
+            }
+
+        }else{
+            getRightGroup();
+            getLeftGroup();
+
+        }
+
+
+            centerGroup.setTranslateX(0);
+            centerGroup.setTranslateY(0);
+
+
 
 
 
@@ -924,6 +1140,26 @@ public class Power implements CustomShape, ShapeWithVariables{
         return rectangle;
     }
 
+    private void addSelectedCustomShapeToCenterShape(){
+        centerShape.getChildren().clear();
+        BasicShape dropped = (BasicShape) selectedCustomShape;
+
+        NewCompositionShape.Information translationX = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
+        NewCompositionShape.Information translationY = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
+
+
+        BasicShape toUse = orchestrator.getCopyOfBasicShape(dropped.getUUID().toString(), translationX.getConsumer(), translationY.getConsumer(), null);
+        Pane toAdd = toUse.getRectangle();
+        System.out.println("width coiso: " + toUse.getWidth());
+
+        selectedCustomShapeWidth = toUse.getWidth();
+        selectedCustomShapeHeight = toUse.getHeight();
+
+        centerShape.getChildren().add(toAdd);
+
+        centerShape.setTranslateY(-selectedCustomShapeHeight);
+    }
+
     private VBox getCenterBox(){
         Label shapeVariableToUseLabel = new Label("Shape variable: ");
         styleLabel(shapeVariableToUseLabel);
@@ -944,6 +1180,7 @@ public class Power implements CustomShape, ShapeWithVariables{
                 if (!newValue.matches("[a-zA-Z]+")){
                     textFieldVariable.setText(oldValue);
                     customShapeLabel.setText(oldValue);
+
                 }else{
                     centerVariable = newValue;
                     customShapeLabel.setText(newValue);
@@ -969,12 +1206,17 @@ public class Power implements CustomShape, ShapeWithVariables{
                 }
 
                 if(!centerHasVariable && customShape != null){
+                    //Use shape
                     vBox.getChildren().clear();
                     vBox.getChildren().add(fistHBox);
-                    customShapeLabel.setText(customShape.getShapeName());
+                    //addSelectedCustomShapeToCenterShape();
+                    updateBoxesAndTranslations();
                 }else{
+                    //Use variable
                     vBox.getChildren().clear();
                     vBox.getChildren().addAll(fistHBox, secondHBox);
+
+                    removeShapeFromCenterShapeAndAddVariableShapeLabel();
                     customShapeLabel.setText(centerVariable);
 
                 }
@@ -1116,7 +1358,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         jsonObject.put("leftTranslation", leftTranslation);
 
         if(!centerHasVariable){
-            jsonObject.put("customShapeID", customShape.getUUID());
+            jsonObject.put("customShapeID", customShape.getUUID().toString());
             jsonObject.put("customShapeName", customShape.getShapeName());
         }
 

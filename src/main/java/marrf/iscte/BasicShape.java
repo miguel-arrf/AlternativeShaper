@@ -30,6 +30,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.text.DecimalFormat;
@@ -77,6 +80,7 @@ public class BasicShape implements CustomShape {
     private double height;
 
     private Image selectedImage;
+    private String imageName;
 
     private Color color;
     private String shapeName = "defaultName";
@@ -101,6 +105,10 @@ public class BasicShape implements CustomShape {
 
     public Image getSelectedImage() {
         return selectedImage;
+    }
+
+    public String getImageName() {
+        return imageName;
     }
 
     public Color getColor() {
@@ -385,6 +393,7 @@ public class BasicShape implements CustomShape {
         colorLabel.setTextFill(Color.web("#BDBDBD"));
 
         ColorPicker colorPicker = new ColorPicker(color);
+        colorPicker.setStyle("-fx-color-label-visible: false ;");
         colorPicker.valueProperty().addListener((observable, oldValue, newValue) -> {
             BackgroundFill backgroundFill = new BackgroundFill(newValue, new CornerRadii(0), new Insets(0));
             Background background = new Background(backgroundFill);
@@ -392,6 +401,8 @@ public class BasicShape implements CustomShape {
             color = newValue;
             selectedImage = null;
         });
+
+
 
         colorSection = new HBox(colorLabel, horizontalGrower(),colorPicker);
         colorSection.setPadding(new Insets(10, 10, 10, 15));
@@ -412,11 +423,29 @@ public class BasicShape implements CustomShape {
         FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("Image files (*.jpg, .*png)", "*.jpg","*.png");
         fileChooser.getExtensionFilters().add(extFilter);
 
-        Pane selectImage = getButtonWith_Label_Color_Image("Select Image", "#355C65", "#56CDF2", "process.png", 10);
+        Pane selectImage = getButtonWith_Label_Color_Image("", "#355C65", "#56CDF2", "icons8-image-gallery-96.png", 10);
         selectImage.setOnMouseClicked(event -> {
             File file = fileChooser.showOpenDialog(selectImage.getParent().getScene().getWindow());
             if (file != null){
-                System.out.println("we have a file!: " + file.toURI().toString());
+                System.out.println("we have a file!: " + file.toURI());
+
+                Path imagePath = Paths.get(Orchestrator.path + Orchestrator.IMAGES_PATH);
+                if (!Files.exists(imagePath)){
+                    try {
+                        Files.createDirectories(imagePath);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                try {
+                    Path copiedImagePath = Paths.get(Orchestrator.path + Orchestrator.IMAGES_PATH + file.getName());
+                    imageName = file.getName();
+                    Files.copy(file.toPath(), copiedImagePath, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 Image image = new Image(file.toURI().toString());
                 BackgroundImage backgroundImage = new BackgroundImage(image, BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
                 Background background = new Background(backgroundImage);
@@ -707,8 +736,8 @@ public class BasicShape implements CustomShape {
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
 
-        TextField textField = new TextField((String.valueOf(getInitialTranslation().getY() / SCALE)));
-        textField.setPromptText((String.valueOf(getInitialTranslation().getY() / SCALE)));
+        TextField textField = new TextField((String.valueOf(-getInitialTranslation().getY() / SCALE)));
+        textField.setPromptText((String.valueOf(-getInitialTranslation().getY() / SCALE)));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(60);
@@ -717,7 +746,7 @@ public class BasicShape implements CustomShape {
         Slider translationYSlider = new Slider();
         translationYSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
         translationYSlider.setMin(- NUMBER_COLUMNS_AND_ROWS);
-        translationYSlider.setValue(getInitialTranslation().getY() / SCALE);
+        translationYSlider.setValue(-getInitialTranslation().getY() / SCALE);
 
         translationYSlider.setMajorTickUnit(0.1);
         translationYSlider.setMinorTickCount(0);
@@ -746,14 +775,14 @@ public class BasicShape implements CustomShape {
             DecimalFormat df = new DecimalFormat("#.#");
             df.setRoundingMode(RoundingMode.HALF_UP);
 
-            Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+            double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
             translateYProperty.setValue(truncatedDouble * SCALE);
 
-            this.addTranslationY((newValue.doubleValue() - oldValue.doubleValue())* SCALE);
+            this.addTranslationY((newValue.doubleValue() - oldValue.doubleValue())* -SCALE);
 
-            writeTranslateY.apply(truncatedDouble * SCALE);
+            writeTranslateY.apply(truncatedDouble * -SCALE);
         });
 
         translationYSlider.setMaxWidth(Double.MAX_VALUE);

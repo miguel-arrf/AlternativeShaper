@@ -1146,8 +1146,8 @@ public class ParametricCompositionShape implements CustomShape {
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
 
-        TextField textField = new TextField(String.valueOf(selectedTranslationY.getValue() / SCALE));
-        textField.setPromptText(String.valueOf(selectedTranslationY.getValue() / SCALE));
+        TextField textField = new TextField(String.valueOf(-selectedTranslationY.getValue() / SCALE));
+        textField.setPromptText(String.valueOf(-selectedTranslationY.getValue() / SCALE));
         textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
         textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         textField.setPrefWidth(60);
@@ -1158,7 +1158,7 @@ public class ParametricCompositionShape implements CustomShape {
         Slider translationYSlider = new Slider();
         translationYSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
         translationYSlider.setMin(- NUMBER_COLUMNS_AND_ROWS);
-        translationYSlider.setValue(tempTranslationY.getValue() / SCALE);
+        translationYSlider.setValue(-tempTranslationY.getValue() / SCALE);
 
         textField.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode().equals(KeyCode.ENTER)) {
@@ -1189,8 +1189,8 @@ public class ParametricCompositionShape implements CustomShape {
             Double truncatedDouble = BigDecimal.valueOf(newValue.doubleValue()).setScale(2, RoundingMode.HALF_UP).doubleValue();
             textField.setText(String.valueOf(truncatedDouble));
 
-            tempTranslationY.setValue(truncatedDouble * SCALE);
-            selected.setTranslateY(selected.getTranslateY() + (newValue.doubleValue() - oldValue.doubleValue()) * SCALE); ;
+            tempTranslationY.setValue(truncatedDouble * -SCALE);
+            selected.setTranslateY(selected.getTranslateY() + (newValue.doubleValue() - oldValue.doubleValue()) * -SCALE); ;
         });
 
         translationYSlider.setMaxWidth(Double.MAX_VALUE);

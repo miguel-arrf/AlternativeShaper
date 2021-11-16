@@ -1,11 +1,10 @@
 package marrf.iscte;
 
 import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
+import javafx.scene.image.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
@@ -22,6 +21,8 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Set;
+
+import static marrf.iscte.NewCompositionShape.getMinimumTranslationX;
 
 public class GridCanvas {
 
@@ -77,6 +78,22 @@ public class GridCanvas {
     }
 
     public static void addGroup(Pane basicShape){
+        System.out.println("basicShape.getTranslateX(): " + basicShape.getTranslateX());
+
+        /*double minimumTranslationX = 0;
+
+        for(Node node: basicShape.getChildren()){
+            minimumTranslationX = getMinimumTranslationX(node, minimumTranslationX);
+        }
+
+        if(minimumTranslationX < 0){
+            basicShape.setTranslateX(basicShape.getTranslateX() - minimumTranslationX + circle.getCenterX() + circle.getTranslateX());
+        }else{
+            basicShape.setTranslateX(basicShape.getTranslateX() + circle.getCenterX() + circle.getTranslateX());
+
+        }*/
+
+
         basicShape.setTranslateX(basicShape.getTranslateX() + circle.getCenterX() + circle.getTranslateX());
         basicShape.setTranslateY(basicShape.getTranslateY() + circle.getCenterY() + circle.getTranslateY());
 
@@ -355,19 +372,58 @@ public class GridCanvas {
         return toReturn;
     }
 
+    private static Image removePixels(Image inputImage){
+        int W = (int) inputImage.getWidth();
+        int H = (int) inputImage.getHeight();
+
+        int heightMidPoint = H/2;
+        int startHeight = heightMidPoint - H/4;
+        int endHeight = heightMidPoint + H/4;
+
+        int widthMidPoint = W/2;
+        int startWidth = widthMidPoint  - W/4;
+        int endWidth = widthMidPoint + W/4;
+
+        WritableImage outputImage = new WritableImage(W/2, H/2);
+        PixelReader reader = inputImage.getPixelReader();
+        PixelWriter writer = outputImage.getPixelWriter();
+
+        int old_x = 0;
+        for(int x = startWidth; x < endWidth; x++){
+
+            int old_y = 0;
+            for(int y = startHeight; y < endHeight; y++){
+                int argb = reader.getArgb(x,y);
+                writer.setArgb(old_x, old_y, argb);
+                old_y++;
+            }
+            old_x++;
+        }
+
+
+
+        return outputImage;
+    }
+
     public static Rectangle takeScreenshootWithRoundedCorners(){
         try {
             //TODO AO Tirar o screenshot, deviamos centrar tudo novamente...
             GridCanvas.recenterEverything();
 
-            WritableImage writableImage = new WritableImage((int) GridCanvas.pane.getWidth(),
-                    (int) GridCanvas.pane.getHeight());
+            WritableImage writableImage = new WritableImage((int) NUMBER_COLUMNS_AND_ROWS * 40,
+                    (int) NUMBER_COLUMNS_AND_ROWS*40);
 
+            System.out.println("WIDTH: " + GridCanvas.pane.getWidth());
+            Node clip = pane.getClip();
+            pane.setClip(null);
 
             WritableImage snapshot = GridCanvas.pane.snapshot(null, writableImage);
+
             //TODO Tirar screenshoot ao gridCanvas e não ao elemento!
             RenderedImage renderedImage = SwingFXUtils.fromFXImage(writableImage, null);
             GridCanvas.toOriginalPosition();
+
+            pane.setClip(clip);
 
             Set<PosixFilePermission> fp = PosixFilePermissions.fromString("rwxrwxrwx");
 
@@ -381,25 +437,28 @@ public class GridCanvas {
 
             ImageIO.write(renderedImage, "png", file);
 
-            Image image = new Image(file.toURL().toExternalForm());
+            Image image = new Image(file.toURI().toString());
             ImageView imageView = new ImageView(image);
             imageView.setSmooth(true);
 
 
             //TODO ALTERAR
-            imageView.setPreserveRatio(true);
+            //imageView.setPreserveRatio(true);
             imageView.setFitWidth(100);
+
 
 
             var initialWidth = image.getWidth() / imageView.getFitWidth();
             var newHeight = image.getHeight()/initialWidth;
 
-            Rectangle imageViewRectangle = new Rectangle(0, 0, 100,newHeight);
+            Rectangle imageViewRectangle = new Rectangle(0, 0, 100,100);
             imageViewRectangle.setArcWidth(30.0);   // Corner radius
             imageViewRectangle.setArcHeight(30.0);
 
+            Image toUse = removePixels(image);
+
             ImagePattern pattern = new ImagePattern(
-                    image, 0,0,1,1,true // Resizing
+                    toUse, 0,0,1,1,true // Resizing
             );
 
             imageViewRectangle.setFill(pattern);

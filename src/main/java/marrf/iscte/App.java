@@ -513,7 +513,13 @@ public class App extends Application {
         complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         complexShape.setTextFill(Color.web(labelColor));
 
-        HBox complexShapeHBox = new HBox(complexPlusImageView, complexShape);
+        HBox complexShapeHBox;
+        if(label.isBlank()){
+             complexShapeHBox = new HBox(complexPlusImageView);
+        }else{
+             complexShapeHBox = new HBox(complexPlusImageView, complexShape);
+        }
+
         complexShapeHBox.setAlignment(Pos.CENTER);
         complexShapeHBox.setSpacing(5);
         complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius);
@@ -695,7 +701,7 @@ public class App extends Application {
 
             transformersBox.getChildren().clear();
 
-            Power power = new Power(getProceedWhenDeletingPowerShape());
+            Power power = new Power(getProceedWhenDeletingPowerShape(), orchestrator);
             addPowerShape(power);
             selectedPower = power;
             selectedCompositionShape = null;
@@ -783,14 +789,23 @@ public class App extends Application {
 
     }
 
-    public Pane getScenePanelWithLoadedFile(Scene scene){
+    private Pane setupScenePanel(Scene scene){
         finishSetup();
 
         this.scene = scene;
 
+        topToolbar = new HBox();
+        topToolbar.setStyle("-fx-background-color: #333234; -fx-background-radius: 10");
+        topToolbar.setAlignment(Pos.CENTER_LEFT);
+        topToolbar.setPadding(new Insets(10));
+        topToolbar.setSpacing(15);
+        topToolbar.setPrefHeight(50);
+
+        BorderPane.setMargin(topToolbar, new Insets(0, 0, 25, 0));
+
         mainPanel = new VBox();
         mainPanel.setMaxWidth(500);
-        mainPanel.setPrefSize(500, 700);
+        mainPanel.setPrefSize(400, 700);
         mainPanel.setStyle("-fx-background-color: #262528;");
         mainPanel.setAlignment(Pos.TOP_CENTER);
         mainPanel.setPadding(new Insets(0,0,0,20));
@@ -803,8 +818,7 @@ public class App extends Application {
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color: rgb(38,37,40); -fx-background-radius: 10; -fx-background: transparent");
 
-
-        mainPanel.getChildren().addAll(getScrollPane(), getNameSection(),scrollPane, getSaveButtonSection());
+        mainPanel.getChildren().addAll(getNameSection(),scrollPane, getSaveButtonSection());
 
         transformersBox.setSpacing(20);
 
@@ -821,11 +835,19 @@ public class App extends Application {
         borderPane.setRight(mainPanel);
         borderPane.setCenter(sceneStackPane);
 
+        ScrollPane shapesScrollPane = getScrollPane();
+        shapesScrollPane.setPrefWidth(300);
+        BorderPane.setMargin(shapesScrollPane, new Insets(0,25,0,0));
+        borderPane.setLeft(shapesScrollPane);
 
+        borderPane.setTop(topToolbar);
 
-        sceneStackPane.layout();
+        return  borderPane;
+    }
 
-
+    public Pane getScenePanelWithLoadedFile(Scene scene){
+       Pane borderPane = setupScenePanel(scene);
+       sceneStackPane.layout();
         return borderPane;
     }
 
@@ -835,7 +857,6 @@ public class App extends Application {
 
     public void loadParametricShapes(File file){
         ArrayList<ParametricCompositionShape> newCompositionShapeArrayList = orchestrator.getParametricShapesFromFile(file, transformersBox,getProceedWhenDeletingCompositionShape(), teste -> {
-            System.err.println("oh, here I am!");
             newParametricCompositionShapes.forEach(ParametricCompositionShape::redrawThumbnail);
             return null;
         } );
@@ -847,7 +868,7 @@ public class App extends Application {
         ArrayList<Power> newPowerShapesArrayList = orchestrator.getPowerShapesFromFile(file, getProceedWhenDeletingPowerShape());
         powerArrayList.addAll(newPowerShapesArrayList);
         sideBarThumbnails.addAll(newPowerShapesArrayList);
-        newPowerShapesArrayList.forEach(p -> p.redrawThumbnail());
+        newPowerShapesArrayList.forEach(Power::redrawThumbnail);
     }
 
     public void loadProcesses(File file){
@@ -894,57 +915,7 @@ public class App extends Application {
     }
 
     public Pane getScenePanel(Scene scene){
-        finishSetup();
-
-        this.scene = scene;
-
-        topToolbar = new HBox();
-        topToolbar.setStyle("-fx-background-color: #333234; -fx-background-radius: 10");
-        topToolbar.setAlignment(Pos.CENTER_LEFT);
-        topToolbar.setPadding(new Insets(10));
-        topToolbar.setSpacing(15);
-        topToolbar.setPrefHeight(50);
-
-        BorderPane.setMargin(topToolbar, new Insets(0, 0, 25, 0));
-
-        mainPanel = new VBox();
-        mainPanel.setMaxWidth(500);
-        mainPanel.setPrefSize(500, 700);
-        mainPanel.setStyle("-fx-background-color: #262528;");
-        mainPanel.setAlignment(Pos.TOP_CENTER);
-        mainPanel.setPadding(new Insets(0,0,0,20));
-        mainPanel.setSpacing(15);
-
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setContent(transformersBox);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-
-        scrollPane.setFitToWidth(true);
-        scrollPane.setStyle("-fx-background-color: rgb(38,37,40); -fx-background-radius: 10; -fx-background: transparent");
-
-        mainPanel.getChildren().addAll(getNameSection(),scrollPane, getSaveButtonSection());
-
-        transformersBox.setSpacing(20);
-
-        var scenePanel = new VBox(mainPanel);
-        scenePanel.setStyle("-fx-background-color: black");
-        scenePanel.setAlignment(Pos.CENTER);
-        scenePanel.setPadding(new Insets(20));
-
-
-        BorderPane borderPane = new BorderPane();
-        borderPane.setStyle("-fx-background-color: #262528");
-        borderPane.setPadding(new Insets(20));
-
-        borderPane.setRight(mainPanel);
-        borderPane.setCenter(sceneStackPane);
-
-        ScrollPane shapesScrollPane = getScrollPane();
-        BorderPane.setMargin(shapesScrollPane, new Insets(0,25,0,0));
-        borderPane.setLeft(shapesScrollPane);
-
-        borderPane.setTop(topToolbar);
-
+        Pane borderPane = setupScenePanel(scene);
 
         BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), null, getProceedWhenDeleting());
         addShape(toAdd);

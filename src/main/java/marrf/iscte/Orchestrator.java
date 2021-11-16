@@ -20,6 +20,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Optional;
@@ -37,8 +40,6 @@ public class Orchestrator {
     //private String path = "C:\\Users\\mferr\\Downloads\\objetos\\test.json";
     public static String path = "/Users/miguelferreira/Downloads/alternativeShaperSaves/test.json";
 
-    public static String htmlFolder = "/Users/miguelferreira/Downloads/AlternativeShaperFiles/";
-
     private final ArrayList<BasicShape> basicShapes = new ArrayList<>();
     private final ArrayList<NewCompositionShape> newCompositionShapes = new ArrayList<>();
     private final ArrayList<Process> processes = new ArrayList<>();
@@ -47,7 +48,8 @@ public class Orchestrator {
     private final ArrayList<Power> powerShapes = new ArrayList<>();
     private final ArrayList<ParametricCompositionShape> parametricCompositionShapes = new ArrayList<>();
 
-
+    public static String SHAPES_PATH = "/shapes/";
+    public static String IMAGES_PATH = "/images/";
 
     public static int getSCALE() {
         return SCALE;
@@ -141,7 +143,7 @@ public class Orchestrator {
         if(shape.isPresent()){
             Power toCopyFrom = shape.get();
 
-            toReturn = new Power(parametricXTranslation, parametricYTranslation,  toCopyFrom.getShapeName(), toCopyFrom.getUUID(), toCopyFrom.getHasLeft(), toCopyFrom.getHasRight(), toCopyFrom.getLeftHasVariable(), toCopyFrom.getRightHasVariable(), toCopyFrom.getCenterHasVariable(), toCopyFrom.getRightVariable(), toCopyFrom.getLeftVariable(), toCopyFrom.getCenterVariable(), toCopyFrom.getLeftValue(), toCopyFrom.getRightValue(), toCopyFrom.getRightTranslation(), toCopyFrom.getLeftTranslation(), writeTranslateX, writeTranslateY, proceedWhenDeleting);
+            toReturn = new Power(parametricXTranslation, parametricYTranslation,  toCopyFrom.getShapeName(), toCopyFrom.getUUID(), toCopyFrom.getHasLeft(), toCopyFrom.getHasRight(), toCopyFrom.getLeftHasVariable(), toCopyFrom.getRightHasVariable(), toCopyFrom.getCenterHasVariable(), toCopyFrom.getRightVariable(), toCopyFrom.getLeftVariable(), toCopyFrom.getCenterVariable(), toCopyFrom.getLeftValue(), toCopyFrom.getRightValue(), toCopyFrom.getRightTranslation(), toCopyFrom.getLeftTranslation(), writeTranslateX, writeTranslateY, proceedWhenDeleting, this);
         }
 
         return toReturn;
@@ -155,7 +157,7 @@ public class Orchestrator {
         if(shape.isPresent()){
             Power toCopyFrom = shape.get();
 
-            toReturn = new Power(toCopyFrom.getShapeName(), toCopyFrom.getUUID(), toCopyFrom.getHasLeft(), toCopyFrom.getHasRight(), toCopyFrom.getLeftHasVariable(), toCopyFrom.getRightHasVariable(), toCopyFrom.getCenterHasVariable(), toCopyFrom.getRightVariable(), toCopyFrom.getLeftVariable(), toCopyFrom.getCenterVariable(), toCopyFrom.getLeftValue(), toCopyFrom.getRightValue(), toCopyFrom.getRightTranslation(), toCopyFrom.getLeftTranslation(), writeTranslateX, writeTranslateY, proceedWhenDeleting);
+            toReturn = new Power(toCopyFrom.getShapeName(), toCopyFrom.getUUID(), toCopyFrom.getHasLeft(), toCopyFrom.getHasRight(), toCopyFrom.getLeftHasVariable(), toCopyFrom.getRightHasVariable(), toCopyFrom.getCenterHasVariable(), toCopyFrom.getRightVariable(), toCopyFrom.getLeftVariable(), toCopyFrom.getCenterVariable(), toCopyFrom.getLeftValue(), toCopyFrom.getRightValue(), toCopyFrom.getRightTranslation(), toCopyFrom.getLeftTranslation(), writeTranslateX, writeTranslateY, proceedWhenDeleting, this);
         }
 
 
@@ -260,9 +262,15 @@ public class Orchestrator {
                 String rightTranslation = (String) powerJSON.get("rightTranslation");
                 String leftTranslation = (String) powerJSON.get("leftTranslation");
 
+                /*
+                UUID customShapeUUID = null;
+                String customShapeID = (String) powerJSON.getOrDefault("customShapeID", null);
+                if (customShapeID != null){
+                    customShapeUUID = UUID.fromString(customShapeID);
+                }*/
 
                 Power powerToAdd = new Power(name, id,hasLeft, hasRight, leftHasVariable, rightHasVariable, centerHasVariable, rightVariable, leftVariable, centerVariable, leftValue, rightValue, rightTranslation, leftTranslation,
-                        a -> 0.0, a -> 0.0, proceedWhenDeletingFromThumbnail);
+                        a -> 0.0, a -> 0.0, proceedWhenDeletingFromThumbnail, this);
                 powerShapes.add(powerToAdd);
 
             }
@@ -623,8 +631,8 @@ public class Orchestrator {
                 Color colorToSend = null;
                 if(color.contains(".jpg") || color.contains(".png")){
                     //It is an image
-                    image = new Image(color);
-                    color = null;
+                    File imageFile = new File(Orchestrator.path + IMAGES_PATH + color);
+                    image = new Image(imageFile.toURI().toString());
                 }else{
                     colorToSend = Color.web(color);
                 }
@@ -670,7 +678,7 @@ public class Orchestrator {
 
             jsonObject.put("id", basicShape.getUUID().toString());
             jsonObject.put("basic", "true");
-            jsonObject.put("color", basicShape.getFill() != null ? basicShape.getFill().toString() : basicShape.getSelectedImage().getUrl());
+            jsonObject.put("color", basicShape.getFill() != null ? basicShape.getFill().toString() : basicShape.getImageName());
             jsonObject.put("width", basicShape.getWidth());
             jsonObject.put("height", basicShape.getHeight());
             jsonObject.put("name", basicShape.getShapeName());
@@ -861,7 +869,12 @@ public class Orchestrator {
             }
 
             try {
-                File toSave = new File(path + "/shapes/" + basicShape.getShapeName() + ".gif");
+                File toSave = new File(path + SHAPES_PATH + basicShape.getShapeName() + ".gif");
+
+                Path folderPath = Paths.get(path + SHAPES_PATH);
+                if (!Files.exists(folderPath)){
+                    Files.createDirectories(folderPath);
+                }
 
                 ImageIO.write(SwingFXUtils.fromFXImage(image, null), "gif", toSave);
             }catch (IOException e){
