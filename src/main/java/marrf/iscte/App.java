@@ -326,7 +326,6 @@ public class App extends Application {
 
         Pane toAdd = new Pane();
             compositionShape.getTeste(toAdd, true, 0,0);
-            System.out.println("tamanho de basic shapes: " + compositionShape.getBasicShapes().size());
 
             GridCanvas.addGroup(toAdd);
 
@@ -341,7 +340,6 @@ public class App extends Application {
             compositionShape.getBasicShapes().forEach(this::addShape);
             Pane toAdd = new Pane();
             compositionShape.getTeste(toAdd, true, 0,0);
-            System.out.println("tamanho de basic shapes: " + compositionShape.getBasicShapes().size());
 
             GridCanvas.addGroup(toAdd);
         }
@@ -743,7 +741,10 @@ public class App extends Application {
 
                 GridCanvas.addShape(tempBasicShape);
                 if(!basicShapes.contains(tempBasicShape)){
+                    //if(isCurrentSimple){
+                    //TODO: Every basic shape is added to this vector...
                         basicShapes.add(tempBasicShape);
+                    //}
                 }
                 selectedBasicShape = tempBasicShape;
                 selectedBasicShape.turnOnStroke();
@@ -947,18 +948,20 @@ public class App extends Application {
         //We are cleaning everything, but if the user is on a composition shape, we shouldn't... this way is easier tho.
         BasicShape temp = basicShapesToSave.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
         basicShapesToSave.remove(temp);
+        System.out.println("TAMANHO ERA: " + basicShapes.size());
         basicShapes.remove(temp);
+        System.out.println("TAMANHO AGORA É: " + basicShapes.size());
         GridCanvas.clearEverything();
         transformersBox.getChildren().clear();
         sideBarThumbnails.remove(temp);
-
-
 
         if(basicShapesToSave.size() == 0){
             mainPanel.getChildren().remove(nameSection);
             mainPanel.getChildren().remove(saveSection);
 
+
         }else{
+            System.out.println("AI O CARAGO");
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
         }
@@ -975,17 +978,19 @@ public class App extends Application {
 
         System.err.println("basic shapes size: " + basicShapes.size());
         if(basicShapes.size() == 0){
+            System.err.println("I've added a new basic shape since there was none");
             isCurrentSimple = true;
             inDragCustomShape = null;
             selectedPower = null;
             selectedParametricCompositionShape = null;
             selectedCompositionShape = null;
             //Ads a basic shape when we delete the last one!
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"),null, getProceedWhenDeleting());
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#76d6ff"),null, getProceedWhenDeleting());
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
             currentName.setText("defaultName");
             sideBarThumbnails.add(toAdd);
+            addSaveSectionIfItIsNot();
 
 
         }else{
@@ -1010,9 +1015,10 @@ public class App extends Application {
         transformersBox.getChildren().clear();
         sideBarThumbnails.remove(temp);
 
-        if(basicShapes.size() == 0){
+        //TODO Here it was basicShapes instead of basicShapesToSave, but this is how it makes sense!
+        if(basicShapesToSave.size() == 0){
             //Ads a basic shape when we delete the last one!
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), null, getProceedWhenDeleting());
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#76d6ff"), null, getProceedWhenDeleting());
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
             currentName.setText("defaultName");
@@ -1023,7 +1029,9 @@ public class App extends Application {
             selectedPower = null;
             selectedParametricCompositionShape = null;
             selectedCompositionShape = null;
+            addSaveSectionIfItIsNot();
         }else{
+            System.out.println("here we have: " + basicShapes.size());
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
 
@@ -1107,12 +1115,18 @@ public class App extends Application {
         sideBarThumbnails.remove(powerToRemove);
 
         if(basicShapes.size() == 0){
+            isCurrentSimple = true;
+            inDragCustomShape = null;
+            selectedPower = null;
+            selectedParametricCompositionShape = null;
+            selectedCompositionShape = null;
             //Ads a basic shape when we delete the last one!
-            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc4"), null, getProceedWhenDeleting());
+            BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#76d6ff"), null, getProceedWhenDeleting());
             addShape(toAdd);
             basicShapesToSave.add(toAdd);
             currentName.setText("defaultName");
             sideBarThumbnails.add(toAdd);
+            addSaveSectionIfItIsNot();
         }else{
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
@@ -1490,7 +1504,11 @@ public class App extends Application {
     }
 
     private void saveCurrentShape(){
+        System.out.println("basic shapes aqui era: " + basicShapes.size());
+
         if(isCurrentSimple){
+            System.out.println("basic shapes aqui era: " + basicShapes.size());
+
             BasicShape currentRectangle = gridCanvas.getSimpleRectangle();
             currentRectangle.setShapeName(currentName.getText());
             currentRectangle.redrawThumbnail();
@@ -1513,7 +1531,7 @@ public class App extends Application {
             orchestrator.addAllCompositionShapes(newCompositionShapes);
             orchestrator.addAllPowerShapes(powerArrayList);
             orchestrator.addAllParametricCompositionShapes(newParametricCompositionShapes);
-
+            System.out.println("basic shapes aqui é: " + basicShapes.size());
         }else if(selectedCompositionShape != null){
             selectedCompositionShape.setShapeName(currentName.getText());
             newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);

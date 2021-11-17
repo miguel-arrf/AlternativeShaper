@@ -748,6 +748,10 @@ public class Power implements CustomShape, ShapeWithVariables{
 
             double height = Math.abs(finalMinimumTranslationY) + Math.abs(newMaximumY);
 
+            if(finalMinimumTranslationY < 0 && newMaximumY < 0){
+                height = Math.abs(finalMinimumTranslationY) - Math.abs(newMaximumY);
+            }
+
             //getRightGroup(width, toAdd.getBoundsInParent().getHeight());
             //getLeftGroup(width, toAdd.getBoundsInParent().getHeight());
             getRightGroup(width, height);

@@ -624,8 +624,8 @@ public class NewCompositionShape implements CustomShape {
             Group group = (Group) node;
             for(Node groupNode: group.getChildren()){
                 if(!(groupNode instanceof Group)){
-                    if(groupNode.getTranslateY() < minimumValue){
-                        minimumValue = groupNode.getTranslateY();
+                    if(groupNode.getTranslateY()  + groupNode.getLayoutBounds().getHeight() < minimumValue){
+                        minimumValue = groupNode.getTranslateY() + groupNode.getLayoutBounds().getHeight();
                     }
                 }else{
                     minimumValue = getMinimumTranslationY(groupNode, minimumValue);
