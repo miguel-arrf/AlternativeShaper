@@ -50,7 +50,7 @@ public class App extends Application {
     public static final int SCALE = 40;
     public static final int NUMBER_COLUMNS_AND_ROWS = 40;
 
-    private Scene scene;
+    public static Scene scene;
     private final GridCanvas gridCanvas = new GridCanvas();
     private final Pane sceneStackPane = getGraphSection();
 
@@ -65,6 +65,7 @@ public class App extends Application {
 
     private final BooleanProperty firstBasicShapeWasSaved = new SimpleBooleanProperty(false);
     private VBox mainPanel;
+    private VBox sectionToKeep;
     private HBox topToolbar;
     private final VBox transformersBox = new VBox();
     private final ObservableList<CustomShape> sideBarThumbnails = FXCollections.observableList(new ArrayList<>());
@@ -206,6 +207,7 @@ public class App extends Application {
                                 selectedCompositionShape = (NewCompositionShape) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
+                                sectionToKeep.getChildren().clear();
                                 GridCanvas.clearEverything();
                                 //TODO aqui está a true, mas em algum momento não será...
                                 currentName.setText(basicShapeAdded.getShapeName());
@@ -226,6 +228,9 @@ public class App extends Application {
                                 selectedParametricCompositionShape = (ParametricCompositionShape) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
+                                sectionToKeep.getChildren().clear();
+                                sectionToKeep.getChildren().add(selectedParametricCompositionShape.variablesPane);
+                                //transformersBox.getChildren().add(selectedParametricCompositionShape.variablesPane);
 
                                 GridCanvas.clearEverything();
                                 //TODO aqui está a true, mas em algum momento não será...
@@ -249,6 +254,7 @@ public class App extends Application {
                                 selectedBasicShape = (BasicShape) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
+                                sectionToKeep.getChildren().clear();
                                 GridCanvas.clearEverything();
                                 //TODO aqui está a true, mas em algum momento não será...
                                 isCurrentSimple = true;
@@ -269,6 +275,7 @@ public class App extends Application {
                                 selectedPower = (Power) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
+                                sectionToKeep.getChildren().clear();
                                 GridCanvas.clearEverything();
                                 //TODO aqui está a true, mas em algum momento não será...
                                 isCurrentSimple = false;
@@ -365,6 +372,9 @@ public class App extends Application {
                 newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
                 return null;
             });
+            //transformersBox.getChildren().add(selectedParametricCompositionShape.variablesPane);
+            sectionToKeep.getChildren().clear();
+            sectionToKeep.getChildren().add(selectedParametricCompositionShape.variablesPane);
 
             selectedPower = null;
             selectedCompositionShape = null;
@@ -629,6 +639,22 @@ public class App extends Application {
         return complexShapeHBox;
     }
 
+    public static HBox getButtonWith_Label_Color(@NamedArg("label") String label, @NamedArg("background color") String backgroundColor,@NamedArg("label color") String labelColor, @NamedArg("corner radius") int cornerRadius){
+        Label complexShape = new Label(label);
+        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        complexShape.setTextFill(Color.web(labelColor));
+
+        HBox complexShapeHBox = new HBox(complexShape);
+        complexShapeHBox.setAlignment(Pos.CENTER);
+        complexShapeHBox.setSpacing(5);
+        complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius);
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
+        return complexShapeHBox;
+    }
+
+
+
 
     private Pane getProcessButton(){
         HBox complexShapeHBox = getButtonWith_Label_Color_Image("Processes editor", "#355C65", "#56CDF2", "process.png", 10);
@@ -812,6 +838,12 @@ public class App extends Application {
         mainPanel.setPadding(new Insets(0,0,0,20));
         mainPanel.setSpacing(15);
 
+        sectionToKeep = new VBox();
+        sectionToKeep.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
+        sectionToKeep.setAlignment(Pos.TOP_CENTER);
+        sectionToKeep.setSpacing(10);
+
+
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setContent(transformersBox);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -819,7 +851,7 @@ public class App extends Application {
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color: rgb(38,37,40); -fx-background-radius: 10; -fx-background: transparent");
 
-        mainPanel.getChildren().addAll(getNameSection(),scrollPane, getSaveButtonSection());
+        mainPanel.getChildren().addAll(getNameSection(),sectionToKeep, scrollPane, getSaveButtonSection());
 
         transformersBox.setSpacing(20);
 
@@ -931,6 +963,7 @@ public class App extends Application {
                 Node node = mainPanel.getChildren().get(i);
                 if(node instanceof ScrollPane){
                     mainPanel.getChildren().add(i+1,nameSection);
+                    mainPanel.getChildren().add(i+2, sectionToKeep);
                     break;
                 }
             }
@@ -957,11 +990,11 @@ public class App extends Application {
 
         if(basicShapesToSave.size() == 0){
             mainPanel.getChildren().remove(nameSection);
+            mainPanel.getChildren().remove(sectionToKeep);
             mainPanel.getChildren().remove(saveSection);
 
 
         }else{
-            System.out.println("AI O CARAGO");
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
         }

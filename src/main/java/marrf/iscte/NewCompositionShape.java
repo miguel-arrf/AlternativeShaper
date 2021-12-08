@@ -1,6 +1,5 @@
 package marrf.iscte;
 
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -23,10 +22,7 @@ import org.json.simple.JSONObject;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -601,57 +597,419 @@ public class NewCompositionShape implements CustomShape {
         return minimumValue;
     }
 
-    public static double getMaximumTranslationX(Node node, double minimumValue){
-        if(node instanceof Group){
-            Group group = (Group) node;
-            for(Node groupNode: group.getChildren()){
-                if(!(groupNode instanceof Group)){
-                    if(groupNode.getTranslateX() + groupNode.getLayoutBounds().getWidth() > minimumValue){
-                        minimumValue = groupNode.getTranslateX() + groupNode.getLayoutBounds().getWidth();
-                    }
-                }else{
-                    minimumValue = getMaximumTranslationX(groupNode, minimumValue);
-                }
 
-            }
+    private ArrayList<Double> getMaximumBasicShapeYTranslation(){
+        double maximumValue;
+        if(basicShapesYTranslation.size() != 0){
+            maximumValue = basicShapesYTranslation.get(0).value;
+        }else {
+            System.out.println("i am going to return this shit!");
+            return new ArrayList<>();
         }
+        ArrayList<Double> lowerValues = new ArrayList<>();
+        lowerValues.add(maximumValue);
 
-        return minimumValue;
+        double finalMaximumValue = maximumValue;
+        basicShapesYTranslation.forEach(basicShape -> {
+            BasicShape copy = orchestrator.getCopyOfBasicShape(basicShape.getId(), new Information("1", 0.0).getConsumer(), new Information("1", 0.0).getConsumer(), getProceedWhenDeleting(basicShape.getId()));;
+
+            //if(basicShape.getValue() < finalMaximumValue){
+                lowerValues.add(basicShape.getValue() );
+            //}
+        });
+        return  lowerValues;
     }
 
-    public static double getMinimumTranslationY(Node node, double minimumValue){
-        if(node instanceof Group){
-            Group group = (Group) node;
-            for(Node groupNode: group.getChildren()){
-                if(!(groupNode instanceof Group)){
-                    if(groupNode.getTranslateY()  + groupNode.getLayoutBounds().getHeight() < minimumValue){
-                        minimumValue = groupNode.getTranslateY() + groupNode.getLayoutBounds().getHeight();
-                    }
-                }else{
-                    minimumValue = getMinimumTranslationY(groupNode, minimumValue);
-                }
-            }
-        }
+    private double getMaximumTranslationY_inner_forCompositions(ArrayList<Information> compositionShapesY, double previousTranslation){
+        ArrayList<Double> toReturn = new ArrayList<>();
 
-        return minimumValue;
+        compositionShapesY.forEach(information -> {
+            ArrayList<Double> values = new ArrayList<>();
+            double translationY = information.getValue();
+            NewCompositionShape shape = compositionShapeMap.get(information.getId());
+
+            ArrayList<Double> tempValues = shape.getMaximumBasicShapeYTranslation();
+            tempValues.forEach(p -> values.add(p + translationY + previousTranslation));
+
+            values.sort(Collections.reverseOrder());
+            if(values.size() != 0){
+                toReturn.add(values.get(0));
+            }
+
+            //Basic Shapes are now already dealt with.
+
+            //Let's take care of composition shapes...
+            toReturn.add(getMaximumTranslationY_inner_forCompositions(shape.compositionShapesYTranslation, translationY));
+
+        });
+        toReturn.sort(Comparator.reverseOrder());
+        //Collections.sort(toReturn);
+
+        if(toReturn.size() == 0){
+            return 0;
+        }else{
+            return toReturn.get(0);
+        }
     }
 
-    public static double getMaximumTranslationY(Node node, double minimumValue){
-        if(node instanceof Group){
-            Group group = (Group) node;
-            for(Node groupNode: group.getChildren()){
-                if(!(groupNode instanceof Group)){
-                    if(groupNode.getTranslateY() + groupNode.getLayoutBounds().getHeight() > minimumValue){
-                        minimumValue = groupNode.getTranslateY() + groupNode.getLayoutBounds().getHeight();
-                    }
-                }else{
-                    minimumValue = getMaximumTranslationY(groupNode, minimumValue);
-                }
-            }
+    private ArrayList<Double> getMaximumTranslationY_inner(){
+        if(compositionShapesYTranslation.size() == 0 && basicShapesYTranslation.size() == 0) {
+            System.out.println("i am going to return this shit!");
+            return new ArrayList<>();
         }
 
-        return minimumValue;
+        ArrayList<Double> maximumValues = new ArrayList<>();
+
+        maximumValues.add(getMaximumTranslationY_inner_forCompositions(compositionShapesYTranslation, 0));
+
+        basicShapesYTranslation.forEach(basicShape -> {
+            System.out.println("value: " + basicShape.getValue());
+            BasicShape copy = orchestrator.getCopyOfBasicShape(basicShape.getId(), new Information("1", 0.0).getConsumer(), new Information("1", 0.0).getConsumer(), getProceedWhenDeleting(basicShape.getId()));;
+
+            maximumValues.add(basicShape.getValue() );
+        });
+
+
+        return maximumValues;
     }
+
+    public double getMaximumTranslationY(){
+        ArrayList<Double> minimumValues = getMaximumTranslationY_inner();
+
+        if(minimumValues.size() == 0){
+            return 0.0;
+        }else{
+            System.out.println("hehe here i am to return like a good boy!");
+            minimumValues.sort(Comparator.reverseOrder());
+            return minimumValues.get(0);
+        }
+    }
+
+    private ArrayList<Double> getMininumTranslationY(){
+        double mininumValue;
+        if(compositionShapesYTranslation.size() != 0){
+            mininumValue = compositionShapesYTranslation.get(0).value;
+        }else if(basicShapesYTranslation.size() != 0){
+            mininumValue = basicShapesYTranslation.get(0).value;
+        }else {
+            System.out.println("i am going to return this shit!");
+            return new ArrayList<>();
+        }
+
+        ArrayList<Double> lowerValues = new ArrayList<>();
+        lowerValues.add(mininumValue);
+
+        double finalMininumValue = mininumValue;
+        compositionShapesYTranslation.stream().filter(p -> p.value > finalMininumValue).forEach(p -> lowerValues.add(p.value));
+        basicShapesYTranslation.stream().filter(p -> p.value > finalMininumValue).forEach(p -> lowerValues.add(p.value));
+        compositionShapeMap.forEach((id, compositionShape) -> lowerValues.addAll(compositionShape.getMininumTranslationY()));
+
+        return lowerValues;
+    }
+
+    public double getMinimumTranslationY(){
+       ArrayList<Double> minimumValues = getMininumTranslationY();
+
+       if(minimumValues.size() == 0){
+           return 0.0;
+       }else{
+           System.out.println("hehe here i am to return like a good boy!");
+           minimumValues.sort(Collections.reverseOrder());
+           return minimumValues.get(0);
+       }
+
+    }
+
+
+
+    private double getMinimumTranslationY_inner_forCompositions(ArrayList<Information> compositionShapesY, double previousTranslation){
+        ArrayList<Double> toReturn = new ArrayList<>();
+
+        compositionShapesY.forEach(information -> {
+            ArrayList<Double> values = new ArrayList<>();
+            double translationY = information.getValue();
+            NewCompositionShape shape = compositionShapeMap.get(information.getId());
+
+            ArrayList<Double> tempValues = shape.getMinimumBasicShapeYTranslation();
+            tempValues.forEach(p -> {
+                values.add(p + translationY + previousTranslation);
+                System.out.println("---> TRANSLATIONY: " + translationY + ", p: " + p);
+
+            });
+            Collections.sort(values);
+            toReturn.add(values.size() == 0 ? 0 : values.get(0));
+            //Basic Shapes are now already dealt with.
+
+            //Let's take care of composition shapes...
+            toReturn.add(getMinimumTranslationY_inner_forCompositions(shape.compositionShapesYTranslation, translationY));
+
+        });
+        Collections.sort(toReturn);
+        if(toReturn.size() == 0){
+            return 0;
+        }else{
+            return toReturn.get(0);
+        }
+    }
+
+
+    private ArrayList<Double> getMinimumTranslationY_inner(){
+        if(compositionShapesYTranslation.size() == 0 && basicShapesYTranslation.size() == 0) {
+            System.out.println("i am going to return this shit!");
+            return new ArrayList<>();
+        }
+
+        ArrayList<Double> maximumValues = new ArrayList<>();
+
+        maximumValues.add(getMinimumTranslationY_inner_forCompositions(compositionShapesYTranslation, 0));
+
+        basicShapesYTranslation.forEach(basicShape -> {
+            BasicShape copy = orchestrator.getCopyOfBasicShape(basicShape.getId(), new Information("1", 0.0).getConsumer(), new Information("1", 0.0).getConsumer(), getProceedWhenDeleting(basicShape.getId()));;
+            maximumValues.add(basicShape.getValue() - copy.getHeight() );
+        });
+
+
+        return maximumValues;
+    }
+
+
+    public double getMinimumTranslationY_new(){
+        ArrayList<Double> minimumValues = getMinimumTranslationY_inner();
+
+        if(minimumValues.size() == 0){
+            return 0.0;
+        }else{
+            System.out.println("hehe here i am to return like a good boy!");
+            Collections.sort(minimumValues);
+            return minimumValues.get(0);
+        }
+    }
+
+
+
+
+
+
+    /*
+    private ArrayList<Double> getMinimumTranslationX_inner(){
+        double mininumValue;
+        if(compositionShapesXTranslation.size() != 0){
+            mininumValue = compositionShapesXTranslation.get(0).value;
+        }else if(basicShapesXTranslation.size() != 0){
+            mininumValue = basicShapesXTranslation.get(0).value;
+        }else {
+            System.out.println("i am going to return this shit!");
+            return new ArrayList<>();
+        }
+
+        ArrayList<Double> lowerValues = new ArrayList<>();
+        lowerValues.add(mininumValue);
+
+        double finalMininumValue = mininumValue;
+        compositionShapesXTranslation.stream().filter(p -> p.value < finalMininumValue).forEach(p -> lowerValues.add(p.value));
+        basicShapesXTranslation.stream().filter(p -> p.value < finalMininumValue).forEach(p -> lowerValues.add(p.value));
+        compositionShapeMap.forEach((id, compositionShape) -> lowerValues.addAll(compositionShape.getMinimumTranslationX_inner()));
+
+        return lowerValues;
+    }*/
+
+    private double getMinimumTranslationX_inner_forCompositions(ArrayList<Information> compositionShapesX, double previousTranslation){
+        ArrayList<Double> toReturn = new ArrayList<>();
+
+        compositionShapesX.forEach(information -> {
+            ArrayList<Double> values = new ArrayList<>();
+            double translationX = information.getValue();
+            NewCompositionShape shape = compositionShapeMap.get(information.getId());
+
+            ArrayList<Double> tempValues = shape.getMinimumBasicShapeXTranslation();
+            tempValues.forEach(p -> {
+                values.add(p + translationX + previousTranslation);
+                System.out.println("---> TRANSLATIONX: " + translationX + ", p: " + p);
+
+            });
+
+            Collections.sort(values);
+            toReturn.add(values.size() == 0 ? 0 : values.get(0));
+            //Basic Shapes are now already dealt with.
+
+            //Let's take care of composition shapes...
+            toReturn.add(getMinimumTranslationX_inner_forCompositions(shape.compositionShapesXTranslation, translationX));
+
+        });
+        Collections.sort(toReturn);
+
+        if(toReturn.size() == 0){
+            return 0;
+        }else{
+            return toReturn.get(0);
+        }
+    }
+
+
+    private ArrayList<Double> getMinimumTranslationX_inner(){
+        if(compositionShapesXTranslation.size() == 0 && basicShapesXTranslation.size() == 0) {
+            System.out.println("i am going to return this shit!");
+            return new ArrayList<>();
+        }
+
+        ArrayList<Double> maximumValues = new ArrayList<>();
+
+        maximumValues.add(getMinimumTranslationX_inner_forCompositions(compositionShapesXTranslation, 0));
+
+        basicShapesXTranslation.forEach(basicShape -> {
+            maximumValues.add(basicShape.getValue());
+        });
+
+
+        return maximumValues;
+    }
+
+    public double getMinimumTranslationX(){
+        ArrayList<Double> minimumValues = getMinimumTranslationX_inner();
+
+        if(minimumValues.size() == 0){
+            return 0.0;
+        }else{
+            System.out.println("hehe here i am to return like a good boy!");
+            Collections.sort(minimumValues);
+            return minimumValues.get(0);
+        }
+
+    }
+
+
+
+
+    private ArrayList<Double> getMaximumBasicShapeXTranslation(){
+        double maximumValue;
+        if(basicShapesXTranslation.size() != 0){
+            maximumValue = basicShapesXTranslation.get(0).value;
+        }else {
+            System.out.println("i am going to return this shit!");
+            return new ArrayList<>();
+        }
+        ArrayList<Double> lowerValues = new ArrayList<>();
+        lowerValues.add(maximumValue);
+
+        double finalMaximumValue = maximumValue;
+        basicShapesXTranslation.forEach(basicShape -> {
+            BasicShape copy = orchestrator.getCopyOfBasicShape(basicShape.getId(), new Information("1", 0.0).getConsumer(), new Information("1", 0.0).getConsumer(), getProceedWhenDeleting(basicShape.getId()));;
+
+            //if(basicShape.getValue() < finalMaximumValue){
+            //Shouldn't it be >=?
+                lowerValues.add(basicShape.getValue() + copy.getWidth());
+            //}
+        });
+        return  lowerValues;
+    }
+
+    private ArrayList<Double> getMinimumBasicShapeXTranslation(){
+        double maximumValue;
+        if(basicShapesXTranslation.size() != 0){
+            maximumValue = basicShapesXTranslation.get(0).value;
+        }else {
+            System.out.println("i am going to return this shit!");
+            return new ArrayList<>();
+        }
+        ArrayList<Double> lowerValues = new ArrayList<>();
+        lowerValues.add(maximumValue);
+
+        basicShapesXTranslation.forEach(basicShape -> {
+            lowerValues.add(basicShape.getValue());
+        });
+        return  lowerValues;
+    }
+
+
+    private ArrayList<Double> getMinimumBasicShapeYTranslation(){
+        double maximumValue;
+        if(basicShapesYTranslation.size() != 0){
+            maximumValue = basicShapesYTranslation.get(0).value;
+        }else {
+            System.out.println("i am going to return this shit!");
+            return new ArrayList<>();
+        }
+        ArrayList<Double> lowerValues = new ArrayList<>();
+        lowerValues.add(maximumValue);
+
+        basicShapesYTranslation.forEach(basicShape -> {
+            BasicShape copy = orchestrator.getCopyOfBasicShape(basicShape.getId(), new Information("1", 0.0).getConsumer(), new Information("1", 0.0).getConsumer(), getProceedWhenDeleting(basicShape.getId()));;
+
+            lowerValues.add(basicShape.getValue() - copy.getHeight() );
+        });
+        return  lowerValues;
+    }
+
+    private double getMaximumTranslationX_inner_forCompositions(ArrayList<Information> compositionShapesX, double previousTranslation){
+        ArrayList<Double> toReturn = new ArrayList<>();
+
+        compositionShapesX.forEach(information -> {
+            ArrayList<Double> values = new ArrayList<>();
+            double translationX = information.getValue();
+            NewCompositionShape shape = compositionShapeMap.get(information.getId());
+
+            ArrayList<Double> tempValues = shape.getMaximumBasicShapeXTranslation();
+            tempValues.forEach(p -> {
+                values.add(p + translationX + previousTranslation);
+                System.out.println("---> TRANSLATIONX: " + translationX + ", p: " + p);
+
+            });
+
+            values.sort(Collections.reverseOrder());
+            toReturn.add(values.size() == 0 ? 0 : values.get(0));
+
+            //Basic Shapes are now already dealt with.
+
+            //Let's take care of composition shapes...
+            toReturn.add(getMaximumTranslationX_inner_forCompositions(shape.compositionShapesXTranslation, translationX));
+
+        });
+        toReturn.sort(Collections.reverseOrder());
+
+        if(toReturn.size() == 0){
+            return 0;
+        }else{
+            return toReturn.get(0);
+        }
+    }
+
+    private ArrayList<Double> getMaximumTranslationX_inner(){
+        if(compositionShapesXTranslation.size() == 0 && basicShapesXTranslation.size() == 0) {
+            System.out.println("i am going to return this shit!");
+            return new ArrayList<>();
+        }
+
+        ArrayList<Double> maximumValues = new ArrayList<>();
+
+        maximumValues.add(getMaximumTranslationX_inner_forCompositions(compositionShapesXTranslation, 0));
+
+        basicShapesXTranslation.forEach(basicShape -> {
+            System.out.println("value: " + basicShape.getValue());
+            BasicShape copy = orchestrator.getCopyOfBasicShape(basicShape.getId(), new Information("1", 0.0).getConsumer(), new Information("1", 0.0).getConsumer(), getProceedWhenDeleting(basicShape.getId()));;
+            System.out.println("i'm on a basic shape!");
+            maximumValues.add(basicShape.getValue() + copy.getWidth());
+        });
+
+
+        return maximumValues;
+    }
+
+    public double getMaximumTranslationX(){
+        ArrayList<Double> maximumValues = getMaximumTranslationX_inner();
+        if(maximumValues.size() == 0){
+            return 0.0;
+        }else{
+            maximumValues.sort(Collections.reverseOrder());
+            return maximumValues.get(0);
+        }
+    }
+
+
+
+
+
+
+
 
     public Pane addNewCompositionShape(NewCompositionShape NewCompositionShape) {
         String id = UUID.randomUUID().toString();

@@ -1,5 +1,8 @@
 package marrf.iscte;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -9,30 +12,24 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
-import static marrf.iscte.App.NUMBER_COLUMNS_AND_ROWS;
-import static marrf.iscte.App.SCALE;
+import static marrf.iscte.App.*;
 import static marrf.iscte.BasicShape.colorToRGBString;
 import static marrf.iscte.BasicShape.getRelativeLuminance;
 
@@ -67,6 +64,10 @@ public class ParametricCompositionShape implements CustomShape {
     private final ArrayList<Coiso<String>> powerShapesYParametricTranslation = new ArrayList<>();
 
 
+    private final ObservableList<String> variables = FXCollections.observableList(new ArrayList<>());
+    public VBox variablesPane = new VBox();
+
+    private static final String SEPARATOR = "<-";
     private final Orchestrator orchestrator;
     //Composition Shape Thumbnail
     private final HBox thumbnail = new HBox();
@@ -111,7 +112,93 @@ public class ParametricCompositionShape implements CustomShape {
         ID = UUID.randomUUID();
         this.orchestrator = orchestrator;
         this.transformersBox = transformersBox;
+        setUpVariablesPane();
+
+        FlowPane flowPane = new FlowPane();
+        flowPane.setHgap(15);
+        flowPane.setVgap(15);
+
+        variables.addListener((ListChangeListener<? super String>) change -> {
+            while(change.next()){
+                if(change.wasRemoved()){
+                    for(String variableRemoved : change.getRemoved()){
+                        flowPane.getChildren().removeIf(p -> p.getId().equals(variableRemoved));
+                    }
+                }
+                if(change.wasAdded()){
+                    for(String variableAdded : change.getAddedSubList()){
+                       if(flowPane.getChildren().filtered(p -> p.getId().equals(variableAdded)).size() == 0){
+                           flowPane.getChildren().add(getPaneForVariable(variableAdded));
+                       }else{
+                           System.err.println("We are trying to add an already existing variable...!");
+                       }
+                    }
+                }
+            }
+        });
+
+        variablesPane.getChildren().add(flowPane);
+
+
         //setUpComponents();
+    }
+
+    private Pane getPaneForVariable(String variable){
+        return getPaneForVariable(variable, true);
+    }
+
+    private Pane getPaneForVariable(String variable, boolean withDelete){
+        return getPaneForVariable(variable, withDelete, 15, 30, 30, 6);
+    }
+
+    private Pane getPaneForVariable(String variable, boolean withDelete, int fontSize, int width, int height, int cornerRadius ){
+        String backgroundColor = FxUtils.toRGBCode(Color.web(StartMenu.getRGBColor()).darker());
+
+        Label label = getLabel(variable, fontSize);
+        label.setWrapText(true);
+        label.setTextFill(Color.web(backgroundColor).brighter().brighter());
+
+        VBox vBox = new VBox(label);
+        vBox.setPadding(new Insets(3));
+        vBox.setAlignment(Pos.CENTER);
+        vBox.setId(variable);
+
+        vBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius);
+
+        if(withDelete){
+            vBox.setOnMouseEntered(mouseEvent -> {
+                vBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: " + cornerRadius);
+            });
+
+            vBox.setOnMouseExited(mouseEvent -> {
+                vBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius);
+            });
+
+            ContextMenu contextMenu = new ContextMenu();
+            contextMenu.setId("betterMenuItem");
+
+            MenuItem menuItem = new MenuItem("Delete Variable");
+            menuItem.setStyle("-fx-text-fill: red");
+            contextMenu.getItems().add(menuItem);
+
+            menuItem.setOnAction(actionEvent -> {
+                variables.remove(variable);
+            });
+
+            vBox.setOnContextMenuRequested(contextMenuEvent -> {
+                contextMenu.show(vBox, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+            });
+
+        }
+
+        vBox.setMinWidth(width);
+        vBox.setMinHeight(height);
+
+        vBox.setMaxWidth(Double.MAX_VALUE);
+        vBox.setMaxHeight(Double.MAX_VALUE);
+
+
+        return vBox;
     }
 
     public ParametricCompositionShape(Orchestrator orchestrator, Pane transformersBox, String name, UUID id, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
@@ -474,11 +561,11 @@ public class ParametricCompositionShape implements CustomShape {
 
     public Power addPowerShape(String powerShapeID){
         System.out.println("ó maluco, here i am");
-        Coiso<Double> translationX = new Coiso<Double>(powerShapeID, 0.0);
-        Coiso<Double> translationY = new Coiso<Double>(powerShapeID, 0.0);
+        Coiso<Double> translationX = new Coiso<>(powerShapeID, 0.0);
+        Coiso<Double> translationY = new Coiso<>(powerShapeID, 0.0);
 
-        Coiso<String> parametricXTranslation = new Coiso<String>(powerShapeID, "");
-        Coiso<String> parametricYTranslation = new Coiso<String>(powerShapeID, "");
+        Coiso<String> parametricXTranslation = new Coiso<>(powerShapeID, "");
+        Coiso<String> parametricYTranslation = new Coiso<>(powerShapeID, "");
 
         powerShapesXParametricTranslation.add(parametricXTranslation);
         powerShapesYParametricTranslation.add(parametricYTranslation);
@@ -490,11 +577,11 @@ public class ParametricCompositionShape implements CustomShape {
     }
 
     public Power addPowerShapeWithTranslation(String powerShapeID,double xTranslation, double yTranslation, String parametricX, String parametricY){
-        Coiso<Double> translationX = new Coiso<Double>(powerShapeID, xTranslation);
-        Coiso<Double> translationY = new Coiso<Double>(powerShapeID, yTranslation);
+        Coiso<Double> translationX = new Coiso<>(powerShapeID, xTranslation);
+        Coiso<Double> translationY = new Coiso<>(powerShapeID, yTranslation);
 
-        Coiso<String> parametricXTranslation = new Coiso<String>(powerShapeID, parametricX);
-        Coiso<String> parametricYTranslation = new Coiso<String>(powerShapeID, parametricY);
+        Coiso<String> parametricXTranslation = new Coiso<>(powerShapeID, parametricX);
+        Coiso<String> parametricYTranslation = new Coiso<>(powerShapeID, parametricY);
 
         powerShapesXParametricTranslation.add(parametricXTranslation);
         powerShapesYParametricTranslation.add(parametricYTranslation);
@@ -984,6 +1071,13 @@ public class ParametricCompositionShape implements CustomShape {
     public Pane addParametricCompositionShape(ParametricCompositionShape parametricCompositionShape){
         String id = UUID.randomUUID().toString();
 
+        /*ArrayList<String> parametricShapeVariables = parametricCompositionShape.getOutputVariables();
+        FlowPane flowPane = new FlowPane(new Label("Shape: " + parametricCompositionShape.getShapeName()));
+        for(String variable: parametricShapeVariables){
+            flowPane.getChildren().add(getPaneForVariable(variable, false, 10, 15, 15, 6));
+        }
+        variablesPane.getChildren().add(flowPane);*/
+
         parametricCompositionShapesMap.put(id, parametricCompositionShape);
 
         parametricShapesXTranslation.add(new Coiso<>(id, 0.0));
@@ -1073,11 +1167,241 @@ public class ParametricCompositionShape implements CustomShape {
         parametricTranslationYBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
     }
 
-    private void setUpTranslationXBox() {
-        Label translationLabel = new Label(notParametric ? "Translation X:" : "Temporary translation X:");
+    private Pane getNumericLabel(){
+        HBox numericLabel = getPopupButton("Numeric Variable", "#703636", "#F96767");
+
+        numericLabel.setPrefWidth(140);
+        numericLabel.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(numericLabel, Priority.ALWAYS);
+
+        numericLabel.setOnMouseClicked(variableLabelMouseEvent -> {
+            PopupWindow popupWindow = new PopupWindow();
+            Stage tempStage = popupWindow.getStage();
+
+            Pane closeButton = PopupWindow.getButton("Close", "null", "#5E2323", "#EB5757", event -> {
+                tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
+            });
+            popupWindow.createPopup("Create new Variable", scene, getCreateNumericVariablePane(tempStage), closeButton );
+        });
+
+        return numericLabel;
+    }
+
+    private boolean variableAlreadyExists(String variableName){
+        String correctVariableName = variableName;
+        if(variableName.contains(SEPARATOR)){
+            String[] variableNameParts = variableName.split(SEPARATOR);
+            correctVariableName = variableNameParts[0];
+        }
+
+        for(String variable : variables){
+            if(variable.contains(SEPARATOR)){
+                String[] parts = variable.split(SEPARATOR);
+                if(parts[0].equals(correctVariableName))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+
+
+    private Pane getCreateVariablePane(Stage stage){
+        Label variableName = getLabel("Variable Name:");
+
+        TextField textField = new TextField();
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setAlignment(Pos.CENTER_LEFT);
+
+        Pane saveButton = PopupWindow.getButton("Save", "null", "#35654F", "#56F28F", event -> {
+            if(textField.getText().isEmpty() || textField.getText().isBlank()){
+                textField.setPromptText("Variable name empty");
+                System.err.println("Variable name is empty...!");
+            }else{
+                if(!variables.contains(textField.getText()) && !variableAlreadyExists(textField.getText())){
+                    variables.add(textField.getText());
+                    stage.fireEvent(new WindowEvent(stage, WindowEvent.WINDOW_CLOSE_REQUEST));
+                }else{
+                    textField.setPromptText("Variable name empty");
+                    System.err.println("We are trying to add an already existing variable... on the textfield!");
+                }
+
+            }
+
+        });
+
+        HBox hBox = new HBox(variableName, textField);
+        hBox.setSpacing(10);
+        hBox.setAlignment(Pos.CENTER_LEFT);
+
+        VBox toReturn = new VBox(hBox, saveButton);
+        toReturn.setSpacing(20);
+
+        return toReturn;
+    }
+
+    private Pane getCreateNumericVariablePane(Stage stage){
+        Label variableName = getLabel("Variable Name:");
+
+        TextField textField = new TextField();
+        textField.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textField.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textField.setAlignment(Pos.CENTER_LEFT);
+
+        Label variableValue = getLabel("Variable Value:");
+
+        TextField textFieldValue = new TextField();
+        textFieldValue.setStyle("-fx-background-color: #333234; -fx-text-fill: #BDBDBD; -fx-highlight-text-fill: #078D55; -fx-highlight-fill: #6FCF97;");
+        textFieldValue.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        textFieldValue.setAlignment(Pos.CENTER_LEFT);
+
+        Pane saveButton = PopupWindow.getButton("Save", "null", "#35654F", "#56F28F", event -> {
+            if(textField.getText().isEmpty() || textField.getText().isBlank() || textFieldValue.getText().isBlank() || textFieldValue.getText().isEmpty()){
+                System.err.println("Variable name or variable value is empty...!");
+            }else{
+                try{
+                    double value = Double.parseDouble(textFieldValue.getText());
+                    if(!variables.contains(textField.getText())  && !textField.getText().contains(SEPARATOR) && !variableAlreadyExists(textField.getText())){
+                        variables.add(textField.getText() + SEPARATOR + value );
+                        stage.fireEvent(new WindowEvent(stage, WindowEvent.WINDOW_CLOSE_REQUEST));
+                    }else{
+                        textField.setPromptText("Variable name empty");
+                        System.err.println("We are trying to add an already existing variable... on the textfield!");
+                    }
+                }catch (NumberFormatException e){
+                    e.printStackTrace();
+                    System.err.println("Variable value is incorrect!");
+
+                }
+
+            }
+
+        });
+
+        HBox hBox = new HBox(variableName, textField);
+        hBox.setSpacing(10);
+        hBox.setAlignment(Pos.CENTER_LEFT);
+
+        HBox valueHBox = new HBox(variableValue, textFieldValue);
+        valueHBox.setSpacing(10);
+        valueHBox.setAlignment(Pos.CENTER_LEFT);
+
+        VBox toReturn = new VBox(hBox, valueHBox, saveButton);
+        toReturn.setSpacing(20);
+
+        return toReturn;
+    }
+
+    private Pane getVariableLabel(){
+        HBox variableLabel = getPopupButton("Variable", "#5F3670", "#F967A8");
+
+        variableLabel.setPrefWidth(140);
+        variableLabel.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(variableLabel, Priority.ALWAYS);
+
+        variableLabel.setOnMouseClicked(variableLabelMouseEvent -> {
+            PopupWindow popupWindow = new PopupWindow();
+            Stage tempStage = popupWindow.getStage();
+
+            Pane closeButton = PopupWindow.getButton("Close", "null", "#5E2323", "#EB5757", event -> {
+                tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
+            });
+            popupWindow.createPopup("Create new Variable", scene, getCreateVariablePane(tempStage), closeButton );
+        });
+
+        return variableLabel;
+    }
+
+    public ArrayList<String> getOutputVariables(){
+        ArrayList<String> toReturn = new ArrayList<>();
+        for(String variable: variables){
+            if(!variable.contains(SEPARATOR)){
+                toReturn.add(variable);
+            }
+        }
+        return toReturn;
+    }
+
+    private HBox getPopupButton(String label, String backgroundColor, String labelColor){
+        Label complexShape = new Label(label);
+        complexShape.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
+        complexShape.setTextFill(Color.web(labelColor));
+
+        HBox complexShapeHBox = new HBox(complexShape);
+
+        complexShapeHBox.setAlignment(Pos.CENTER);
+        complexShapeHBox.setSpacing(5);
+        complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + 10);
+        HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
+
+        complexShapeHBox.setOnMouseEntered(mouseEvent -> {
+            complexShapeHBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: " + 10);
+        });
+
+        complexShapeHBox.setOnMouseExited(mouseEvent -> {
+            complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + 10);
+        });
+
+        complexShape.setMinHeight(30);
+        complexShapeHBox.setPadding(new Insets(0, 5, 0, 5));
+
+
+        return complexShapeHBox;
+    }
+
+    public void setUpVariablesPane(){
+        HBox variablesLabel = getButtonWith_Label_Color("Variables", "#717640", "#BBBBBB", 6);
+        Pane addButton = getButtonWith_Label_Color_Image("", "#717640", "#BBBBBB", "icons8-plus-math-96.png", 6);
+
+        variablesLabel.setMaxHeight(30);
+        variablesLabel.setMinHeight(30);
+        variablesLabel.setPrefHeight(30);
+
+        addButton.setMaxHeight(30);
+        addButton.setPrefHeight(30);
+        addButton.setMinHeight(30);
+        addButton.setPrefSize(30,30);
+        addButton.setMaxWidth(30);
+
+        HBox topButtonsAndLabel = new HBox(variablesLabel, addButton);
+        topButtonsAndLabel.setSpacing(10);
+
+        CustomMenuItem numericVariable = new CustomMenuItem(getNumericLabel());
+        CustomMenuItem variable = new CustomMenuItem(getVariableLabel());
+
+        ContextMenu contextMenuParametric = new ContextMenu();
+        contextMenuParametric.setId("testeCoiso");
+        contextMenuParametric.getItems().addAll(numericVariable, variable);
+
+        addButton.setOnMouseClicked(mouseEvent -> contextMenuParametric.show(addButton, mouseEvent.getScreenX(), mouseEvent.getScreenY()));
+
+        variablesPane.setPadding(new Insets(10));
+        variablesPane.setPrefHeight(50);
+        variablesPane.setSpacing(15);
+        variablesPane.getChildren().add(topButtonsAndLabel);
+    }
+
+
+
+    private Label getLabel(String text){
+        Label translationLabel = new Label(text);
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));
         translationLabel.setWrapText(false);
+        return translationLabel;
+    }
+
+    private Label getLabel(String text, int size){
+        Label translationLabel = new Label(text);
+        translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, size));
+        translationLabel.setTextFill(Color.web("#BDBDBD"));
+        translationLabel.setWrapText(false);
+        return translationLabel;
+    }
+
+    private void setUpTranslationXBox() {
+        Label translationLabel = getLabel(notParametric ? "Translation X:" : "Temporary translation X:");
 
         TextField textField = new TextField(String.valueOf(selectedTranslationX.getValue() / SCALE));
         textField.setPromptText(String.valueOf(selectedTranslationX.getValue() / SCALE));
@@ -1241,20 +1565,22 @@ public class ParametricCompositionShape implements CustomShape {
         thumbnail.getChildren().add(GridCanvas.takeScreenshootWithRoundedCornersAndLoadTemporarily(this));
 
         //label tags
-        VBox nameAndTagVBox = new VBox(StartMenu.verticalGrower());
+        VBox nameAndTagVBox = new VBox();
         nameAndTagVBox.setSpacing(5);
 
         Label nameLabel = new Label(getShapeName());
         nameLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 12));
         nameLabel.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)")));
-
+        nameLabel.setWrapText(true);
 
         Label tagLabel = new Label("Composition Shape");
+        tagLabel.setWrapText(true);
         tagLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 10));
         tagLabel.setPadding(new Insets(3));
         tagLabel.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)").darker()));
         tagLabel.setStyle("-fx-background-color: " + colorToRGBString(Color.web("rgb(79,79,79)").darker()) + "; -fx-background-radius: 3");
 
+        /*
         Label numberOfBasicShapes = new Label(basicShapesXTranslation.size() + "x");
         numberOfBasicShapes.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 10));
         numberOfBasicShapes.setPadding(new Insets(3));
@@ -1266,12 +1592,27 @@ public class ParametricCompositionShape implements CustomShape {
         numberOfCompositionShapes.setPadding(new Insets(3));
         numberOfCompositionShapes.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)").darker()));
         numberOfCompositionShapes.setStyle("-fx-background-color: " + colorToRGBString(Color.web("rgb(79,79,79)").darker()) + "; -fx-background-radius: 3");
-
-        HBox detailsHB = new HBox(tagLabel, numberOfBasicShapes, numberOfCompositionShapes);
-        detailsHB.setSpacing(10);
+         */
+        FlowPane detailsHB = new FlowPane(tagLabel);
+        detailsHB.setVgap(10);
+        detailsHB.setHgap(10);
 
         nameAndTagVBox.getChildren().addAll(nameLabel, detailsHB);
 
+        FlowPane variablesFlowPane = new FlowPane();
+        variablesFlowPane.setVgap(10);
+        variablesFlowPane.setHgap(10);
+
+        if(variables.size() != 0){
+            //There are variables!
+            nameAndTagVBox.getChildren().add(variablesFlowPane);
+            for(String variable: getOutputVariables()){
+                    Pane variablePane = getPaneForVariable(variable, false, 10, 20, 20, 3);
+                    variablesFlowPane.getChildren().add(variablePane);
+            }
+        }
+
+        thumbnail.setAlignment(Pos.TOP_CENTER);
         thumbnail.getChildren().add(nameAndTagVBox);
     }
 
@@ -1282,7 +1623,7 @@ public class ParametricCompositionShape implements CustomShape {
         thumbnail.setPadding(new Insets(10));
         thumbnail.setStyle("-fx-background-color: rgb(79,79,79); -fx-background-radius: 10");
         thumbnail.setSpacing(10);
-        thumbnail.setAlignment(Pos.CENTER_LEFT);
+        thumbnail.setAlignment(Pos.TOP_CENTER);
 
         HBox.setHgrow(thumbnail, Priority.NEVER);
 

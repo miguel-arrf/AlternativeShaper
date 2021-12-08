@@ -23,7 +23,9 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Random;
 
 public class StartMenu extends Application {
 
@@ -37,6 +39,33 @@ public class StartMenu extends Application {
 
     private boolean fileDirectoryChoosen = false;
 
+
+    public static String getRGBColor(){
+        String LIGHT_GREENISH_BLUE = "#55efc4";
+        String FADED_POSTER = "#81ecec";
+        String GREEN_DARNER_TAIL = "#74b9ff";
+        String SHY_MOMENT = "#a29bfe";
+        String SOUR_LEMON = "#ffeaa7";
+        String FIRST_DATE = "#fab1a0";
+        String PINK_GLAMOUR = "#ff7675";
+        String PICO_8_PINK = "#fd79a8";
+        String YUE_GUANG_LAN_BLUE = "#1e3799";
+
+        ArrayList<String> colors = new ArrayList<>();
+        colors.add(LIGHT_GREENISH_BLUE);
+        colors.add(FADED_POSTER);
+        colors.add(GREEN_DARNER_TAIL);
+        colors.add(SHY_MOMENT);
+        colors.add(SOUR_LEMON);
+        colors.add(FIRST_DATE);
+        colors.add(PINK_GLAMOUR);
+        colors.add(PICO_8_PINK);
+        colors.add(YUE_GUANG_LAN_BLUE);
+
+        Random random = new Random();
+
+        return colors.get(random.nextInt(colors.size()));
+    }
 
     private Effect getDarkerEffect(){
         ColorAdjust colorAdjust = new ColorAdjust();

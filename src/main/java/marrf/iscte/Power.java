@@ -12,19 +12,19 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import org.json.simple.JSONObject;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Function;
@@ -33,7 +33,6 @@ import java.util.function.Supplier;
 import static marrf.iscte.App.SCALE;
 import static marrf.iscte.BasicShape.colorToRGBString;
 import static marrf.iscte.BasicShape.getRelativeLuminance;
-import static marrf.iscte.NewCompositionShape.*;
 
 public class Power implements CustomShape, ShapeWithVariables{
 
@@ -43,7 +42,7 @@ public class Power implements CustomShape, ShapeWithVariables{
     private final Group rightGroup = new Group();
     private final Group leftGroup = new Group();
     private final Group centerGroup = new Group();
-    private VBox centerShape;
+    private StackPane centerShape;
 
     private boolean hasLeft = true;
     private boolean hasRight = true;
@@ -56,11 +55,13 @@ public class Power implements CustomShape, ShapeWithVariables{
     private String leftVariable = "Y";
     private String centerVariable = "Z";
 
-    private String leftValue = "0";
-    private String rightValue = "0";
+    private String leftValue = "1";
+    private String rightValue = "1";
 
     private String rightTranslation = "1";
+    private TextField rightTextFieldTranslation;
     private String leftTranslation = "1";
+    private TextField leftTextFieldTranslation;
 
     private final Label rightLabel = new Label(rightVariable);
     private final Label leftLabel = new Label(leftVariable);
@@ -220,7 +221,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         translationXSection.setPadding(new Insets(10, 10, 10, 15));
         translationXSection.setAlignment(Pos.CENTER_LEFT);
         translationXSection.setMinHeight(30);
-        translationXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        translationXSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         translationXSection.setSpacing(20);
 
     }
@@ -288,7 +289,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         translationYSection.setPadding(new Insets(10, 10, 10, 15));
         translationYSection.setAlignment(Pos.CENTER_LEFT);
         translationYSection.setMinHeight(30);
-        translationYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        translationYSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         translationYSection.setSpacing(15);
 
     }
@@ -449,7 +450,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         verticalParametricTranslationSection.setPadding(new Insets(10, 10, 10, 15));
         verticalParametricTranslationSection.setAlignment(Pos.CENTER_LEFT);
         verticalParametricTranslationSection.setMinHeight(30);
-        verticalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        verticalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         verticalParametricTranslationSection.setSpacing(20);
 
     }
@@ -480,7 +481,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         horizontalParametricTranslationSection.setPadding(new Insets(10, 10, 10, 15));
         horizontalParametricTranslationSection.setAlignment(Pos.CENTER_LEFT);
         horizontalParametricTranslationSection.setMinHeight(30);
-        horizontalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        horizontalParametricTranslationSection.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         horizontalParametricTranslationSection.setSpacing(20);
 
     }
@@ -508,40 +509,49 @@ public class Power implements CustomShape, ShapeWithVariables{
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
     }
 
-    private void getRightGroup(double translationX, double translationY){
-        System.out.println("translation x hehe: " + translationX);
+    private void getRightGroup(double width, double height, double spacing){
+
         Circle firstRightCircle = new Circle();
         firstRightCircle.setRadius(3);
         firstRightCircle.setFill(Color.web("#B2B2B2"));
-        firstRightCircle.setTranslateX(translationX + 9 );
-        firstRightCircle.setTranslateY(- translationY / 2.0);
-
+        firstRightCircle.setTranslateX(width + 9 );
+        firstRightCircle.setTranslateY(- height / 2.0);
 
         Circle secondRightCircle = new Circle();
         secondRightCircle.setRadius(3);
         secondRightCircle.setFill(Color.web("#999999"));
-        secondRightCircle.setTranslateX(translationX + 20 );
-        secondRightCircle.setTranslateY(- translationY / 2.0);
+        secondRightCircle.setTranslateX(width + 20 );
+        secondRightCircle.setTranslateY(- height / 2.0);
 
         Circle thirdRightCircle = new Circle();
         thirdRightCircle.setRadius(3);
         thirdRightCircle.setFill(Color.web("#737373"));
-        thirdRightCircle.setTranslateX(translationX + 31 );
-        thirdRightCircle.setTranslateY(- translationY / 2.0);
+        thirdRightCircle.setTranslateX(width + 31 );
+        thirdRightCircle.setTranslateY(- height / 2.0);
+
 
         VBox addRight = new VBox();
-        addRight.setPrefSize(translationX, translationY);
-        addRight.setTranslateX(translationX + SCALE);
-        addRight.setTranslateY(- translationY);
+        addRight.setPrefSize(width, height);
+        addRight.setTranslateX(width + SCALE);
+        addRight.setTranslateY(- height);
         addRight.setStyle(getDashStyle());
 
         addRight.getChildren().add(rightLabel);
         addRight.setAlignment(Pos.CENTER);
 
-        rightGroup.getChildren().clear();
-        rightGroup.getChildren().addAll(firstRightCircle, secondRightCircle, thirdRightCircle, addRight);
+        Group toAdd = new Group();
+        toAdd.getChildren().addAll(firstRightCircle, secondRightCircle, thirdRightCircle, addRight);
 
+        rightGroup.setTranslateY(0);
+        rightGroup.setTranslateX(0);
+        rightGroup.getChildren().clear();
+        rightGroup.getChildren().addAll(toAdd);
     }
+
+    private void getRightGroup(double translationX, double translationY){
+        getRightGroup(translationX, translationY, 0);
+    }
+
 
     private void getRightGroup(){
         Circle firstRightCircle = new Circle();
@@ -577,36 +587,46 @@ public class Power implements CustomShape, ShapeWithVariables{
     }
 
     private void getLeftGroup(double translationX, double translationY){
+        getLeftGroup(translationX, translationY, 0);
+    }
+
+    private void getLeftGroup(double width, double height, double spacing){
         Circle firstLeftCircle = new Circle();
         firstLeftCircle.setRadius(3);
         firstLeftCircle.setFill(Color.web("#B2B2B2"));
-        firstLeftCircle.setTranslateY(- (translationY + 9) );
-        firstLeftCircle.setTranslateX( translationX / 2.0);
+        firstLeftCircle.setTranslateY(- (height + 9) );
+        firstLeftCircle.setTranslateX( width / 2.0);
 
 
         Circle secondLeftCircle = new Circle();
         secondLeftCircle.setRadius(3);
         secondLeftCircle.setFill(Color.web("#999999"));
-        secondLeftCircle.setTranslateY( - (translationY + 20) );
-        secondLeftCircle.setTranslateX( translationX / 2.0);
+        secondLeftCircle.setTranslateY( - (height + 20) );
+        secondLeftCircle.setTranslateX( width / 2.0);
 
         Circle thirdLeftCircle = new Circle();
         thirdLeftCircle.setRadius(3);
         thirdLeftCircle.setFill(Color.web("#737373"));
-        thirdLeftCircle.setTranslateY(- (translationY + 31) );
-        thirdLeftCircle.setTranslateX( translationX / 2.0);
+        thirdLeftCircle.setTranslateY(- (height + 31) );
+        thirdLeftCircle.setTranslateX( width / 2.0);
 
 
         VBox addLeft = new VBox();
-        addLeft.setPrefSize(translationX, translationY);
-        addLeft.setTranslateY(- translationY  * 2 - SCALE);
+        addLeft.setPrefSize(width, height);
+        addLeft.setTranslateY(- height  * 2 - SCALE);
         addLeft.setStyle(getDashStyle());
 
         addLeft.getChildren().add(leftLabel);
         addLeft.setAlignment(Pos.CENTER);
 
+        Group toAdd = new Group();
+        toAdd.getChildren().addAll(firstLeftCircle, secondLeftCircle, thirdLeftCircle, addLeft);
+
+
+        leftGroup.setTranslateY(0);
+        leftGroup.setTranslateX(0);
         leftGroup.getChildren().clear();
-        leftGroup.getChildren().addAll(firstLeftCircle, secondLeftCircle, thirdLeftCircle, addLeft);
+        leftGroup.getChildren().addAll(toAdd);
 
     }
 
@@ -667,6 +687,17 @@ public class Power implements CustomShape, ShapeWithVariables{
         centerShape.setTranslateY(-SCALE);
         getRightGroup();
         getLeftGroup();
+
+        leftGroup.setTranslateX(0);
+        leftGroup.setTranslateY(0);
+
+        rightGroup.setTranslateX(0);
+        rightGroup.setTranslateY(0);
+
+        updateLeftPowerUIWithoutDetail();
+        updateLeftPowerUIWithDetail();
+        updateRightPowerUIWithDetail();
+        updateRightPowerUIWithoutDetail();
     }
 
     private void updateBoxesAndTranslations(){
@@ -701,61 +732,271 @@ public class Power implements CustomShape, ShapeWithVariables{
         getLeftGroup(selectedCustomShapeWidth, selectedCustomShapeHeight);
     }
 
-    public void setUpCompositionShapeOnCenterGroup(){
-        System.err.println("HERE I AM!");
-        centerShape.setTranslateY(0);
-        centerShape.setTranslateX(0);
+    private void correctLeftGroup(double minimumTranslationX, double maximumTranslationX, double minimumTranslationY, double maximumTranslationY){
+        leftGroup.setTranslateX(0);
+        leftGroup.setTranslateY(0);
+        if(minimumTranslationY <= 0 && maximumTranslationY >= 0){
+            //Quando estou a meio
+            leftGroup.setTranslateY(leftGroup.getTranslateY() + maximumTranslationY);
+        }else if(minimumTranslationY >= 0 && maximumTranslationY >= 0){
+            //Quando está tudo bem baixo!
+            leftGroup.setTranslateY(leftGroup.getTranslateY() + maximumTranslationY);
+        }
+
+        if(minimumTranslationX <= 0 && maximumTranslationX <= 0){
+            //We are on the left side
+            leftGroup.setTranslateX(leftGroup.getTranslateX() + minimumTranslationX);
+        }else if(minimumTranslationX <= 0 && maximumTranslationX >= 0){
+            //We are on both sides!
+            leftGroup.setTranslateX(leftGroup.getTranslateX() + minimumTranslationX);
+        }
+    }
+
+    private void correctRightGroup(double minimumTranslationX, double maximumTranslationX, double minimumTranslationY, double maximumTranslationY){
+        rightGroup.setTranslateX(0);
+        rightGroup.setTranslateY(0);
+        if(minimumTranslationY <= 0 && maximumTranslationY >= 0){
+            //Quando estou a meio
+            rightGroup.setTranslateY(rightGroup.getTranslateY() + maximumTranslationY);
+        }else if(minimumTranslationY >= 0 && maximumTranslationY >= 0){
+            //Quando está tudo bem baixo!
+            rightGroup.setTranslateY(rightGroup.getTranslateY() + maximumTranslationY);
+        }
+
+        if(minimumTranslationX <= 0 && maximumTranslationX <= 0){
+            //We are on the left side
+            rightGroup.setTranslateX(rightGroup.getTranslateX() + minimumTranslationX);
+        }else if(minimumTranslationX <= 0 && maximumTranslationX >= 0){
+            //We are on both sides!
+            rightGroup.setTranslateX(rightGroup.getTranslateX() + minimumTranslationX);
+        }
+    }
+
+    private void correctRightAndLeftGroups(double minimumTranslationX, double maximumTranslationX, double minimumTranslationY, double maximumTranslationY){
+        rightGroup.setTranslateX(0);
+        rightGroup.setTranslateY(0);
+
+        leftGroup.setTranslateX(0);
+        leftGroup.setTranslateY(0);
+        if(minimumTranslationY <= 0 && maximumTranslationY >= 0){
+            //Quando estou a meio
+            rightGroup.setTranslateY(rightGroup.getTranslateY() + maximumTranslationY);
+            leftGroup.setTranslateY(leftGroup.getTranslateY() + maximumTranslationY);
+        }else if(minimumTranslationY >= 0 && maximumTranslationY >= 0){
+            //Quando está tudo bem baixo!
+            rightGroup.setTranslateY(rightGroup.getTranslateY() + maximumTranslationY);
+            leftGroup.setTranslateY(leftGroup.getTranslateY() + maximumTranslationY);
+        }
+
+        if(minimumTranslationX <= 0 && maximumTranslationX <= 0){
+            //We are on the left side
+            rightGroup.setTranslateX(rightGroup.getTranslateX() + minimumTranslationX);
+            leftGroup.setTranslateX(leftGroup.getTranslateX() + minimumTranslationX);
+        }else if(minimumTranslationX <= 0 && maximumTranslationX >= 0){
+            //We are on both sides!
+            rightGroup.setTranslateX(rightGroup.getTranslateX() + minimumTranslationX);
+            leftGroup.setTranslateX(leftGroup.getTranslateX() + minimumTranslationX);
+        }
+    }
+
+    public void setRightGroupWithDetail(int repetitions, double translation){
+        ArrayList<Double> values = getDroppedCompositionValues();
+
+        var width = values.get(0);
+        var height = values.get(1);
+        var minimumTranslationX = values.get(2);
+        var maximumTranslationX = values.get(3);
+        var minimumTranslationY = values.get(4);
+        var maximumTranslationY = values.get(5);
+
+        if(centerHasVariable){
+            width =  0.0 + SCALE;
+            height = 0.0 + SCALE;
+        }
+
+        Pane hBox = new Pane();
+        for(int i = 1; i <= repetitions; i++){
+            VBox box = new VBox();
+            box.setPrefSize(width, height);
+            box.setTranslateX(i * translation * SCALE);
+            box.setTranslateY(- height);
+            box.setStyle(getDashStyle());
+
+            hBox.getChildren().add(box);
+        }
+
+        rightGroup.setTranslateY(0);
+        rightGroup.setTranslateX(0);
+        rightGroup.getChildren().clear();
+        rightGroup.getChildren().addAll(hBox);
+
+        if(!centerHasVariable)
+            correctRightGroup(minimumTranslationX, maximumTranslationX, minimumTranslationY, maximumTranslationY);
+
+    }
+
+    public void setLeftGroupWithDetail(int repetitions, double translation){
+        ArrayList<Double> values = getDroppedCompositionValues();
+
+        var width = values.get(0);
+        var height = values.get(1);
+        var minimumTranslationX = values.get(2);
+        var maximumTranslationX = values.get(3);
+        var minimumTranslationY = values.get(4);
+        var maximumTranslationY = values.get(5);
+
+        if(centerHasVariable){
+            width =  0.0 + SCALE;
+            height = 0.0 + SCALE;
+        }
+
+        Pane vBox = new Pane();
+        for(int i = 1; i <= repetitions; i++){
+            VBox box = new VBox();
+            box.setPrefSize(width, height);
+            box.setTranslateY(- height - i * translation * SCALE);
+            box.setStyle(getDashStyle());
+
+            vBox.getChildren().add(box);
+        }
 
 
+        leftGroup.setTranslateY(0);
+        leftGroup.setTranslateX(0);
+        leftGroup.getChildren().clear();
+        leftGroup.getChildren().addAll(vBox);
+
+        if(!centerHasVariable)
+            correctLeftGroup(minimumTranslationX, maximumTranslationX, minimumTranslationY, maximumTranslationY);
+
+
+
+    }
+
+    private double getCorrectHeight(double minimumTranslationY, double maximumTranslationY){
+        double tempHeight = 0;
+        if(minimumTranslationY <= 0 && maximumTranslationY <= 0){
+            tempHeight = Math.abs(minimumTranslationY);
+        }else if(minimumTranslationY <= 0 && maximumTranslationY >= 0){
+            tempHeight = Math.abs(minimumTranslationY) + maximumTranslationY;
+        }else if(minimumTranslationY >= 0 && maximumTranslationY >= 0){
+            tempHeight = maximumTranslationY;
+        }
+        return tempHeight;
+    }
+
+    private double getCorrectWidth(double minimumTranslationX, double maximumTranslationX){
+        double tempWidth = 0;
+        if(minimumTranslationX >= 0 && maximumTranslationX >= 0){
+            tempWidth = maximumTranslationX;
+            //We are on the right side
+        }else if(minimumTranslationX <= 0 && maximumTranslationX <= 0){
+            tempWidth = Math.abs(minimumTranslationX);
+            //We are on the left side
+        }else if(minimumTranslationX <= 0 && maximumTranslationX >= 0){
+            //We are on both sides!
+            tempWidth = Math.abs(minimumTranslationX) + maximumTranslationX;
+        }
+        return tempWidth;
+    }
+
+    public Pane getPaneToAddFromDroppedComposition(){
         NewCompositionShape dropped = (NewCompositionShape) selectedCustomShape;
         Pane toAdd;
         NewCompositionShape newCompositionShape = new NewCompositionShape(orchestrator, new VBox(), teste -> null, teste -> null);
         toAdd = newCompositionShape.addNewCompositionShape(dropped, false);
 
-        double maximumTranslationX = -1000;
-        double minimumTranslationX = 10000;
-        double maximumTranslationY = -1000;
-        double minimumTranslationY = 10000;
+        return toAdd;
+    }
 
-        for(Node node: toAdd.getChildren()){
-            maximumTranslationX  = getMaximumTranslationX(node, maximumTranslationX);
-            minimumTranslationX = getMinimumTranslationX(node, minimumTranslationX);
-            maximumTranslationY = getMaximumTranslationY(node, maximumTranslationY);
-            minimumTranslationY = getMinimumTranslationY(node, minimumTranslationY);
-        }
-        System.out.println("old minimum translationY: " + minimumTranslationY + ", old maximum translationY: " + maximumTranslationY);
+    public ArrayList<Double> getDroppedCompositionValues(){
+        ArrayList<Double> toReturn = new ArrayList<>();
 
-        toAdd.setTranslateX(toAdd.getTranslateX() - minimumTranslationX);
+        NewCompositionShape dropped = (NewCompositionShape) selectedCustomShape;
+
+        double minimumTranslationY = dropped.getMinimumTranslationY_new();
+        double maximumTranslationY = dropped.getMaximumTranslationY();
+        double tempHeight = getCorrectHeight(minimumTranslationY, maximumTranslationY);
+
+        double minimumTranslationX = dropped.getMinimumTranslationX();
+        double maximumTranslationX = dropped.getMaximumTranslationX();
+        double tempWidth = getCorrectWidth(minimumTranslationX, maximumTranslationX);
+
+        toReturn.add(tempWidth);
+        toReturn.add(tempHeight);
+        toReturn.add(minimumTranslationX);
+        toReturn.add(maximumTranslationX);
+        toReturn.add(minimumTranslationY);
+        toReturn.add(maximumTranslationY);
+
+        return toReturn;
+    }
+
+
+    public void setUpCompositionShapeOnCenterGroup(){
+        centerShape.setTranslateY(0);
+        centerShape.setTranslateX(0);
+
+        Pane toAdd = getPaneToAddFromDroppedComposition();
+        ArrayList<Double> values = getDroppedCompositionValues();
+
+        var tempWidth = values.get(0);
+        var tempHeight = values.get(1);
+        var minimumTranslationX = values.get(2);
+        var maximumTranslationX = values.get(3);
+        var minimumTranslationY = values.get(4);
+        var maximumTranslationY = values.get(5);
+
+        Rectangle rectangle = new Rectangle(tempWidth, tempHeight);
+        rectangle.setFill(Color.web("rgba(255,255,255,0.15)"));
+        centerShape.getChildren().add(rectangle);
+        rectangle.setTranslateX(minimumTranslationX < 0 ? minimumTranslationX : 0);
+        rectangle.setTranslateY(minimumTranslationY <= 0 ? minimumTranslationY : 0);
 
         centerShape.getChildren().add(toAdd);
-
         toAdd.layout();
         centerShape.layout();
 
-        double finalMinimumTranslationX = minimumTranslationX;
-        double finalMinimumTranslationY = minimumTranslationY;
+        double finalTempHeight = tempHeight;
+        double finalTempWidth = tempWidth;
+
         Platform.runLater(() -> {
-            double newMaximumX = -1000;
-            double newMaximumY = -1000;
-            for(Node node: toAdd.getChildren()){
-                newMaximumX  = getMaximumTranslationX(node, newMaximumX);
-                newMaximumY = getMaximumTranslationY(node, newMaximumY);
-            }
-            System.out.println("new minimum translationY: " + finalMinimumTranslationY +", new maximum translationY: " + newMaximumY);
-            toAdd.setTranslateY(toAdd.getTranslateY() - newMaximumY);
-            double width = Math.abs(finalMinimumTranslationX - newMaximumX);
+            getRightGroup(finalTempWidth, finalTempHeight);
+            getLeftGroup(finalTempWidth, finalTempHeight);
 
 
-            double height = Math.abs(finalMinimumTranslationY) + Math.abs(newMaximumY);
-
-            if(finalMinimumTranslationY < 0 && newMaximumY < 0){
-                height = Math.abs(finalMinimumTranslationY) - Math.abs(newMaximumY);
+             if(minimumTranslationY <= 0 && maximumTranslationY >= 0){
+                //Quando estou a meio
+                rightGroup.setTranslateY(rightGroup.getTranslateY() + maximumTranslationY);
+                leftGroup.setTranslateY(leftGroup.getTranslateY() + maximumTranslationY);
+            }else if(minimumTranslationY >= 0 && maximumTranslationY >= 0){
+                //Quando está tudo bem baixo!
+                rightGroup.setTranslateY(rightGroup.getTranslateY() + maximumTranslationY);
+                leftGroup.setTranslateY(leftGroup.getTranslateY() + maximumTranslationY);
             }
 
-            //getRightGroup(width, toAdd.getBoundsInParent().getHeight());
-            //getLeftGroup(width, toAdd.getBoundsInParent().getHeight());
-            getRightGroup(width, height);
-            getLeftGroup(width, height);
+             if(minimumTranslationX <= 0 && maximumTranslationX <= 0){
+                //We are on the left side
+                rightGroup.setTranslateX(rightGroup.getTranslateX() + minimumTranslationX);
+                leftGroup.setTranslateX(leftGroup.getTranslateX() + minimumTranslationX);
+            }else if(minimumTranslationX <= 0 && maximumTranslationX >= 0){
+                //We are on both sides!
+                rightGroup.setTranslateX(rightGroup.getTranslateX() + minimumTranslationX);
+                leftGroup.setTranslateX(leftGroup.getTranslateX() + minimumTranslationX);
+            }
+
+            if(rightHasVariable){
+                updateRightPowerUIWithoutDetail();
+            }else{
+                updateRightPowerUIWithDetail();
+            }
+
+            if(leftHasVariable){
+                updateLeftPowerUIWithoutDetail();
+            }else{
+                updateLeftPowerUIWithDetail();
+            }
+
 
         });
 
@@ -768,7 +1009,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         toPut.setPrefSize(SCALE, SCALE);
         toPut.setStyle("-fx-background-color: #B2B2B2; -fx-background-radius: 6px;");
 
-        centerShape = new VBox(toPut);
+        centerShape = new StackPane(toPut);
 
         centerShape.getChildren().add(customShapeLabel);
         centerShape.setAlignment(Pos.CENTER);
@@ -821,7 +1062,7 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         setUpCenterGroup();
 
-        if (selectedCustomShape != null){
+        if (selectedCustomShape != null && !centerHasVariable){
             centerShape.getChildren().clear();
 
             System.out.println("centerShape.getLayoutBounds().getWidth(): " + centerShape.getLayoutBounds().getWidth());
@@ -926,17 +1167,109 @@ public class Power implements CustomShape, ShapeWithVariables{
         return vBox;
     }
 
+    private void updateRightPowerUIWithoutDetail(){
+
+        //Right label!
+        if(rightHasVariable){
+            if(customShape instanceof NewCompositionShape || selectedCustomShape instanceof NewCompositionShape){
+                if(centerHasVariable){
+                    getRightGroup();
+                    rightGroup.setTranslateX(0);
+                    rightGroup.setTranslateY(0);
+                }else{
+                    ArrayList<Double> values = getDroppedCompositionValues();
+
+                    var width = values.get(0);
+                    var height = values.get(1);
+                    var minimumTranslationX = values.get(2);
+                    var maximumTranslationX = values.get(3);
+                    var minimumTranslationY = values.get(4);
+                    var maximumTranslationY = values.get(5);
+
+                    getRightGroup(width, height);
+                    correctRightGroup(minimumTranslationX, maximumTranslationX, minimumTranslationY, maximumTranslationY);
+                }
+
+            }
+        }
+
+       }
+
+    private void updateRightPowerUIWithDetail(){
+        if(!rightHasVariable){
+            if(customShape instanceof NewCompositionShape || selectedCustomShape instanceof NewCompositionShape){
+                try{
+                    double translation = Double.parseDouble(rightTranslation);
+                    int repetitions = Integer.parseInt(rightValue);
+                    setRightGroupWithDetail(repetitions, translation);
+                }catch (NumberFormatException e){
+                    System.err.println("since the righ translation has a strange value, we are now doing assumptons!");
+                    ArrayList<Double> values = getDroppedCompositionValues();
+                    setRightGroupWithDetail(1, values.get(0)/SCALE);
+                    rightTranslation = String.valueOf(values.get(0)/SCALE);
+                    rightTextFieldTranslation.setText(rightTranslation);
+                }
+            }
+        }
+    }
+
+    private void updateLeftPowerUIWithoutDetail(){
+        if(leftHasVariable){
+            if(customShape instanceof NewCompositionShape || selectedCustomShape instanceof NewCompositionShape){
+                if(centerHasVariable){
+                    getLeftGroup();
+                    leftGroup.setTranslateX(0);
+                    leftGroup.setTranslateY(0);
+                }else{
+                    ArrayList<Double> values = getDroppedCompositionValues();
+
+                    var width = values.get(0);
+                    var height = values.get(1);
+                    var minimumTranslationX = values.get(2);
+                    var maximumTranslationX = values.get(3);
+                    var minimumTranslationY = values.get(4);
+                    var maximumTranslationY = values.get(5);
+
+                    getLeftGroup(width, height);
+                    correctLeftGroup(minimumTranslationX, maximumTranslationX, minimumTranslationY, maximumTranslationY);
+                }
+
+            }
+        }
+    }
+
+
+
+    private void updateLeftPowerUIWithDetail(){
+        if(!leftHasVariable){
+            if(customShape instanceof NewCompositionShape || selectedCustomShape instanceof NewCompositionShape){
+                try{
+                    double translation = Double.parseDouble(leftTranslation);
+                    int repetitions = Integer.parseInt(leftValue);
+                    setLeftGroupWithDetail(repetitions, translation);
+                }catch (NumberFormatException e){
+                    System.err.println("since the left translation has a strange value, we are now doing assumptons!");
+                    ArrayList<Double> values = getDroppedCompositionValues();
+                    setLeftGroupWithDetail(1, values.get(1)/SCALE);
+                    leftTranslation = String.valueOf(values.get(1)/SCALE);
+                    leftTextFieldTranslation.setText(leftTranslation);
+                }
+            }
+        }
+    }
+
+
     private void setUpVerticalSection(){
         VBox horizontalBox = getHorizontalBox();
-        horizontalBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        horizontalBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         horizontalBox.setPadding(new Insets(10, 10, 10, 15));
 
         VBox verticalBox = getVerticalBox();
-        verticalBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        verticalBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         verticalBox.setPadding(new Insets(10, 10, 10, 15));
 
         VBox centerBox = getCenterBox();
-        centerBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 20");
+        centerBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         centerBox.setPadding(new Insets(10, 10, 10, 15));
 
 
@@ -975,6 +1308,7 @@ public class Power implements CustomShape, ShapeWithVariables{
                 }else{
                     rightVariable = newValue;
                     rightLabel.setText(newValue);
+                    updateRightPowerUIWithoutDetail();
                 }
             }else{
                 if(!newValue.matches("[0-9]+")){
@@ -983,6 +1317,7 @@ public class Power implements CustomShape, ShapeWithVariables{
                 }else{
                     rightValue = newValue;
                     rightLabel.setText(newValue);
+                    updateRightPowerUIWithDetail();
                 }
             }
         });
@@ -996,12 +1331,15 @@ public class Power implements CustomShape, ShapeWithVariables{
         Label translationLabel = new Label("Translation: ");
         styleLabel(translationLabel);
 
-        TextField textFieldTranslation = new TextField(rightTranslation);
-        textFieldTranslation.setPromptText("1");
-        styleTextField(textFieldTranslation);
+        rightTextFieldTranslation = new TextField(rightTranslation);
+        rightTextFieldTranslation.setPromptText("1");
+        styleTextField(rightTextFieldTranslation);
 
-        textFieldTranslation.textProperty().addListener((observableValue, s, t1) -> rightTranslation = t1);
-
+        rightTextFieldTranslation.textProperty().addListener((observableValue, s, t1) -> {
+            rightTranslation = t1;
+            updateRightPowerUIWithDetail();
+            updateRightPowerUIWithoutDetail();
+        });
 
         HBox fistHBox = new HBox(horizontalPowerCheckboxToUseLabel,checkboxToUse);
         fistHBox.setSpacing(10);
@@ -1009,7 +1347,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         HBox secondHBox = new HBox(horizontalVariableCheckboxLabel, checkBoxVariable);
         secondHBox.setSpacing(10);
 
-        HBox thirdHBox = new HBox(variableLabel, textFieldVariable, getVerticalSeparator(), translationLabel, textFieldTranslation);
+        HBox thirdHBox = new HBox(variableLabel, textFieldVariable, getVerticalSeparator(), translationLabel, rightTextFieldTranslation);
         thirdHBox.setSpacing(10);
 
         VBox vBox = new VBox(fistHBox, secondHBox, thirdHBox);
@@ -1064,6 +1402,7 @@ public class Power implements CustomShape, ShapeWithVariables{
                 }else{
                     leftVariable = newValue;
                     leftLabel.setText(newValue);
+                    updateLeftPowerUIWithoutDetail();
                 }
 
             }else{
@@ -1073,6 +1412,7 @@ public class Power implements CustomShape, ShapeWithVariables{
                 }else{
                     leftValue = newValue;
                     leftLabel.setText(newValue);
+                    updateLeftPowerUIWithDetail();
                 }
             }
         });
@@ -1083,11 +1423,15 @@ public class Power implements CustomShape, ShapeWithVariables{
             textFieldVariable.setText(leftHasVariable ? leftVariable : leftValue);
         });
 
-        TextField textFieldTranslation = new TextField(leftTranslation);
-        textFieldTranslation.setPromptText("1");
-        styleTextField(textFieldTranslation);
+        leftTextFieldTranslation = new TextField(leftTranslation);
+        leftTextFieldTranslation.setPromptText("1");
+        styleTextField(leftTextFieldTranslation);
 
-        textFieldTranslation.textProperty().addListener((observableValue, s, t1) -> leftTranslation = t1);
+        leftTextFieldTranslation.textProperty().addListener((observableValue, s, t1) -> {
+            leftTranslation = t1;
+            updateLeftPowerUIWithDetail();
+            updateLeftPowerUIWithoutDetail();
+        });
 
 
         HBox fistHBox = new HBox(verticalPowerCheckboxToUseLabel,checkboxToUse);
@@ -1102,7 +1446,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         Label translationLabel = new Label("Translation: ");
         styleLabel(translationLabel);
 
-        HBox thirdHBox = new HBox(variableLabel, textFieldVariable, getVerticalSeparator(),translationLabel, textFieldTranslation);
+        HBox thirdHBox = new HBox(variableLabel, textFieldVariable, getVerticalSeparator(),translationLabel, leftTextFieldTranslation);
         thirdHBox.setSpacing(10);
         thirdHBox.setMaxHeight(30);
 

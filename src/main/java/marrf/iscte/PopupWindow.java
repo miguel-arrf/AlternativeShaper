@@ -77,11 +77,57 @@ public class PopupWindow {
         stage.setScene(dialogScene);
         stage.show();
 
+
+
         stage.sizeToScene();
         stage.setTitle(windowTitle);
 
         //TODO if the screen resolution is to low, the stage may appear too big...
         stage.setResizable(false);
+
+        stage.setOnCloseRequest(event -> {
+            scene.getRoot().setCache(true);
+            scene.getRoot().setCacheHint(CacheHint.SPEED);
+            startBlurAnimation(scene.getRoot(), 30.0, 0.0, Duration.millis(100), true);
+            scene.getRoot().setCache(false);
+            scene.getRoot().setCacheHint(CacheHint.DEFAULT);
+        });
+
+
+    }
+
+    public void createPopup(String windowTitle, Scene scene, Pane ... panes){
+        scene.getRoot().setCache(true);
+        scene.getRoot().setCacheHint(CacheHint.SPEED);
+        startBlurAnimation(scene.getRoot(), 0.0, 30.0, Duration.millis(100), false);
+        scene.getRoot().setCache(false);
+        scene.getRoot().setCacheHint(CacheHint.DEFAULT);
+
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.initOwner(StartMenu.primaryStage);
+        VBox dialogVbox = new VBox(20);
+        dialogVbox.setPadding(new Insets(20));
+        dialogVbox.setStyle("-fx-background-color: #262528");
+
+
+        VBox content = new VBox();
+        dialogVbox.getChildren().addAll(content);
+
+        content.setSpacing(20);
+        content.setPadding(new Insets(0));
+        content.getChildren().addAll(panes);
+
+        dialogVbox.setMaxHeight(Double.MAX_VALUE);
+
+        Scene dialogScene = new Scene(dialogVbox, 400, 190);
+        stage.setScene(dialogScene);
+        stage.show();
+
+        stage.sizeToScene();
+        stage.setTitle(windowTitle);
+
+        //TODO if the screen resolution is to low, the stage may appear too big...
+        stage.setResizable(true);
 
         stage.setOnCloseRequest(event -> {
             scene.getRoot().setCache(true);
