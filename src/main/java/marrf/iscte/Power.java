@@ -102,6 +102,8 @@ public class Power implements CustomShape, ShapeWithVariables{
     private double selectedCustomShapeWidth;
     private double selectedCustomShapeHeight;
 
+    private CheckBox checkBoxCenterShapeVariable;
+
     public UUID getUuid() {
         return uuid;
     }
@@ -160,6 +162,23 @@ public class Power implements CustomShape, ShapeWithVariables{
 
     public String getRightValue() {
         return rightValue;
+    }
+
+    public CustomShape getCustomShape() {
+        return customShape;
+    }
+
+    public void deleteCustomShape(String uuidToRemove){
+        System.out.println("to remove: " + uuidToRemove);
+        if(getCustomShape() != null && getCustomShape().getUUID().toString().equals(uuidToRemove)){
+            if(!centerHasVariable){
+                customShape = null;
+                centerHasVariable = true;
+                checkBoxCenterShapeVariable.setSelected(true);
+            }
+
+
+        }
     }
 
     public void setUpTranslationXBox() {
@@ -901,12 +920,24 @@ public class Power implements CustomShape, ShapeWithVariables{
     }
 
     public Pane getPaneToAddFromDroppedComposition(){
-        NewCompositionShape dropped = (NewCompositionShape) selectedCustomShape;
-        Pane toAdd;
-        NewCompositionShape newCompositionShape = new NewCompositionShape(orchestrator, new VBox(), teste -> null, teste -> null);
-        toAdd = newCompositionShape.addNewCompositionShape(dropped, false);
+        if(selectedCustomShape instanceof NewCompositionShape){
+            NewCompositionShape dropped = (NewCompositionShape) selectedCustomShape;
+            Pane toAdd;
+            NewCompositionShape newCompositionShape = new NewCompositionShape(orchestrator, new VBox(), teste -> null, teste -> null);
+            toAdd = newCompositionShape.addNewCompositionShape(dropped, false);
 
-        return toAdd;
+            return toAdd;
+        }else if(selectedCustomShape instanceof BasicShape){
+            BasicShape dropped = (BasicShape) selectedCustomShape;
+
+            NewCompositionShape.Information translationX = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
+            NewCompositionShape.Information translationY = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
+
+            BasicShape toUse = orchestrator.getCopyOfBasicShape(dropped.getUUID().toString(), translationX.getConsumer(), translationY.getConsumer(), null);
+            return toUse.getRectangle();
+        }
+        return null;
+
     }
 
     public ArrayList<Double> getDroppedCompositionValues(){
@@ -1021,6 +1052,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         }
 
         centerShape.setOnDragOver(dragEvent -> {
+            System.out.println("I WAS DROPPED HERE!!!_1");
             Dragboard db = dragEvent.getDragboard();
             if (db.hasString()) {
                 dragEvent.acceptTransferModes(TransferMode.ANY);
@@ -1028,6 +1060,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         });
 
         centerShape.setOnDragDropped(dragEvent -> {
+            System.out.println("I WAS DROPPED HERE!!!_2");
             dragEvent.acceptTransferModes(TransferMode.ANY);
             System.out.println("dragDropped in Power");
 
@@ -1080,13 +1113,13 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         }
 
-
             centerGroup.setTranslateX(0);
             centerGroup.setTranslateY(0);
 
-
-
-
+            updateRightPowerUIWithoutDetail();
+            updateRightPowerUIWithDetail();
+            updateLeftPowerUIWithDetail();
+            updateLeftPowerUIWithoutDetail();
 
         if(proceedWhenDeleting != null){
             ContextMenu contextMenu = new ContextMenu();
@@ -1512,8 +1545,8 @@ public class Power implements CustomShape, ShapeWithVariables{
         Label shapeVariableToUseLabel = new Label("Shape variable: ");
         styleLabel(shapeVariableToUseLabel);
 
-        CheckBox checkboxToUse = new CheckBox("Shape variable");
-        checkboxToUse.setSelected(true);
+        checkBoxCenterShapeVariable = new CheckBox("Shape variable");
+        checkBoxCenterShapeVariable.setSelected(true);
 
 
         Label variableLabel = new Label("Variable: ");
@@ -1537,7 +1570,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         });
 
 
-        HBox fistHBox = new HBox(shapeVariableToUseLabel,checkboxToUse);
+        HBox fistHBox = new HBox(shapeVariableToUseLabel,checkBoxCenterShapeVariable);
         fistHBox.setSpacing(10);
 
         HBox secondHBox = new HBox(variableLabel, textFieldVariable);
@@ -1546,11 +1579,11 @@ public class Power implements CustomShape, ShapeWithVariables{
         VBox vBox = new VBox(fistHBox, secondHBox);
         vBox.setSpacing(10);
 
-        checkboxToUse.selectedProperty().addListener((observableValue, oldValue, newValue) -> {
+        checkBoxCenterShapeVariable.selectedProperty().addListener((observableValue, oldValue, newValue) -> {
             centerHasVariable = newValue;
             if(oldValue != null && oldValue != newValue){
                 if(!centerHasVariable & customShape == null){
-                    checkboxToUse.setSelected(true);
+                    checkBoxCenterShapeVariable.setSelected(true);
                 }
 
                 if(!centerHasVariable && customShape != null){
@@ -1575,7 +1608,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         customShapeSelected.addListener((observableValue, oldValue, newValue) -> {
             if(newValue){
                 centerHasVariable = false;
-                checkboxToUse.setSelected(false);
+                checkBoxCenterShapeVariable.setSelected(false);
             }
         });
 

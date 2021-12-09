@@ -243,6 +243,7 @@ public class NewCompositionShape implements CustomShape {
     }
 
     public void deleteBasicShape(String uuidToRemove) {
+
         if (getBasicShapesUUIDList().stream().anyMatch(p -> p.equals(uuidToRemove))) {
             Information basicShapeXTranslationToRemove = basicShapesXTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();
             Information basicShapeYTranslationToRemove = basicShapesYTranslation.stream().filter(p -> p.getId().equals(uuidToRemove)).findFirst().get();

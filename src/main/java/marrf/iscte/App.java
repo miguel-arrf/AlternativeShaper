@@ -1084,6 +1084,13 @@ public class App extends Application {
         });
     }
 
+    private void deleteCompositionShapeFromPowerShape(String uuidToRemove){
+        powerArrayList.forEach(power -> {
+            power.deleteCustomShape(uuidToRemove);
+            power.redrawThumbnail();
+        });
+    }
+
     private void deleteBasicShapeFromCompositionShape(String uuidToRemove){
         newCompositionShapes.forEach(newCompositionShape -> {
             newCompositionShape.deleteBasicShape(uuidToRemove);
@@ -1106,6 +1113,7 @@ public class App extends Application {
                    deleteBasicShape(uuidToRemove);
                    deleteBasicShapeFromCompositionShape(uuidToRemove);
                    deleteBasicShapeFromShapeRule(uuidToRemove);
+                   deleteCompositionShapeFromPowerShape(uuidToRemove);
 
                    //saveCurrentShape(); //Needed in order to be able to then drag it!
                    tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
@@ -1189,6 +1197,7 @@ public class App extends Application {
                     deleteCompositionShape(uuidToRemove);
                     deleteCompositionShapeFromCompositionShape(uuidToRemove);
                     deleteCompositionShapeFromShapeRule(uuidToRemove);
+                    deleteCompositionShapeFromPowerShape(uuidToRemove);
 
                     tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
                 });

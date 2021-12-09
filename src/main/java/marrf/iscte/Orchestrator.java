@@ -179,6 +179,11 @@ public class Orchestrator {
                 return false;
         }
 
+        for(Power power: powerShapes){
+            if(power.getCustomShape().getUUID().toString().equals(uuid))
+                return false;
+        }
+
         return true;
     }
 
@@ -197,6 +202,11 @@ public class Orchestrator {
             if (shapeRule.getLeftShape().getCompositionShapesUUIDList().stream().anyMatch(p -> p.equals(uuid)))
                 return false;
             if (shapeRule.getRightShape().getCompositionShapesUUIDList().stream().anyMatch(p -> p.equals(uuid)))
+                return false;
+        }
+
+        for(Power power: powerShapes){
+            if(power.getCustomShape().getUUID().toString().equals(uuid))
                 return false;
         }
 
