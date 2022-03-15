@@ -51,7 +51,7 @@ public class LoadPrologResult {
         string = string.replaceAll(Pattern.quote("'"), "");
         string = string.replaceAll(Pattern.quote("[]"), "");
 
-        System.out.println(string);
+        //System.out.println(string);
     }
 
     public  ArrayList<Coordenadas> obterValores(){

@@ -27,6 +27,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Files;
@@ -44,7 +45,7 @@ import java.util.function.Supplier;
 import static marrf.iscte.App.getButtonWith_Label_Color_Image;
 import static marrf.iscte.App.horizontalGrower;
 
-public class BasicShape implements CustomShape {
+public class BasicShape implements CustomShape , Serializable {
 
     private static final double SCALE = 40.0;
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
@@ -730,7 +731,6 @@ public class BasicShape implements CustomShape {
     }
 
     public void setUpTranslationYBox() {
-        System.out.println("isParametricBasicShape: " + isParametricBasicShape);
         Label translationLabel = new Label(isParametricBasicShape ? "Temporary translation Y: " : "Translation Y: ");
         translationLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 15));
         translationLabel.setTextFill(Color.web("#BDBDBD"));

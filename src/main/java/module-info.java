@@ -1,4 +1,4 @@
-module marrf.iscte {
+open module marrf.iscte {
     requires javafx.controls;
     requires java.desktop;
     requires javafx.web;
@@ -7,5 +7,6 @@ module marrf.iscte {
     requires json.simple;
     requires org.apache.commons.lang3;
     requires jpl;
+    requires com.google.gson;
     exports marrf.iscte;
 }

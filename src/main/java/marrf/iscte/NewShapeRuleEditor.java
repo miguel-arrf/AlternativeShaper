@@ -22,7 +22,6 @@ import javafx.util.Duration;
 import marrf.iscte.ShapeRules.*;
 
 import java.io.File;
-import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -226,36 +225,6 @@ public class NewShapeRuleEditor {
         horizontal.setAlignment(Pos.CENTER_LEFT);
         horizontal.setSpacing(20);
 
-        getBasicShapesStringArray().forEach(p -> {
-            Label basicShapeLabel = new Label(p);
-            basicShapeLabel.setPadding(new Insets(5));
-            basicShapeLabel.setStyle("-fx-background-color: rgb(130,114,17); -fx-background-radius: 10");
-            basicShapeLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BOLD, 15));
-            basicShapeLabel.setTextFill(Color.WHITE);
-
-            basicShapeLabel.setOnMouseEntered(mouseEvent -> basicShapeLabel.setStyle("-fx-background-color: rgb(176,154,20); -fx-background-radius: 10"));
-
-            basicShapeLabel.setOnMouseExited(mouseEvent -> basicShapeLabel.setStyle("-fx-background-color: rgb(130,114,17); -fx-background-radius: 10"));
-
-            basicShapeLabel.setOnMouseClicked(mouseEvent -> {
-                BasicShape originalBasicShape = basicShapes.stream().filter(a -> a.getShapeName().equals(p)).findFirst().get();
-
-                UUID toPut = UUID.randomUUID();
-
-                BasicShape shapeToAdd = smallGridCanvas.getCompositionShape().addBasicShape(originalBasicShape.getUUID().toString());
-                shapeToAdd.setOnMouseClicked(mouseEvent1 -> {
-                    toAddTo.getChildren().clear();
-                    toAddTo.getChildren().addAll(shapeToAdd.getTranslationXSection(), shapeToAdd.getTranslationYSection());
-                });
-
-                smallGridCanvas.addShape(shapeToAdd, toPut);
-
-            });
-
-            horizontal.getChildren().add(basicShapeLabel);
-            basicShapeLabel.setMinWidth(Region.USE_PREF_SIZE);
-
-        });
 
         getPowerShapesStringArray().forEach(p -> {
             Label basicShapeLabel = new Label(p);
@@ -513,7 +482,7 @@ public class NewShapeRuleEditor {
                     "      \"type\": \"field_dropdown\",\n" +
                     "      \"name\": \"NAME\",\n" +
                     "      \"options\": [\n" +
-                    "       " + getShapesJSON(basicShapes, newCompositionShapes, powerShapes, parametricCompositionShapes) +
+                    "       " + getShapesJSON(orchestrator.getBasicShapes(), orchestrator.getNewCompositionShapes(), orchestrator.getPowerShapes(), orchestrator.getParametricCompositionShapes()) +
                     "      ]\n" +
                     "    }\n" +
                     "  ],\n" +
@@ -660,18 +629,15 @@ public class NewShapeRuleEditor {
 
                             String shapeNameToReplace = "";
 
-                            System.out.println("basic shapes size: " + currentShapeRule.getLeftShapeCopy().getBasicShapes().size());
                             System.out.println("compoisitonShapeSize: " + currentShapeRule.getLeftShapeCopy().getCompositionShapesUUIDList().size());
 
-                            if(currentShapeRule.getLeftShapeCopy().getBasicShapes().size() == 0 && currentShapeRule.getLeftShapeCopy().getCompositionShapesUUIDList().size() == 1){
+                            if(currentShapeRule.getLeftShapeCopy().getCompositionShapesUUIDList().size() == 1){
                                 Map<String, NewCompositionShape> map = currentShapeRule.getLeftShapeCopy().getCompositionShapeMap();
                                 for(var entry : map.entrySet()){
                                     shapeNameToReplace = entry.getValue().getShapeName();
                                     break;
                                 }
 
-                            }else if(currentShapeRule.getLeftShapeCopy().getBasicShapes().size() == 1 && currentShapeRule.getLeftShapeCopy().getCompositionShapesUUIDList().size() == 0){
-                                shapeNameToReplace = currentShapeRule.getLeftShapeCopy().getBasicShapes().get(0).getShapeName();
                             }
 
                             System.err.println("we need to replace because of the matched: " + shapeNameToReplace);
@@ -795,29 +761,12 @@ public class NewShapeRuleEditor {
         });
 
 
-        shapeRule.getLeftShapeCopy().getBasicShapes().forEach(shape -> {
-
-            shape.setOnMouseClicked(mouseEvent1 -> {
-                leftTranslationSection.getChildren().clear();
-                leftTranslationSection.getChildren().addAll(shape.getTranslationXSection(), shape.getTranslationYSection());
-            });
-
-            leftGrid.addShape(shape, UUID.randomUUID());
-        });
 
         Pane toAdd = new Pane();
-        shapeRule.getLeftShapeCopy().getTeste(toAdd, true, 0,0);
+        shapeRule.getLeftShapeCopy().getTeste(toAdd, true, 0,0, null);
         leftGrid.addGroupParametric(toAdd, shapeRule.getLeftShapeCopy());
 
 
-        shapeRule.getRightShapeCopy().getBasicShapes().forEach(shape -> {
-            shape.setOnMouseClicked(mouseEvent1 -> {
-                rightTranslationSection.getChildren().clear();
-                rightTranslationSection.getChildren().addAll(shape.getTranslationXSection(), shape.getTranslationYSection());
-            });
-
-            rightGrid.addShape(shape, UUID.randomUUID());
-        });
 
         shapeRule.getRightShapeCopy().getPowerShapes().forEach(shape -> {
             shape.setOnMouseClicked(mouseEvent1 -> {
@@ -830,7 +779,7 @@ public class NewShapeRuleEditor {
 
 
         Pane toAddRight = new Pane();
-        shapeRule.getRightShapeCopy().getTeste(toAddRight, true, 0,0);
+        shapeRule.getRightShapeCopy().getTeste(toAddRight, true, 0,0, null);
         rightGrid.addGroupParametric(toAddRight, shapeRule.getRightShapeCopy());
 
 

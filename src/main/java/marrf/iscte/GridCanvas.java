@@ -1,8 +1,6 @@
 package marrf.iscte;
 
 import javafx.embed.swing.SwingFXUtils;
-import javafx.geometry.Rectangle2D;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.image.*;
 import javafx.scene.layout.Pane;
@@ -21,8 +19,6 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Set;
-
-import static marrf.iscte.NewCompositionShape.getMinimumTranslationX;
 
 public class GridCanvas {
 
@@ -78,7 +74,6 @@ public class GridCanvas {
     }
 
     public static void addGroup(Pane basicShape){
-        System.out.println("basicShape.getTranslateX(): " + basicShape.getTranslateX());
 
         /*double minimumTranslationX = 0;
 
@@ -304,10 +299,8 @@ public class GridCanvas {
         clearEverything();
 
         compositionShape.getPowerShapes().forEach(GridCanvas::addPowerShape);
-        compositionShape.getBasicShapes().forEach(GridCanvas::addShape);
         Pane toAdd = new Pane();
-        compositionShape.getTeste(toAdd, true, 0,0);
-        System.out.println("tamanho de basic shapes: " + compositionShape.getBasicShapes().size());
+        compositionShape.getTeste(toAdd, true, 0,0, null);
 
         addGroup(toAdd);
 
@@ -413,7 +406,6 @@ public class GridCanvas {
             WritableImage writableImage = new WritableImage((int) NUMBER_COLUMNS_AND_ROWS * 40,
                     (int) NUMBER_COLUMNS_AND_ROWS*40);
 
-            System.out.println("WIDTH: " + GridCanvas.pane.getWidth());
             Node clip = pane.getClip();
             pane.setClip(null);
 

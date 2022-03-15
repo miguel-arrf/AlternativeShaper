@@ -20,7 +20,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import org.json.simple.JSONObject;
 
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -33,6 +32,8 @@ import java.util.function.Supplier;
 import static marrf.iscte.App.SCALE;
 import static marrf.iscte.BasicShape.colorToRGBString;
 import static marrf.iscte.BasicShape.getRelativeLuminance;
+import static marrf.iscte.ParametricCompositionShape.Information;
+
 
 public class Power implements CustomShape, ShapeWithVariables{
 
@@ -51,9 +52,9 @@ public class Power implements CustomShape, ShapeWithVariables{
     private boolean rightHasVariable = true;
     private boolean centerHasVariable = true;
 
-    private String rightVariable = "X";
-    private String leftVariable = "Y";
-    private String centerVariable = "Z";
+    private ParametricVariable rightVariable = new ParametricVariable("X", "right variable");
+    private ParametricVariable leftVariable = new ParametricVariable("Y", "left variable");
+    private ParametricVariable centerVariable = new ParametricVariable("Z", "center variable");
 
     private String leftValue = "1";
     private String rightValue = "1";
@@ -63,9 +64,9 @@ public class Power implements CustomShape, ShapeWithVariables{
     private String leftTranslation = "1";
     private TextField leftTextFieldTranslation;
 
-    private final Label rightLabel = new Label(rightVariable);
-    private final Label leftLabel = new Label(leftVariable);
-    private final Label customShapeLabel = new Label(centerVariable);
+    private final Label rightLabel = new Label(rightVariable.getVariableName());
+    private final Label leftLabel = new Label(leftVariable.getVariableName());
+    private final Label customShapeLabel = new Label(centerVariable.getVariableName());
 
     private final Orchestrator orchestrator;
 
@@ -78,7 +79,6 @@ public class Power implements CustomShape, ShapeWithVariables{
     private VBox verticalSection;
 
     private static final int NUMBER_COLUMNS_AND_ROWS = 40;
-
 
     public final Function<Double, Double> writeTranslateX;
     public final Function<Double, Double> writeTranslateY;
@@ -103,6 +103,8 @@ public class Power implements CustomShape, ShapeWithVariables{
     private double selectedCustomShapeHeight;
 
     private CheckBox checkBoxCenterShapeVariable;
+
+    private boolean isFigureVariable = false;
 
     public UUID getUuid() {
         return uuid;
@@ -144,15 +146,15 @@ public class Power implements CustomShape, ShapeWithVariables{
         return centerHasVariable;
     }
 
-    public String getRightVariable() {
+    public ParametricVariable getRightVariable() {
         return rightVariable;
     }
 
-    public String getLeftVariable() {
+    public ParametricVariable getLeftVariable() {
         return leftVariable;
     }
 
-    public String getCenterVariable() {
+    public ParametricVariable getCenterVariable() {
         return centerVariable;
     }
 
@@ -168,6 +170,30 @@ public class Power implements CustomShape, ShapeWithVariables{
         return customShape;
     }
 
+    public boolean isFigureVariable() {
+        return isFigureVariable;
+    }
+
+    public ArrayList<ParametricVariable> getOutputVariables() {
+        ArrayList<ParametricVariable> toReturn = new ArrayList<>();
+        if(centerHasVariable)
+            toReturn.add(centerVariable);
+        if(rightHasVariable && hasRight)
+            toReturn.add(rightVariable);
+        if(leftHasVariable && hasLeft)
+            toReturn.add(leftVariable);
+        return toReturn;
+    }
+
+    public ArrayList<ParametricVariable> getAllOutputVariables(){
+        ArrayList<ParametricVariable> toReturn = new ArrayList<>();
+        toReturn.add(centerVariable);
+        toReturn.add(rightVariable);
+        toReturn.add(leftVariable);
+
+        return toReturn;
+   }
+
     public void deleteCustomShape(String uuidToRemove){
         System.out.println("to remove: " + uuidToRemove);
         if(getCustomShape() != null && getCustomShape().getUUID().toString().equals(uuidToRemove)){
@@ -176,6 +202,7 @@ public class Power implements CustomShape, ShapeWithVariables{
                 centerHasVariable = true;
                 checkBoxCenterShapeVariable.setSelected(true);
             }
+            //TODO Even if the center has a variable, we should remove the customShape no?
 
 
         }
@@ -347,8 +374,27 @@ public class Power implements CustomShape, ShapeWithVariables{
         centerGroup.setOnDragDetected(value);
     }
 
+    public void addShape(CustomShape shapeToAdd){
+        customShape = shapeToAdd;
 
-    public Power(String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation,  Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<String, Double> proceedWhenDeletingFromThumbnail, Orchestrator orchestrator) {
+    }
+
+    private void setUpCenterDesign(){
+        customShapeLabel.setText(customShape.getShapeName());
+
+        centerShape.getChildren().clear();
+        if(customShape instanceof BasicShape){
+            setUpBasicShapeOnCenterGroup((BasicShape) customShape);
+        }else if(customShape instanceof NewCompositionShape ){
+            this.selectedCustomShape = customShape;
+            setUpCompositionShapeOnCenterGroup();
+        }
+
+        customShapeSelected.set(true);
+        centerHasVariable = false;
+    }
+
+    public Power(boolean isFigureVariable, String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, ParametricVariable rightVariable, ParametricVariable leftVariable, ParametricVariable centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation,  Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Orchestrator orchestrator, Function<String, Double> proceedWhenDeletingFromThumbnail) {
         this.name = name;
         this.uuid = uuid;
 
@@ -375,6 +421,15 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         }
 
+        this.isFigureVariable = isFigureVariable;
+        if(isFigureVariable){
+            System.out.println("ESTOU A CRIAR COPIA DE FIGURA VARIABEL");
+            this.hasLeft = false;
+            this.hasRight = false;
+            this.leftHasVariable = false;
+            this.rightHasVariable = false;
+        }
+
         this.writeTranslateX = writeTranslateX;
         this.writeTranslateY = writeTranslateY;
 
@@ -382,23 +437,22 @@ public class Power implements CustomShape, ShapeWithVariables{
         setUpTranslationXBox();
 
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
-        setUpVerticalSection();
 
-        setUpTranslationYBox();
-        setUpTranslationXBox();
+        if(!isFigureVariable){
+            setUpVerticalSection();
+            setUpTranslationYBox();
+            setUpTranslationXBox();
+        }
+
     }
 
-    public Power(Function<String, String> parametricXTranslation, Function<String, String> parametricYTranslation, String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, String rightVariable, String leftVariable, String centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Node, Double> proceedWhenDeleting, Orchestrator orchestrator) {
+    public Power(boolean isFigureVariable, String name, UUID uuid, boolean hasLeft, boolean hasRight, boolean leftHasVariable, boolean rightHasVariable, boolean centerHasVariable, ParametricVariable rightVariable, ParametricVariable leftVariable, ParametricVariable centerVariable, String leftValue, String rightValue, String rightTranslation, String leftTranslation, Function<Double, Double> writeTranslateX, Function<Double, Double> writeTranslateY, Function<Node, Double> proceedWhenDeleting, Orchestrator orchestrator) {
         this.name = name;
         this.uuid = uuid;
 
         this.proceedWhenDeleting = proceedWhenDeleting;
 
-        this.writeTranslationXParametric = parametricXTranslation;
-        this.writeTranslationYParametric = parametricYTranslation;
 
-        this.verticalParametricTranslation = parametricYTranslation.apply(null);
-        this.horizontalParametricTranslation = parametricXTranslation.apply(null);
 
         this.orchestrator = orchestrator;
 
@@ -418,6 +472,14 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         this.rightTranslation = rightTranslation;
         this.leftTranslation = leftTranslation;
+
+        this.isFigureVariable = isFigureVariable;
+        if(isFigureVariable){
+            this.hasLeft = false;
+            this.hasRight = false;
+            this.leftHasVariable = false;
+            this.rightHasVariable = false;
+        }
 
         if(!centerHasVariable){
 
@@ -524,6 +586,29 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         setUpTranslationYBox();
         setUpTranslationXBox();
+
+        this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+    }
+
+    public Power(String name, Function<String, Double> proceedWhenDeletingFromThumbnail, Orchestrator orchestrator){
+        writeTranslateX = a -> 0.0;
+        writeTranslateY = a -> 0.0;
+
+        this.name = name;
+        uuid = UUID.randomUUID();
+
+        this.orchestrator = orchestrator;
+        this.isFigureVariable = true;
+
+        setUpVerticalSection();
+
+        setUpTranslationYBox();
+        setUpTranslationXBox();
+
+        this.hasLeft = false;
+        this.hasRight = false;
+        this.leftHasVariable = false;
+        this.rightHasVariable = false;
 
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
     }
@@ -681,8 +766,12 @@ public class Power implements CustomShape, ShapeWithVariables{
         leftGroup.getChildren().addAll(firstLeftCircle, secondLeftCircle, thirdLeftCircle, addLeft);
     }
 
-    private String getDashStyle(){
+    public static String getDashStyle(){
         return  "-fx-background-color: #737373;-fx-background-radius: 6px; -fx-border-color: rgba(255,255,255,0.5); -fx-border-style: dashed; -fx-border-width: 3; -fx-border-radius: 3; -fx-stroke-dash-offset: 5; -fx-stroke-line-cap: round;";
+    }
+
+    public static String getDashStyle(int backgroundCornerRadius){
+        return  "-fx-background-color: #737373;-fx-background-radius: " + backgroundCornerRadius + "px; -fx-border-color: rgba(255,255,255,0.5); -fx-border-style: dashed; -fx-border-width:  3 ; -fx-border-radius: " + backgroundCornerRadius + "; -fx-stroke-dash-offset: 5; -fx-stroke-line-cap: round;";
     }
 
     private void setUpLabels(){
@@ -738,8 +827,8 @@ public class Power implements CustomShape, ShapeWithVariables{
     public void setUpBasicShapeOnCenterGroup(){
         BasicShape dropped = (BasicShape) selectedCustomShape;
 
-        NewCompositionShape.Information translationX = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
-        NewCompositionShape.Information translationY = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
+        Information translationX = new Information(dropped.getUUID().toString(), 0.0);
+        Information translationY = new Information(dropped.getUUID().toString(), 0.0);
 
         BasicShape toUse = orchestrator.getCopyOfBasicShape(dropped.getUUID().toString(), translationX.getConsumer(), translationY.getConsumer(), null);
         centerShape.getChildren().add(toUse.getRectangle());
@@ -923,18 +1012,22 @@ public class Power implements CustomShape, ShapeWithVariables{
         if(selectedCustomShape instanceof NewCompositionShape){
             NewCompositionShape dropped = (NewCompositionShape) selectedCustomShape;
             Pane toAdd;
-            NewCompositionShape newCompositionShape = new NewCompositionShape(orchestrator, new VBox(), teste -> null, teste -> null);
-            toAdd = newCompositionShape.addNewCompositionShape(dropped, false);
 
+            NewCompositionShape newCompositionShape = new NewCompositionShape(dropped.isFigureVariable(), orchestrator, new VBox(), teste -> null, teste -> null);
+
+            toAdd = newCompositionShape.addNewCompositionShape(dropped, false);
             return toAdd;
+
         }else if(selectedCustomShape instanceof BasicShape){
+
             BasicShape dropped = (BasicShape) selectedCustomShape;
 
-            NewCompositionShape.Information translationX = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
-            NewCompositionShape.Information translationY = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
+            Information<Double> translationX = new Information<>(dropped.getUUID().toString(), 0.0);
+            Information<Double> translationY = new Information<>(dropped.getUUID().toString(), 0.0);
 
             BasicShape toUse = orchestrator.getCopyOfBasicShape(dropped.getUUID().toString(), translationX.getConsumer(), translationY.getConsumer(), null);
             return toUse.getRectangle();
+
         }
         return null;
 
@@ -943,24 +1036,29 @@ public class Power implements CustomShape, ShapeWithVariables{
     public ArrayList<Double> getDroppedCompositionValues(){
         ArrayList<Double> toReturn = new ArrayList<>();
 
-        NewCompositionShape dropped = (NewCompositionShape) selectedCustomShape;
+        if(selectedCustomShape instanceof NewCompositionShape){
+            NewCompositionShape dropped = (NewCompositionShape) selectedCustomShape;
 
-        double minimumTranslationY = dropped.getMinimumTranslationY_new();
-        double maximumTranslationY = dropped.getMaximumTranslationY();
-        double tempHeight = getCorrectHeight(minimumTranslationY, maximumTranslationY);
+            double minimumTranslationY = dropped.getMinimumTranslationY_new();
+            double maximumTranslationY = dropped.getMaximumTranslationY();
+            double tempHeight = getCorrectHeight(minimumTranslationY, maximumTranslationY);
 
-        double minimumTranslationX = dropped.getMinimumTranslationX();
-        double maximumTranslationX = dropped.getMaximumTranslationX();
-        double tempWidth = getCorrectWidth(minimumTranslationX, maximumTranslationX);
+            double minimumTranslationX = dropped.getMinimumTranslationX();
+            double maximumTranslationX = dropped.getMaximumTranslationX();
+            double tempWidth = getCorrectWidth(minimumTranslationX, maximumTranslationX);
 
-        toReturn.add(tempWidth);
-        toReturn.add(tempHeight);
-        toReturn.add(minimumTranslationX);
-        toReturn.add(maximumTranslationX);
-        toReturn.add(minimumTranslationY);
-        toReturn.add(maximumTranslationY);
+            toReturn.add(tempWidth);
+            toReturn.add(tempHeight);
+            toReturn.add(minimumTranslationX);
+            toReturn.add(maximumTranslationX);
+            toReturn.add(minimumTranslationY);
+            toReturn.add(maximumTranslationY);
 
-        return toReturn;
+            return toReturn;
+        }else{
+            return null;
+        }
+
     }
 
 
@@ -1042,6 +1140,9 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         centerShape = new StackPane(toPut);
 
+        if(centerHasVariable){
+            customShapeLabel.setText(centerVariable.getVariableName());
+        }
         centerShape.getChildren().add(customShapeLabel);
         centerShape.setAlignment(Pos.CENTER);
 
@@ -1075,16 +1176,19 @@ public class Power implements CustomShape, ShapeWithVariables{
                     System.out.println("I was dropped a composition shape");
                 }
 
+
                 customShape = App.inDragCustomShape;
                 customShapeLabel.setText(customShape.getShapeName());
 
                 centerShape.getChildren().clear();
                 if(customShape instanceof BasicShape){
                     setUpBasicShapeOnCenterGroup((BasicShape) customShape);
-                }else if(customShape instanceof NewCompositionShape){
+                }else if(customShape instanceof NewCompositionShape ){
                     this.selectedCustomShape = customShape;
                     setUpCompositionShapeOnCenterGroup();
                 }
+
+
 
                 customShapeSelected.set(true);
                 centerHasVariable = false;
@@ -1092,6 +1196,9 @@ public class Power implements CustomShape, ShapeWithVariables{
             }
             dragEvent.consume();
         });
+
+        if(customShape != null)
+            setUpCenterDesign();
 
         setUpCenterGroup();
 
@@ -1101,7 +1208,7 @@ public class Power implements CustomShape, ShapeWithVariables{
             System.out.println("centerShape.getLayoutBounds().getWidth(): " + centerShape.getLayoutBounds().getWidth());
 
 
-            if(selectedCustomShape instanceof NewCompositionShape){
+            if(selectedCustomShape instanceof NewCompositionShape ){
                 setUpCompositionShapeOnCenterGroup();
             }else{
                 setUpBasicShapeOnCenterGroup();
@@ -1305,8 +1412,11 @@ public class Power implements CustomShape, ShapeWithVariables{
         centerBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
         centerBox.setPadding(new Insets(10, 10, 10, 15));
 
-
-        verticalSection = new VBox(horizontalBox, verticalBox, centerBox);
+        if(isFigureVariable){
+            verticalSection = new VBox(centerBox);
+        }else{
+            verticalSection = new VBox(horizontalBox, verticalBox, centerBox);
+        }
         verticalSection.setAlignment(Pos.CENTER_LEFT);
         verticalSection.setMinHeight(30);
         verticalSection.setSpacing(20);
@@ -1329,7 +1439,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         Label variableLabel = new Label("Variable: ");
         styleLabel(variableLabel);
 
-        TextField textFieldVariable = new TextField(rightVariable);
+        TextField textFieldVariable = new TextField(rightVariable.getVariableName());
         textFieldVariable.setPromptText("1");
         styleTextField(textFieldVariable);
 
@@ -1339,7 +1449,7 @@ public class Power implements CustomShape, ShapeWithVariables{
                     textFieldVariable.setText(oldValue);
                     rightLabel.setText(oldValue);
                 }else{
-                    rightVariable = newValue;
+                    rightVariable.setVariableName(newValue);
                     rightLabel.setText(newValue);
                     updateRightPowerUIWithoutDetail();
                 }
@@ -1357,8 +1467,8 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         checkBoxVariable.selectedProperty().addListener((observableValue, oldValue, newValue) -> {
             rightHasVariable = newValue;
-            rightLabel.setText(rightHasVariable ? rightVariable : rightValue);
-            textFieldVariable.setText(rightHasVariable ? rightVariable : rightValue);
+            rightLabel.setText(rightHasVariable ? rightVariable.getVariableName() : rightValue);
+            textFieldVariable.setText(rightHasVariable ? rightVariable.getVariableName() : rightValue);
         });
 
         Label translationLabel = new Label("Translation: ");
@@ -1406,6 +1516,9 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         });
 
+        checkboxToUse.setSelected(hasRight);
+        checkBoxVariable.setSelected(rightHasVariable);
+
         return vBox;
     }
 
@@ -1423,7 +1536,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         checkBoxVariable.setSelected(true);
 
 
-        TextField textFieldVariable = new TextField(leftVariable);
+        TextField textFieldVariable = new TextField(leftVariable.getVariableName());
         textFieldVariable.setPromptText("1");
         styleTextField(textFieldVariable);
 
@@ -1433,7 +1546,7 @@ public class Power implements CustomShape, ShapeWithVariables{
                     textFieldVariable.setText(oldValue);
                     leftLabel.setText(oldValue);
                 }else{
-                    leftVariable = newValue;
+                    leftVariable.setVariableName(newValue);
                     leftLabel.setText(newValue);
                     updateLeftPowerUIWithoutDetail();
                 }
@@ -1452,8 +1565,8 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         checkBoxVariable.selectedProperty().addListener((observableValue, oldValue, newValue) -> {
             leftHasVariable = newValue;
-            leftLabel.setText(leftHasVariable ? leftVariable : leftValue);
-            textFieldVariable.setText(leftHasVariable ? leftVariable : leftValue);
+            leftLabel.setText(leftHasVariable ? leftVariable.getVariableName() : leftValue);
+            textFieldVariable.setText(leftHasVariable ? leftVariable.getVariableName() : leftValue);
         });
 
         leftTextFieldTranslation = new TextField(leftTranslation);
@@ -1506,6 +1619,9 @@ public class Power implements CustomShape, ShapeWithVariables{
 
         });
 
+        checkboxToUse.setSelected(hasLeft);
+        checkBoxVariable.setSelected(leftHasVariable);
+
         return vBox;
     }
 
@@ -1525,13 +1641,12 @@ public class Power implements CustomShape, ShapeWithVariables{
         centerShape.getChildren().clear();
         BasicShape dropped = (BasicShape) selectedCustomShape;
 
-        NewCompositionShape.Information translationX = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
-        NewCompositionShape.Information translationY = new NewCompositionShape.Information(dropped.getUUID().toString(), 0.0);
+        Information translationX = new Information(dropped.getUUID().toString(), 0.0);
+        Information translationY = new Information(dropped.getUUID().toString(), 0.0);
 
 
         BasicShape toUse = orchestrator.getCopyOfBasicShape(dropped.getUUID().toString(), translationX.getConsumer(), translationY.getConsumer(), null);
         Pane toAdd = toUse.getRectangle();
-        System.out.println("width coiso: " + toUse.getWidth());
 
         selectedCustomShapeWidth = toUse.getWidth();
         selectedCustomShapeHeight = toUse.getHeight();
@@ -1552,7 +1667,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         Label variableLabel = new Label("Variable: ");
         styleLabel(variableLabel);
 
-        TextField textFieldVariable = new TextField(centerVariable);
+        TextField textFieldVariable = new TextField(centerVariable.getVariableName());
         textFieldVariable.setPromptText("1");
         styleTextField(textFieldVariable);
 
@@ -1561,10 +1676,12 @@ public class Power implements CustomShape, ShapeWithVariables{
                 if (!newValue.matches("[a-zA-Z]+")){
                     textFieldVariable.setText(oldValue);
                     customShapeLabel.setText(oldValue);
-
+                    centerVariable.setVariableName(oldValue);
                 }else{
-                    centerVariable = newValue;
+                    centerVariable.setVariableName(newValue);
                     customShapeLabel.setText(newValue);
+                    centerVariable.setVariableName(newValue);
+
                 }
             }
         });
@@ -1598,7 +1715,7 @@ public class Power implements CustomShape, ShapeWithVariables{
                     vBox.getChildren().addAll(fistHBox, secondHBox);
 
                     removeShapeFromCenterShapeAndAddVariableShapeLabel();
-                    customShapeLabel.setText(centerVariable);
+                    customShapeLabel.setText(centerVariable.getVariableName());
 
                 }
             }
@@ -1638,13 +1755,13 @@ public class Power implements CustomShape, ShapeWithVariables{
             StringJoiner joiner = new StringJoiner(",");
 
             if(leftHasVariable && hasLeft)
-                joiner.add(leftVariable);
+                joiner.add(leftVariable.getVariableName());
 
             if(rightHasVariable && hasRight)
-                joiner.add(rightVariable);
+                joiner.add(rightVariable.getVariableName());
 
             if(centerHasVariable)
-                joiner.add(centerVariable);
+                joiner.add(centerVariable.getVariableName());
 
             toReturn.append(joiner);
 
@@ -1718,6 +1835,10 @@ public class Power implements CustomShape, ShapeWithVariables{
     public JSONObject getJSONObject(){
         JSONObject jsonObject = new JSONObject();
 
+
+        jsonObject.put("isFigureVariable", isFigureVariable);
+
+
         jsonObject.put("id", getUUID().toString());
         jsonObject.put("name", name);
 
@@ -1728,9 +1849,9 @@ public class Power implements CustomShape, ShapeWithVariables{
         jsonObject.put("rightHasVariable", rightHasVariable);
         jsonObject.put("centerHasVariable", centerHasVariable);
 
-        jsonObject.put("rightVariable", rightVariable);
-        jsonObject.put("leftVariable", leftVariable);
-        jsonObject.put("centerVariable", centerVariable);
+        jsonObject.put("rightVariable", rightVariable.toJSON());
+        jsonObject.put("leftVariable", leftVariable.toJSON());
+        jsonObject.put("centerVariable", centerVariable.toJSON());
 
         jsonObject.put("leftValue", leftValue);
         jsonObject.put("rightValue", rightValue);
@@ -1771,7 +1892,7 @@ public class Power implements CustomShape, ShapeWithVariables{
         nameLabel.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)")));
 
 
-        Label tagLabel = new Label("Power Shape");
+        Label tagLabel = new Label(isFigureVariable ? "Figure Template" : "Power Shape");
         tagLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 10));
         tagLabel.setPadding(new Insets(3));
         tagLabel.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)").darker()));
@@ -1793,13 +1914,9 @@ public class Power implements CustomShape, ShapeWithVariables{
         menuItem.setStyle("-fx-text-fill: red");
         contextMenu.getItems().add(menuItem);
 
-        menuItem.setOnAction(actionEvent -> {
-            proceedWhenDeletingFromThumbnail.apply(getUUID().toString());
-        });
+        menuItem.setOnAction(actionEvent -> proceedWhenDeletingFromThumbnail.apply(getUUID().toString()));
 
-        thumbnail.setOnContextMenuRequested(contextMenuEvent -> {
-            contextMenu.show(thumbnail, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
-        });
+        thumbnail.setOnContextMenuRequested(contextMenuEvent -> contextMenu.show(thumbnail, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY()));
     }
 
     @Override

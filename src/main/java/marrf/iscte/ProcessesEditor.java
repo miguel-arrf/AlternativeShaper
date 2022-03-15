@@ -23,6 +23,8 @@ import javafx.scene.web.WebView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.InputStream;
@@ -77,7 +79,56 @@ public class ProcessesEditor {
 
     }
 
-    public static String getShapesJSON(ArrayList<BasicShape> basicShapes, ArrayList<NewCompositionShape> newCompositionShapes){
+    public JSONArray getProcessAndRulesJSONToJSON(){
+        JSONArray jsonArray = new JSONArray();
+
+        orchestrator.getProcesses().forEach(process -> {
+            JSONArray innerJSONArray = new JSONArray();
+
+            innerJSONArray.add(process.getProcessName());
+            innerJSONArray.add(process.getProcessName());
+
+
+            jsonArray.add(innerJSONArray);
+        });
+
+        orchestrator.getShapeRules().forEach(shapeRule -> {
+            JSONArray innerJSONArray = new JSONArray();
+
+            innerJSONArray.add(shapeRule.getShapeRuleName());
+            innerJSONArray.add(shapeRule.getShapeRuleName());
+
+
+            jsonArray.add(innerJSONArray);
+        });
+        return jsonArray;
+    }
+
+    public  String getProcessAndRulesJSON(){
+        StringBuilder toReturn = new StringBuilder();
+
+           orchestrator.getProcesses().forEach(process -> {
+               toReturn.append("[\n");
+
+               toReturn.append("\"").append(process.getProcessName()).append("\",\n");
+               toReturn.append("\"").append(process.getProcessName()).append("\"\n");
+
+               toReturn.append("],\n");
+           });
+
+        orchestrator.getShapeRules().forEach(shapeRule -> {
+            toReturn.append("[\n");
+
+            toReturn.append("\"").append(shapeRule.getShapeRuleName()).append("\",\n");
+            toReturn.append("\"").append(shapeRule.getShapeRuleName()).append("\"\n");
+
+            toReturn.append("],\n");
+        });
+
+        return toReturn.toString();
+    }
+
+    public static String getShapesJSON(ArrayList<BasicShape> basicShapes, ArrayList<NewCompositionShape> newCompositionShapes, ArrayList<Power> powerShapes, ArrayList<ParametricCompositionShape> parametricCompositionShapes){
         StringBuilder toReturn = new StringBuilder();
 
         basicShapes.forEach(basicShape -> {
@@ -130,6 +181,11 @@ public class ProcessesEditor {
             Files.copy(htmlOriginal, htmlCopied, StandardCopyOption.REPLACE_EXISTING);
 
             String fileContentJS = new String(Files.readAllBytes(htmlCopied));
+
+            if(orchestrator.getProcesses().size() != 0 || orchestrator.getShapeRules().size() != 0){
+                fileContentJS = fileContentJS.replace("<!--CHANGE_HERE_3-->", "<block type=\"availableProcessesAndRules\"></block>" );
+            }
+
             fileContentJS = fileContentJS.replace("myBlocksCopied.js","myBlocksCopied.js?c=r_" + randomNum);
             Files.write(htmlCopied, fileContentJS.getBytes());
 
@@ -139,9 +195,8 @@ public class ProcessesEditor {
 
             Files.copy(original, copied, StandardCopyOption.REPLACE_EXISTING);
 
-
             String fileContent = new String(Files.readAllBytes(copied));
-            fileContent = fileContent.replace("//CHANGE_HERE", "{\n" +
+            fileContent = fileContent.replace("//CHANGE_HERE1", "{\n" +
                     "  \"type\": \"availableshapes\",\n" +
                     "  \"message0\": \"%1\",\n" +
                     "  \"args0\": [\n" +
@@ -149,7 +204,7 @@ public class ProcessesEditor {
                     "      \"type\": \"field_dropdown\",\n" +
                     "      \"name\": \"NAME\",\n" +
                     "      \"options\": [\n" +
-                    "       " + getShapesJSON(basicShapes, newCompositionShapes) +
+                    "       " + getShapesJSON(orchestrator.getBasicShapes(), orchestrator.getNewCompositionShapes(), orchestrator.getPowerShapes(), orchestrator.getParametricCompositionShapes()) +
                     "      ]\n" +
                     "    }\n" +
                     "  ],\n" +
@@ -158,7 +213,29 @@ public class ProcessesEditor {
                     "  \"tooltip\": \"\",\n" +
                     "  \"helpUrl\": \"\"\n" +
                     "},");
+
+            fileContent = fileContent.replace("//CHANGE_HERE2", "{\n" +
+                    "  \"type\": \"availableProcessesAndRules\",\n" +
+                    "  \"message0\": \"%1\",\n" +
+                    "  \"args0\": [\n" +
+                    "    {\n" +
+                    "      \"type\": \"field_dropdown\",\n" +
+                    "      \"name\": \"NAME\",\n" +
+                    "      \"options\": [\n" +
+                    "       " + getProcessAndRulesJSON() +
+                    "      ]\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"output\": null,\n" +
+                    "  \"colour\": 20,\n" +
+                    "  \"tooltip\": \"\",\n" +
+                    "  \"helpUrl\": \"\"\n" +
+                    "},");
+
+
             Files.write(copied, fileContent.getBytes());
+
+
 
 
 
@@ -227,6 +304,7 @@ public class ProcessesEditor {
                             currentProcess = processAdded;
                             nameTextfield.setText(processAdded.getProcessName());
                             webView.getEngine().executeScript("novoTeste('"+ processAdded.getBlocklyXML() +"')");
+                            updateProcessesAndRulesNames();
                         });
 
                         ContextMenu contextMenu = new ContextMenu();
@@ -302,6 +380,7 @@ public class ProcessesEditor {
                 scrollBarThumbnails.add(currentProcess);
 
                 Process.updateOrAdd(processes, currentProcess);
+                updateProcessesAndRulesNames();
 
                 orchestrator.processesToString();
             }
@@ -337,6 +416,17 @@ public class ProcessesEditor {
         return rectangle;
     }
 
+    private void updateProcessesAndRulesNames(){
+        JSONArray processAndRulesToSend = getProcessAndRulesJSONToJSON();
+        System.out.println("vou colocar: ");
+        System.out.println(processAndRulesToSend.toJSONString());
+        webView.getEngine().executeScript("updateProcessesAndRulesNames('" + processAndRulesToSend.toJSONString() +"')");
+
+        webView.getEngine().executeScript("updateProcessesAndRulesNamesToolBox('" + processAndRulesToSend.toJSONString() +"')");
+        webView.getEngine().executeScript("addUpdateProcessesAndRulesNamesSectionToToolBox()");
+
+    }
+
     private Pane setUpAddAndProcessesScrolPane(){
         setUpScrollbarThumbnails();
         setUpProcessesScrollPane();
@@ -357,7 +447,7 @@ public class ProcessesEditor {
         addHBox.setOnMouseClicked(mouseEvent -> {
 
             currentProcess = new Process();
-            nameTextfield.setText("NO_NAME");
+            nameTextfield.setText("Set your process name");
             webView.getEngine().executeScript("clear()");
         });
 

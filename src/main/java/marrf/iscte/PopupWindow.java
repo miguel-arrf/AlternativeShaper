@@ -11,6 +11,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -39,6 +40,56 @@ public class PopupWindow {
     }
 
     public void createPopup(String windowTitle, Scene scene, @NamedArg("labelContent")String labelContent, Pane ... panes){
+        createPopup(windowTitle, scene, labelContent, 400, 300, panes);
+    }
+
+    public void createPopup(boolean withBlurOnClose, String windowTitle, Scene scene,@NamedArg("width") int width, @NamedArg("height") int height, Node... panes){
+        scene.getRoot().setCache(true);
+        scene.getRoot().setCacheHint(CacheHint.SPEED);
+        startBlurAnimation(scene.getRoot(), 0.0, 30.0, Duration.millis(100), false);
+        scene.getRoot().setCache(false);
+        scene.getRoot().setCacheHint(CacheHint.DEFAULT);
+
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.initOwner(StartMenu.primaryStage);
+        VBox dialogVbox = new VBox(20);
+        dialogVbox.setPadding(new Insets(20));
+        dialogVbox.setStyle("-fx-background-color: #262528");
+
+
+        VBox content = new VBox();
+        dialogVbox.getChildren().addAll(content);
+
+        content.setSpacing(20);
+        content.setPadding(new Insets(0));
+        content.getChildren().addAll(panes);
+
+        dialogVbox.setMaxHeight(Double.MAX_VALUE);
+
+        Scene dialogScene = new Scene(dialogVbox, width, height);
+        stage.setScene(dialogScene);
+        stage.show();
+
+        stage.sizeToScene();
+        stage.setTitle(windowTitle);
+
+        //TODO if the screen resolution is to low, the stage may appear too big...
+        stage.setResizable(true);
+
+        stage.setOnCloseRequest(event -> {
+            scene.getRoot().setCache(true);
+            scene.getRoot().setCacheHint(CacheHint.SPEED);
+            if(withBlurOnClose)
+                startBlurAnimation(scene.getRoot(), 30.0, 0.0, Duration.millis(100), true);
+            scene.getRoot().setCache(false);
+            scene.getRoot().setCacheHint(CacheHint.DEFAULT);
+        });
+
+
+    }
+
+
+    public void createPopup(String windowTitle, Scene scene, @NamedArg("labelContent")String labelContent,@NamedArg("width") int width, @NamedArg("height") int height, Pane ... panes){
 
         scene.getRoot().setCache(true);
         scene.getRoot().setCacheHint(CacheHint.SPEED);
@@ -73,7 +124,7 @@ public class PopupWindow {
 
         dialogVbox.setMaxHeight(Double.MAX_VALUE);
 
-        Scene dialogScene = new Scene(dialogVbox, 400, 300);
+        Scene dialogScene = new Scene(dialogVbox, width, height);
         stage.setScene(dialogScene);
         stage.show();
 
@@ -96,7 +147,7 @@ public class PopupWindow {
 
     }
 
-    public void createPopup(String windowTitle, Scene scene, Pane ... panes){
+    public void createPopup(String windowTitle, Scene scene,@NamedArg("width") int width, @NamedArg("height") int height, Node... panes){
         scene.getRoot().setCache(true);
         scene.getRoot().setCacheHint(CacheHint.SPEED);
         startBlurAnimation(scene.getRoot(), 0.0, 30.0, Duration.millis(100), false);
@@ -119,7 +170,7 @@ public class PopupWindow {
 
         dialogVbox.setMaxHeight(Double.MAX_VALUE);
 
-        Scene dialogScene = new Scene(dialogVbox, 400, 190);
+        Scene dialogScene = new Scene(dialogVbox, width, height);
         stage.setScene(dialogScene);
         stage.show();
 

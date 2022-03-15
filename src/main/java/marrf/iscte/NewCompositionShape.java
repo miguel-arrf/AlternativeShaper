@@ -20,6 +20,7 @@ import javafx.scene.text.FontWeight;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -32,22 +33,23 @@ import static marrf.iscte.App.NUMBER_COLUMNS_AND_ROWS;
 import static marrf.iscte.App.SCALE;
 import static marrf.iscte.BasicShape.colorToRGBString;
 import static marrf.iscte.BasicShape.getRelativeLuminance;
+import static marrf.iscte.ParametricCompositionShape.Information;
 
-public class NewCompositionShape implements CustomShape {
+public class NewCompositionShape implements CustomShape, Serializable {
 
     private final Map<String, NewCompositionShape> compositionShapeMap = new HashMap<>();
-    private final ArrayList<Information> compositionShapesXTranslation = new ArrayList<>();
-    private final ArrayList<Information> compositionShapesYTranslation = new ArrayList<>();
-    private final ArrayList<Information> basicShapesXTranslation = new ArrayList<>();
-    private final ArrayList<Information> basicShapesYTranslation = new ArrayList<>();
+    public final ArrayList<Information<Double>> compositionShapesXTranslation = new ArrayList<>();
+    public final ArrayList<Information<Double>> compositionShapesYTranslation = new ArrayList<>();
+    private final ArrayList<Information<Double>> basicShapesXTranslation = new ArrayList<>();
+    private final ArrayList<Information<Double>> basicShapesYTranslation = new ArrayList<>();
     private final Orchestrator orchestrator;
     //Composition Shape Thumbnail
     private final HBox thumbnail = new HBox();
     private String name = "COMPLEX_DEFAULT";
     private final UUID ID;
     private Node selected;
-    private Information selectedTranslationX;
-    private Information selectedTranslationY;
+    private Information<Double> selectedTranslationX;
+    private Information<Double> selectedTranslationY;
     private Pane transformersBox;
     //Modifiers boxes
     private HBox translationXBox;
@@ -57,13 +59,20 @@ public class NewCompositionShape implements CustomShape {
     private Function<String, Double> proceedToRedrawWhenDeleting;
     private Function<Pane, Double> proceedWhenDeleting;
 
+    private boolean isFigureVariable = false;
+
+    public boolean isFigureVariable() {
+        return isFigureVariable;
+    }
+
     public Map<String, NewCompositionShape> getCompositionShapeMap() {
         return compositionShapeMap;
     }
 
     public NewCompositionShape getCopy(){
-        NewCompositionShape toReturn = new NewCompositionShape(orchestrator, transformersBox, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
+        NewCompositionShape toReturn = new NewCompositionShape(false, orchestrator, transformersBox, proceedWhenDeletingFromThumbnail, proceedToRedrawWhenDeleting);
 
+        toReturn.isFigureVariable = toReturn.isFigureVariable;
         toReturn.name = name;
         toReturn.compositionShapeMap.putAll(compositionShapeMap);
 
@@ -107,7 +116,7 @@ public class NewCompositionShape implements CustomShape {
         }
 
         basicShapesXTranslation.forEach(information -> {
-            Information translationY = basicShapesYTranslation.stream().filter(inf -> inf.getId().equals(information.getId())).findFirst().get();
+            Information<Double> translationY = basicShapesYTranslation.stream().filter(inf -> inf.getId().equals(information.getId())).findFirst().get();
 
             toReturn.append("s(").append(orchestrator.getBasicShapeNameFromID(information.getId()));
             toReturn.append(",[1,0,0,0,1,0,").append(information.getValue()/SCALE).append(",").append(translationY.getValue()/SCALE).append(",1]");
@@ -156,17 +165,31 @@ public class NewCompositionShape implements CustomShape {
         this.transformersBox = transformersBox;
     }
 
-    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
+    public NewCompositionShape(boolean isFigureVariable, Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
         this.proceedToRedrawWhenDeleting = proceedToRedrawWhenDeleting;
 
         ID = UUID.randomUUID();
         this.orchestrator = orchestrator;
         this.transformersBox = transformersBox;
+
+        this.isFigureVariable = isFigureVariable;
         //setUpComponents();
     }
 
-    public NewCompositionShape(Orchestrator orchestrator, Pane transformersBox, String name, UUID id, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
+    public NewCompositionShape(boolean isFigureVariable, String name, Orchestrator orchestrator, Pane transformersBox, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
+        this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
+        this.proceedToRedrawWhenDeleting = proceedToRedrawWhenDeleting;
+        this.name = name;
+        ID = UUID.randomUUID();
+        this.orchestrator = orchestrator;
+        this.transformersBox = transformersBox;
+
+        this.isFigureVariable = isFigureVariable;
+        //setUpComponents();
+    }
+
+    public NewCompositionShape(boolean isFigureVariable, Orchestrator orchestrator, Pane transformersBox, String name, UUID id, Function<String, Double> proceedWhenDeletingFromThumbnail, Function<String, Double> proceedToRedrawWhenDeleting) {
         this.name = name;
         this.ID = id;
 
@@ -175,6 +198,8 @@ public class NewCompositionShape implements CustomShape {
         //setUpComponents();
         this.proceedWhenDeletingFromThumbnail = proceedWhenDeletingFromThumbnail;
         this.proceedToRedrawWhenDeleting = proceedToRedrawWhenDeleting;
+
+        this.isFigureVariable = isFigureVariable;
     }
 
     public UUID getID() {
@@ -319,12 +344,12 @@ public class NewCompositionShape implements CustomShape {
         basicShapesXTranslation.forEach(information -> {
             int position = basicShapesXTranslation.indexOf(information);
 
-            Information translationX = basicShapesXTranslation.get(position);
-            Information translationY = basicShapesYTranslation.get(position);
+            Information<Double> translationX = basicShapesXTranslation.get(position);
+            Information<Double> translationY = basicShapesYTranslation.get(position);
 
             //System.out.println("no get: " + "translationX: " + translationX.getValue() + ", translationY: " + translationY.getValue());
 
-            basicShapes.add(orchestrator.getCopyOfBasicShape(information.id, translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(translationY.getId())));
+            basicShapes.add(orchestrator.getCopyOfBasicShape(information.getId(), translationX.getConsumer(), translationY.getConsumer(), getProceedWhenDeleting(translationY.getId())));
         });
 
 
@@ -333,8 +358,8 @@ public class NewCompositionShape implements CustomShape {
 
     private Function<Pane, Double> getProceedWhenDeleting(String basicShapeID) {
         return a -> {
-            Information xTranslationToRemove = basicShapesXTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
-            Information yTranslationToRemove = basicShapesYTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
+            Information<Double> xTranslationToRemove = basicShapesXTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
+            Information<Double> yTranslationToRemove = basicShapesYTranslation.stream().filter(p -> p.getId().equals(basicShapeID)).findFirst().get();
             basicShapesXTranslation.remove(xTranslationToRemove);
             basicShapesYTranslation.remove(yTranslationToRemove);
             System.err.println("VIM AQUI PARA APAGAR!");
@@ -343,9 +368,9 @@ public class NewCompositionShape implements CustomShape {
         };
     }
 
-    public NewCompositionShape getPaneWithBasicAndCompositionShapes(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY, Pane transformersBox){
+    /*public NewCompositionShape getPaneWithBasicAndCompositionShapes(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY, Pane transformersBox){
 
-        NewCompositionShape teste = new NewCompositionShape(orchestrator, transformersBox, a -> 0.0, a -> 0.0);
+        NewCompositionShape teste = new NewCompositionShape(false, orchestrator, transformersBox, a -> 0.0, a -> 0.0);
 
         teste.addNewCompositionShape(this);
         teste.getTeste(toAdd, true, 0,0);
@@ -363,7 +388,7 @@ public class NewCompositionShape implements CustomShape {
 
     public void setProceedWhenDeleting(Function<Pane, Double> proceedWhenDeleting) {
         this.proceedWhenDeleting = proceedWhenDeleting;
-    }
+    }*/
 
     public void getTeste(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY) {
 
@@ -372,8 +397,8 @@ public class NewCompositionShape implements CustomShape {
 
             int position = compositionShapesXTranslation.indexOf(compositionShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get());
 
-            Information translationX = compositionShapesXTranslation.get(position);
-            Information translationY = compositionShapesYTranslation.get(position);
+            Information<Double> translationX = compositionShapesXTranslation.get(position);
+            Information<Double> translationY = compositionShapesYTranslation.get(position);
 
             //Adding basic shapes
             compositionShape.getBasicShapes().forEach(basicShape -> {
@@ -438,7 +463,7 @@ public class NewCompositionShape implements CustomShape {
                     selectedTranslationY = translationY;
 
                     setUpComponents();
-                    System.out.println("I've clicked on here. It should now be true!");
+                    ////System.out.println("I've clicked on here. It should now be true!");
 
                     transformersBox.getChildren().clear();
                     transformersBox.getChildren().addAll(getTransformers());
@@ -454,8 +479,8 @@ public class NewCompositionShape implements CustomShape {
                 menuItem.setOnAction(actionEvent -> {
                     ((Pane) addTo.getParent()).getChildren().remove(addTo);
                     compositionShapeMap.remove(newID);
-                    Information xTranslationToRemove = compositionShapesXTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
-                    Information yTranslationToRemove = compositionShapesYTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
+                    Information xTranslationToRemove = compositionShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get();
+                    Information yTranslationToRemove = compositionShapesYTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get();
                     compositionShapesXTranslation.remove(xTranslationToRemove);
                     compositionShapesYTranslation.remove(yTranslationToRemove);
 
@@ -473,14 +498,13 @@ public class NewCompositionShape implements CustomShape {
     }
 
     public void getTesteForSpecific(Node toAdd, boolean addHover, double upperTranslationX, double upperTranslationY, String newID, NewCompositionShape compositionShape) {
-
             toAdd.setPickOnBounds(false);
             Group addTo = new Group();
 
             int position = compositionShapesXTranslation.indexOf(compositionShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get());
 
-            Information translationX = compositionShapesXTranslation.get(position);
-            Information translationY = compositionShapesYTranslation.get(position);
+            Information<Double> translationX = compositionShapesXTranslation.get(position);
+            Information<Double> translationY = compositionShapesYTranslation.get(position);
 
             //Adding basic shapes
             compositionShape.getBasicShapes().forEach(basicShape -> {
@@ -550,7 +574,7 @@ public class NewCompositionShape implements CustomShape {
                     selectedTranslationY = translationY;
 
                     setUpComponents();
-                    System.out.println("I've clicked on here. It should now be true!");
+                    //System.out.println("I've clicked on here. It should now be true!");
 
                     transformersBox.getChildren().clear();
                     transformersBox.getChildren().addAll(getTransformers());
@@ -566,8 +590,8 @@ public class NewCompositionShape implements CustomShape {
                 menuItem.setOnAction(actionEvent -> {
                     ((Pane) addTo.getParent()).getChildren().remove(addTo);
                     compositionShapeMap.remove(newID);
-                    Information xTranslationToRemove = compositionShapesXTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
-                    Information yTranslationToRemove = compositionShapesYTranslation.stream().filter(p -> p.id.equals(newID)).findFirst().get();
+                    Information<Double> xTranslationToRemove = compositionShapesXTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get();
+                    Information<Double> yTranslationToRemove = compositionShapesYTranslation.stream().filter(p -> p.getId().equals(newID)).findFirst().get();
                     compositionShapesXTranslation.remove(xTranslationToRemove);
                     compositionShapesYTranslation.remove(yTranslationToRemove);
 
@@ -599,12 +623,11 @@ public class NewCompositionShape implements CustomShape {
     }
 
 
-    private ArrayList<Double> getMaximumBasicShapeYTranslation(){
+    ArrayList<Double> getMaximumBasicShapeYTranslation(){
         double maximumValue;
         if(basicShapesYTranslation.size() != 0){
-            maximumValue = basicShapesYTranslation.get(0).value;
+            maximumValue = basicShapesYTranslation.get(0).getValue();
         }else {
-            System.out.println("i am going to return this shit!");
             return new ArrayList<>();
         }
         ArrayList<Double> lowerValues = new ArrayList<>();
@@ -621,7 +644,7 @@ public class NewCompositionShape implements CustomShape {
         return  lowerValues;
     }
 
-    private double getMaximumTranslationY_inner_forCompositions(ArrayList<Information> compositionShapesY, double previousTranslation){
+    private double getMaximumTranslationY_inner_forCompositions(ArrayList<Information<Double>> compositionShapesY, double previousTranslation){
         ArrayList<Double> toReturn = new ArrayList<>();
 
         compositionShapesY.forEach(information -> {
@@ -655,7 +678,6 @@ public class NewCompositionShape implements CustomShape {
 
     private ArrayList<Double> getMaximumTranslationY_inner(){
         if(compositionShapesYTranslation.size() == 0 && basicShapesYTranslation.size() == 0) {
-            System.out.println("i am going to return this shit!");
             return new ArrayList<>();
         }
 
@@ -680,7 +702,6 @@ public class NewCompositionShape implements CustomShape {
         if(minimumValues.size() == 0){
             return 0.0;
         }else{
-            System.out.println("hehe here i am to return like a good boy!");
             minimumValues.sort(Comparator.reverseOrder());
             return minimumValues.get(0);
         }
@@ -689,11 +710,10 @@ public class NewCompositionShape implements CustomShape {
     private ArrayList<Double> getMininumTranslationY(){
         double mininumValue;
         if(compositionShapesYTranslation.size() != 0){
-            mininumValue = compositionShapesYTranslation.get(0).value;
+            mininumValue = compositionShapesYTranslation.get(0).getValue();
         }else if(basicShapesYTranslation.size() != 0){
-            mininumValue = basicShapesYTranslation.get(0).value;
+            mininumValue = basicShapesYTranslation.get(0).getValue();
         }else {
-            System.out.println("i am going to return this shit!");
             return new ArrayList<>();
         }
 
@@ -701,8 +721,8 @@ public class NewCompositionShape implements CustomShape {
         lowerValues.add(mininumValue);
 
         double finalMininumValue = mininumValue;
-        compositionShapesYTranslation.stream().filter(p -> p.value > finalMininumValue).forEach(p -> lowerValues.add(p.value));
-        basicShapesYTranslation.stream().filter(p -> p.value > finalMininumValue).forEach(p -> lowerValues.add(p.value));
+        compositionShapesYTranslation.stream().filter(p -> p.getValue() > finalMininumValue).forEach(p -> lowerValues.add(p.getValue()));
+        basicShapesYTranslation.stream().filter(p -> p.getValue() > finalMininumValue).forEach(p -> lowerValues.add(p.getValue()));
         compositionShapeMap.forEach((id, compositionShape) -> lowerValues.addAll(compositionShape.getMininumTranslationY()));
 
         return lowerValues;
@@ -714,7 +734,6 @@ public class NewCompositionShape implements CustomShape {
        if(minimumValues.size() == 0){
            return 0.0;
        }else{
-           System.out.println("hehe here i am to return like a good boy!");
            minimumValues.sort(Collections.reverseOrder());
            return minimumValues.get(0);
        }
@@ -723,7 +742,7 @@ public class NewCompositionShape implements CustomShape {
 
 
 
-    private double getMinimumTranslationY_inner_forCompositions(ArrayList<Information> compositionShapesY, double previousTranslation){
+    private double getMinimumTranslationY_inner_forCompositions(ArrayList<Information<Double>> compositionShapesY, double previousTranslation){
         ArrayList<Double> toReturn = new ArrayList<>();
 
         compositionShapesY.forEach(information -> {
@@ -756,7 +775,6 @@ public class NewCompositionShape implements CustomShape {
 
     private ArrayList<Double> getMinimumTranslationY_inner(){
         if(compositionShapesYTranslation.size() == 0 && basicShapesYTranslation.size() == 0) {
-            System.out.println("i am going to return this shit!");
             return new ArrayList<>();
         }
 
@@ -780,7 +798,6 @@ public class NewCompositionShape implements CustomShape {
         if(minimumValues.size() == 0){
             return 0.0;
         }else{
-            System.out.println("hehe here i am to return like a good boy!");
             Collections.sort(minimumValues);
             return minimumValues.get(0);
         }
@@ -799,7 +816,6 @@ public class NewCompositionShape implements CustomShape {
         }else if(basicShapesXTranslation.size() != 0){
             mininumValue = basicShapesXTranslation.get(0).value;
         }else {
-            System.out.println("i am going to return this shit!");
             return new ArrayList<>();
         }
 
@@ -814,7 +830,7 @@ public class NewCompositionShape implements CustomShape {
         return lowerValues;
     }*/
 
-    private double getMinimumTranslationX_inner_forCompositions(ArrayList<Information> compositionShapesX, double previousTranslation){
+    private double getMinimumTranslationX_inner_forCompositions(ArrayList<Information<Double>> compositionShapesX, double previousTranslation){
         ArrayList<Double> toReturn = new ArrayList<>();
 
         compositionShapesX.forEach(information -> {
@@ -849,7 +865,6 @@ public class NewCompositionShape implements CustomShape {
 
     private ArrayList<Double> getMinimumTranslationX_inner(){
         if(compositionShapesXTranslation.size() == 0 && basicShapesXTranslation.size() == 0) {
-            System.out.println("i am going to return this shit!");
             return new ArrayList<>();
         }
 
@@ -871,7 +886,6 @@ public class NewCompositionShape implements CustomShape {
         if(minimumValues.size() == 0){
             return 0.0;
         }else{
-            System.out.println("hehe here i am to return like a good boy!");
             Collections.sort(minimumValues);
             return minimumValues.get(0);
         }
@@ -881,12 +895,11 @@ public class NewCompositionShape implements CustomShape {
 
 
 
-    private ArrayList<Double> getMaximumBasicShapeXTranslation(){
+    ArrayList<Double> getMaximumBasicShapeXTranslation(){
         double maximumValue;
         if(basicShapesXTranslation.size() != 0){
-            maximumValue = basicShapesXTranslation.get(0).value;
+            maximumValue = basicShapesXTranslation.get(0).getValue();
         }else {
-            System.out.println("i am going to return this shit!");
             return new ArrayList<>();
         }
         ArrayList<Double> lowerValues = new ArrayList<>();
@@ -894,7 +907,7 @@ public class NewCompositionShape implements CustomShape {
 
         double finalMaximumValue = maximumValue;
         basicShapesXTranslation.forEach(basicShape -> {
-            BasicShape copy = orchestrator.getCopyOfBasicShape(basicShape.getId(), new Information("1", 0.0).getConsumer(), new Information("1", 0.0).getConsumer(), getProceedWhenDeleting(basicShape.getId()));;
+            BasicShape copy = orchestrator.getCopyOfBasicShape(basicShape.getId(), new Information<Double>("1", 0.0).getConsumer(), new Information<Double>("1", 0.0).getConsumer(), getProceedWhenDeleting(basicShape.getId()));;
 
             //if(basicShape.getValue() < finalMaximumValue){
             //Shouldn't it be >=?
@@ -904,12 +917,11 @@ public class NewCompositionShape implements CustomShape {
         return  lowerValues;
     }
 
-    private ArrayList<Double> getMinimumBasicShapeXTranslation(){
+    ArrayList<Double> getMinimumBasicShapeXTranslation(){
         double maximumValue;
         if(basicShapesXTranslation.size() != 0){
-            maximumValue = basicShapesXTranslation.get(0).value;
+            maximumValue = basicShapesXTranslation.get(0).getValue();
         }else {
-            System.out.println("i am going to return this shit!");
             return new ArrayList<>();
         }
         ArrayList<Double> lowerValues = new ArrayList<>();
@@ -922,26 +934,25 @@ public class NewCompositionShape implements CustomShape {
     }
 
 
-    private ArrayList<Double> getMinimumBasicShapeYTranslation(){
+    ArrayList<Double> getMinimumBasicShapeYTranslation(){
         double maximumValue;
         if(basicShapesYTranslation.size() != 0){
-            maximumValue = basicShapesYTranslation.get(0).value;
+            maximumValue = basicShapesYTranslation.get(0).getValue();
         }else {
-            System.out.println("i am going to return this shit!");
             return new ArrayList<>();
         }
         ArrayList<Double> lowerValues = new ArrayList<>();
         lowerValues.add(maximumValue);
 
         basicShapesYTranslation.forEach(basicShape -> {
-            BasicShape copy = orchestrator.getCopyOfBasicShape(basicShape.getId(), new Information("1", 0.0).getConsumer(), new Information("1", 0.0).getConsumer(), getProceedWhenDeleting(basicShape.getId()));;
+            BasicShape copy = orchestrator.getCopyOfBasicShape(basicShape.getId(), new Information<Double>("1", 0.0).getConsumer(), new Information<Double>("1", 0.0).getConsumer(), getProceedWhenDeleting(basicShape.getId()));;
 
             lowerValues.add(basicShape.getValue() - copy.getHeight() );
         });
         return  lowerValues;
     }
 
-    private double getMaximumTranslationX_inner_forCompositions(ArrayList<Information> compositionShapesX, double previousTranslation){
+    private double getMaximumTranslationX_inner_forCompositions(ArrayList<Information<Double>> compositionShapesX, double previousTranslation){
         ArrayList<Double> toReturn = new ArrayList<>();
 
         compositionShapesX.forEach(information -> {
@@ -976,7 +987,6 @@ public class NewCompositionShape implements CustomShape {
 
     private ArrayList<Double> getMaximumTranslationX_inner(){
         if(compositionShapesXTranslation.size() == 0 && basicShapesXTranslation.size() == 0) {
-            System.out.println("i am going to return this shit!");
             return new ArrayList<>();
         }
 
@@ -1084,7 +1094,7 @@ public class NewCompositionShape implements CustomShape {
         textField.setPrefWidth(60);
         textField.setAlignment(Pos.CENTER);
 
-        Information tempTranslationX = selectedTranslationX;
+        Information<Double> tempTranslationX = selectedTranslationX;
 
         Slider translationXSlider = new Slider();
         translationXSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
@@ -1151,7 +1161,7 @@ public class NewCompositionShape implements CustomShape {
         textField.setPrefWidth(60);
         textField.setAlignment(Pos.CENTER);
 
-        Information tempTranslationY = selectedTranslationY;
+        Information<Double> tempTranslationY = selectedTranslationY;
 
         Slider translationYSlider = new Slider();
         translationYSlider.setMax(NUMBER_COLUMNS_AND_ROWS);
@@ -1202,7 +1212,7 @@ public class NewCompositionShape implements CustomShape {
         translationYBox.setStyle("-fx-background-color: #333234;-fx-background-radius: 10");
     }
 
-    private Slider getSlider(Information informationToUpdate, Consumer<Double> consumer, Consumer<Double> textFieldConsumer) {
+    private Slider getSlider(Information<Double> informationToUpdate, Consumer<Double> consumer, Consumer<Double> textFieldConsumer) {
         Slider slider = new Slider();
         slider.setMax(Orchestrator.getNumberColumnsAndRows());
         slider.setMin(- Orchestrator.getNumberColumnsAndRows());
@@ -1265,7 +1275,7 @@ public class NewCompositionShape implements CustomShape {
         nameLabel.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)")));
 
 
-        Label tagLabel = new Label("Composition Shape");
+        Label tagLabel = new Label(isFigureVariable ? "Figure Variable" : "Composition Shape");
         tagLabel.setFont(Font.font("SF Pro Rounded", FontWeight.BLACK, 10));
         tagLabel.setPadding(new Insets(3));
         tagLabel.setTextFill(getRelativeLuminance(Color.web("rgb(79,79,79)").darker()));
@@ -1340,42 +1350,7 @@ public class NewCompositionShape implements CustomShape {
         });
     }
 
-    public static class Information {
-        private String id;
-        private Double value;
 
-        public Information(String id, Double value) {
-            this.id = id;
-            this.value = value;
-        }
-
-        public Double getValue() {
-            return value;
-        }
-
-        public void setValue(Double value) {
-            this.value = value;
-        }
-
-        public Function<Double, Double> getConsumer() {
-            return a -> {
-                if (a == null) {
-                    return getValue();
-                } else {
-                    setValue(a);
-                    return a;
-                }
-            };
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-    }
 
 
 }

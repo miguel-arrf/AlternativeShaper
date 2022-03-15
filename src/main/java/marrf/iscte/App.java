@@ -34,10 +34,9 @@ import marrf.iscte.ShapeRules.ShapeRule;
 import org.json.simple.JSONObject;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -125,12 +124,26 @@ public class App extends Application {
         return () -> {
             if(customShape instanceof NewCompositionShape){
                 inDragCustomShape = customShape;
-                System.out.println("Agora sei o que estou dragging numa variável temporária!");
+                //System.out.println("Agora sei o que estou dragging numa variável temporária!");
             }else{
                 inDragCustomShape = null;
             }
             return null;
         };
+    }
+
+    private void resetBordersAndSetForOne(VBox content, Pane checkIfExists){
+        content.getChildren().forEach(p -> {
+            if(p instanceof Pane){
+                Pane tempPane = (Pane) p;
+                tempPane.setBorder(new Border(new BorderStroke(Color.LIGHTGRAY,
+                        BorderStrokeStyle.SOLID, new CornerRadii(10), BorderWidths.EMPTY)));
+            }
+        });
+
+        checkIfExists.setBorder(new Border(new BorderStroke(Color.DARKGRAY,
+                BorderStrokeStyle.SOLID, new CornerRadii(10), new BorderWidths(5))));
+
     }
 
     private ScrollPane getScrollPane(){
@@ -173,7 +186,7 @@ public class App extends Application {
                     return true;
                 });
             }else{
-                System.out.println("No basic or composition");
+                //System.out.println("No basic or composition");
                 addBasicShapesToSideBarIfTheyArent();
                 addCompositionShapesToSideBarIfTheyArent();
             }
@@ -201,9 +214,11 @@ public class App extends Application {
                         content.getChildren().remove(checkIfExists);//This only removes if it exists
                         content.getChildren().add(checkIfExists);
 
+                        resetBordersAndSetForOne(content, checkIfExists);
+
                         if(basicShapeAdded instanceof NewCompositionShape){
                             checkIfExists.setOnMouseClicked(mouseEvent -> {
-                                System.out.println("I've clicked on a composition shape thumbnail!");
+                                //System.out.println("I've clicked on a composition shape thumbnail!");
                                 selectedCompositionShape = (NewCompositionShape) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
@@ -219,17 +234,17 @@ public class App extends Application {
                                 addCompositionShape(selectedCompositionShape, false);
                                 //addShape(basicShapeAdded, true);
 
-
+                                resetBordersAndSetForOne(content, checkIfExists);
                             });
 
                         }else if (basicShapeAdded instanceof ParametricCompositionShape) {
                             checkIfExists.setOnMouseClicked(mouseEvent -> {
-                                System.out.println("I've clicked on a parametric composition shape thumbnail!");
+                                //System.out.println("I've clicked on a parametric composition shape thumbnail!");
                                 selectedParametricCompositionShape = (ParametricCompositionShape) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
                                 sectionToKeep.getChildren().clear();
-                                sectionToKeep.getChildren().add(selectedParametricCompositionShape.variablesPane);
+                                sectionToKeep.getChildren().addAll(selectedParametricCompositionShape.variablesPane, selectedParametricCompositionShape.variablesSelectionPane);
                                 //transformersBox.getChildren().add(selectedParametricCompositionShape.variablesPane);
 
                                 GridCanvas.clearEverything();
@@ -245,12 +260,12 @@ public class App extends Application {
                                 selectedPower = null;
                                 selectedCompositionShape = null;
 
-
+                                resetBordersAndSetForOne(content, checkIfExists);
                             });
                         } else if(basicShapeAdded instanceof BasicShape){
                             //It is BasicShape
                             checkIfExists.setOnMouseClicked(mouseEvent -> {
-                                System.out.println("I've clicked on a basic shape thumbnail!");
+                                //System.out.println("I've clicked on a basic shape thumbnail!");
                                 selectedBasicShape = (BasicShape) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
@@ -268,10 +283,11 @@ public class App extends Application {
                                 selectedCompositionShape = null;
                                 selectedParametricCompositionShape = null;
 
+                                resetBordersAndSetForOne(content, checkIfExists);
                             });
                         }else if(basicShapeAdded instanceof Power){
                             checkIfExists.setOnMouseClicked(mouseEvent -> {
-                                System.out.println("I've clicked on a POWER shape thumbnail!");
+                                //System.out.println("I've clicked on a POWER shape thumbnail!");
                                 selectedPower = (Power) basicShapeAdded;
 
                                 transformersBox.getChildren().clear();
@@ -289,6 +305,7 @@ public class App extends Application {
                                 selectedCompositionShape = null;
                                 selectedParametricCompositionShape = null;
 
+                                resetBordersAndSetForOne(content, checkIfExists);
                             });
                         }
                     }
@@ -326,16 +343,14 @@ public class App extends Application {
     }
 
     private void addParametricCompositionShape(ParametricCompositionShape compositionShape){
-
-            //I've clicked on a thumbnail
-        compositionShape.getBasicShapes().forEach(this::addShape);
+        //I've clicked on a thumbnail
+        compositionShape.setUpVariablesSelectionPane();
         compositionShape.getPowerShapes().forEach(this::addPowerShape);
 
         Pane toAdd = new Pane();
-            compositionShape.getTeste(toAdd, true, 0,0);
+        compositionShape.getTeste(toAdd, true, 0,0, compositionShape);
 
-            GridCanvas.addGroup(toAdd);
-
+        GridCanvas.addGroup(toAdd);
     }
 
     private void addCompositionShape(NewCompositionShape compositionShape, boolean wasDragged){
@@ -352,6 +367,55 @@ public class App extends Application {
         }
     }
 
+    private Pane getAddParametricFigureTemplaceCompositionShape(){
+
+        HBox complexShapeVBox = getButtonWith_Label_Color_Image("Figure Variable", "#004f40", "#55efc4", "icons8-plus-math-96.png", 10);
+
+        complexShapeVBox.setOnMouseClicked(mouseEvent -> {
+            //System.out.println("I want to add a new figure variable!");
+
+            ArrayList<Integer> tempValues = new ArrayList<>();
+
+            tempValues.add(0);
+            powerArrayList.forEach(p -> {
+                if(p.getShapeName().matches("^.*-\\d$") && p.isFigureVariable()){
+                    String[] split = p.getShapeName().split("-");
+                    tempValues.add(Integer.parseInt(split[split.length-1]));
+                }
+            });
+            tempValues.sort(Comparator.reverseOrder());
+
+            int valueToUse = tempValues.get(0) + 1;
+            String newName = "figureVariable-"+valueToUse;
+
+            GridCanvas.clearEverything();
+            isCurrentSimple = false;
+
+            addNameSectionIfItIsNot();
+            addSaveSectionIfItIsNot();
+
+            currentName.setText(newName);
+
+            sectionToKeep.getChildren().clear();
+            transformersBox.getChildren().clear();
+
+            Power power = new Power(newName, getProceedWhenDeletingPowerShape(), orchestrator);
+            addPowerShape(power);
+            selectedPower = power;
+            selectedCompositionShape = null;
+
+            powerArrayList.add(power);
+            sideBarThumbnails.add(power);
+
+            transformersBox.getChildren().add(power.getTranslationXSection());
+        });
+
+        complexShapeVBox.setPrefWidth(180);
+        complexShapeVBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(complexShapeVBox, Priority.ALWAYS);
+
+        return  complexShapeVBox;
+    }
 
     private Pane getAddParametricCompositionShape(){
 
@@ -360,10 +424,27 @@ public class App extends Application {
 
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
-            System.out.println("I want to add a new Parametric composition shape!");
+            //System.out.println("I want to add a new Parametric composition shape!");
             GridCanvas.clearEverything();
             isCurrentSimple = false;
-            currentName.setText("PARAMETRIC_COMPLEX_DEFAULT");
+
+
+            ArrayList<Integer> tempValues = new ArrayList<>();
+
+            tempValues.add(0);
+            newParametricCompositionShapes.forEach(p -> {
+                if(p.getShapeName().matches("^.*-\\d$")){
+                    String[] split = p.getShapeName().split("-");
+                    tempValues.add(Integer.parseInt(split[split.length-1]));
+                }
+            });
+            tempValues.sort(Comparator.reverseOrder());
+
+            int valueToUse = tempValues.get(0) + 1;
+            String newName = "parametricComp-"+valueToUse;
+
+
+            currentName.setText(newName);
 
             transformersBox.getChildren().clear();
 
@@ -371,10 +452,10 @@ public class App extends Application {
                 System.err.println("oh, here I am!");
                 newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
                 return null;
-            });
+            }, newName);
             //transformersBox.getChildren().add(selectedParametricCompositionShape.variablesPane);
             sectionToKeep.getChildren().clear();
-            sectionToKeep.getChildren().add(selectedParametricCompositionShape.variablesPane);
+            sectionToKeep.getChildren().addAll(selectedParametricCompositionShape.variablesPane, selectedParametricCompositionShape.variablesSelectionPane);
 
             selectedPower = null;
             selectedCompositionShape = null;
@@ -394,7 +475,7 @@ public class App extends Application {
         HBox basicShapeVBox = getButtonWith_Label_Color_Image("Basic Shape", "#355765", "#56CCF2", "icons8-plus-math-96.png");
 
         basicShapeVBox.setOnMouseClicked(mouseEvent -> {
-            System.out.println("I want to add a new basic shape!");
+            //System.out.println("I want to add a new basic shape!");
             GridCanvas.clearEverything();
             isCurrentSimple = true;
 
@@ -403,6 +484,7 @@ public class App extends Application {
 
             currentName.setText("simpleDefault");
 
+            sectionToKeep.getChildren().clear();
             transformersBox.getChildren().clear();
 
             BasicShape toAdd = new BasicShape(SCALE, SCALE, Color.web("#55efc5"), null, getProceedWhenDeleting());
@@ -417,18 +499,32 @@ public class App extends Application {
         HBox complexShapeVBox = getButtonWith_Label_Color_Image("Composition Shape", "#644832", "#F2C94C", "icons8-plus-math-96.png");
 
         complexShapeVBox.setOnMouseClicked(mouseEvent -> {
-            System.out.println("I want to add a new composition shape!");
+            //System.out.println("I want to add a new composition shape!");
             GridCanvas.clearEverything();
             isCurrentSimple = false;
             selectedParametricCompositionShape = null;
             selectedPower = null;
 
-            currentName.setText("complexDefault");
+            ArrayList<Integer> tempValues = new ArrayList<>();
 
+            tempValues.add(0);
+            newCompositionShapes.forEach(p -> {
+                if(p.getShapeName().matches("^.*-\\d$")){
+                    String[] split = p.getShapeName().split("-");
+                    tempValues.add(Integer.parseInt(split[split.length-1]));
+                }
+            });
+            tempValues.sort(Comparator.reverseOrder());
+
+            int valueToUse = tempValues.get(0) + 1;
+            String newName = "comp-"+valueToUse;
+            currentName.setText(newName);
+
+            sectionToKeep.getChildren().clear();
             transformersBox.getChildren().clear();
 
 
-            selectedCompositionShape = new NewCompositionShape(orchestrator, transformersBox, getProceedWhenDeletingCompositionShape(), teste -> {
+            selectedCompositionShape = new NewCompositionShape(false, newName, orchestrator, transformersBox, getProceedWhenDeletingCompositionShape(), teste -> {
                 System.err.println("oh, here I am!");
                 newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
                 return null;
@@ -448,10 +544,12 @@ public class App extends Application {
 
         CustomMenuItem powerShapeMenuItem = new CustomMenuItem(getAddPowerButton());
         CustomMenuItem compositionShapeEditorMenuItem = new CustomMenuItem(getAddParametricCompositionShape());
+        CustomMenuItem parametricFigureMenuItem = new CustomMenuItem(getAddParametricFigureTemplaceCompositionShape());
+
 
         ContextMenu contextMenuParametric = new ContextMenu();
         contextMenuParametric.setId("testeCoiso");
-        contextMenuParametric.getItems().addAll(compositionShapeEditorMenuItem, powerShapeMenuItem);
+        contextMenuParametric.getItems().addAll(compositionShapeEditorMenuItem,parametricFigureMenuItem, powerShapeMenuItem);
 
         parametricShapes.setOnMouseClicked(mouseEvent -> contextMenuParametric.show(parametricShapes, mouseEvent.getScreenX(), mouseEvent.getScreenY()));
 
@@ -534,13 +632,9 @@ public class App extends Application {
         HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
 
 
-        complexShapeHBox.setOnMouseEntered(mouseEvent -> {
-            complexShapeHBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: " + cornerRadius);
-        });
+        complexShapeHBox.setOnMouseEntered(mouseEvent -> complexShapeHBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: " + cornerRadius));
 
-        complexShapeHBox.setOnMouseExited(mouseEvent -> {
-            complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius);
-        });
+        complexShapeHBox.setOnMouseExited(mouseEvent -> complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius));
 
 
         complexShape.setMinHeight(30);
@@ -573,13 +667,9 @@ public class App extends Application {
         HBox.setHgrow(complexShapeHBox, Priority.ALWAYS);
 
 
-        complexShapeHBox.setOnMouseEntered(mouseEvent -> {
-            complexShapeHBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: " + cornerRadius);
-        });
+        complexShapeHBox.setOnMouseEntered(mouseEvent -> complexShapeHBox.setStyle("-fx-background-color: " + FxUtils.toRGBCode(Color.web(backgroundColor).darker()) + ";-fx-background-radius: " + cornerRadius));
 
-        complexShapeHBox.setOnMouseExited(mouseEvent -> {
-            complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius);
-        });
+        complexShapeHBox.setOnMouseExited(mouseEvent -> complexShapeHBox.setStyle("-fx-background-color: " + backgroundColor + ";-fx-background-radius: " + cornerRadius));
 
 
         complexShape.setMinHeight(30);
@@ -714,7 +804,7 @@ public class App extends Application {
 
 
         complexShapeHBox.setOnMouseClicked(event -> {
-            System.out.println("I want to add a new power shape!");
+            //System.out.println("I want to add a new power shape!");
             GridCanvas.clearEverything();
             isCurrentSimple = false;
 
@@ -723,6 +813,7 @@ public class App extends Application {
 
             currentName.setText("simplePower");
 
+            sectionToKeep.getChildren().clear();
             transformersBox.getChildren().clear();
 
             Power power = new Power(getProceedWhenDeletingPowerShape(), orchestrator);
@@ -803,12 +894,13 @@ public class App extends Application {
         if(selectedParametricCompositionShape != null){
             Group group = power.getCenterGroup();
             group.setOnMouseClicked(mouseEvent -> {
-                transformersBox.getChildren().clear();
                 if(selectedParametricCompositionShape != null){
-                    transformersBox.getChildren().addAll(power.getParametricTranslationSection(), power.getRealTranslationSection());
-                }else{
-                    transformersBox.getChildren().add(power.getRealTranslationSection());
+                    transformersBox.getChildren().clear();
+                    transformersBox.getChildren().addAll(/*power.getParametricTranslationSection(),*/ power.getRealTranslationSection());
                 }
+                /*else{
+                    transformersBox.getChildren().add(power.getRealTranslationSection());
+                }*/
 
             });
 
@@ -889,7 +981,7 @@ public class App extends Application {
     }
 
     public void loadParametricShapes(File file){
-        ArrayList<ParametricCompositionShape> newCompositionShapeArrayList = orchestrator.getParametricShapesFromFile(file, transformersBox,getProceedWhenDeletingCompositionShape(), teste -> {
+        ArrayList<ParametricCompositionShape> newCompositionShapeArrayList = orchestrator.getParametricShapesFromFile(file, transformersBox,getProceedWhenDeletingParametricCompositionShape(), teste -> {
             newParametricCompositionShapes.forEach(ParametricCompositionShape::redrawThumbnail);
             return null;
         } );
@@ -902,6 +994,10 @@ public class App extends Application {
         powerArrayList.addAll(newPowerShapesArrayList);
         sideBarThumbnails.addAll(newPowerShapesArrayList);
         newPowerShapesArrayList.forEach(Power::redrawThumbnail);
+
+        newPowerShapesArrayList.forEach(power -> {
+            System.out.println("EU TENHO A POWER SHAPE COM O ID: " + power.getUUID());
+        });
     }
 
     public void loadProcesses(File file){
@@ -981,9 +1077,9 @@ public class App extends Application {
         //We are cleaning everything, but if the user is on a composition shape, we shouldn't... this way is easier tho.
         BasicShape temp = basicShapesToSave.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
         basicShapesToSave.remove(temp);
-        System.out.println("TAMANHO ERA: " + basicShapes.size());
+        //System.out.println("TAMANHO ERA: " + basicShapes.size());
         basicShapes.remove(temp);
-        System.out.println("TAMANHO AGORA É: " + basicShapes.size());
+        //System.out.println("TAMANHO AGORA É: " + basicShapes.size());
         GridCanvas.clearEverything();
         transformersBox.getChildren().clear();
         sideBarThumbnails.remove(temp);
@@ -1008,6 +1104,10 @@ public class App extends Application {
         GridCanvas.clearEverything();
         transformersBox.getChildren().clear();
         sideBarThumbnails.remove(temp);
+
+        newParametricCompositionShapes.forEach(p -> p.removeParametricCompositionShapeWithID(uuidToRemove));
+        //Temos que ir às outras parametric onde esta pode ter sido usada, e apagar esta!
+
 
         System.err.println("basic shapes size: " + basicShapes.size());
         if(basicShapes.size() == 0){
@@ -1036,8 +1136,10 @@ public class App extends Application {
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
 
-
         }
+
+        newParametricCompositionShapes.forEach(ParametricCompositionShape::redrawThumbnail);
+
     }
 
     private void deleteCompositionShape(String uuidToRemove){
@@ -1064,7 +1166,7 @@ public class App extends Application {
             selectedCompositionShape = null;
             addSaveSectionIfItIsNot();
         }else{
-            System.out.println("here we have: " + basicShapes.size());
+            //System.out.println("here we have: " + basicShapes.size());
             currentName.setText(basicShapesToSave.get(0).getShapeName());
             addShape(basicShapesToSave.get(0));
 
@@ -1136,8 +1238,6 @@ public class App extends Application {
 
     private void deleteBasicShapeFromShapeRule(String uuidToRemove){
         orchestrator.getShapeRules().forEach(p -> {
-            p.getLeftShape().deleteBasicShape(uuidToRemove);
-            p.getRightShape().deleteBasicShape(uuidToRemove);
         });
     }
 
@@ -1148,12 +1248,35 @@ public class App extends Application {
         });
     }
 
+    private void deletePowerShapeFromParametricCompositionShape(String uuidToRemove){
+        orchestrator.getParametricCompositionShapes().forEach(parametricShape -> {
+            parametricShape.removePowerShapeWithID(uuidToRemove);
+        });
+        newParametricCompositionShapes.forEach(ParametricCompositionShape::redrawThumbnail);
+    }
+
+    private void deleteCompositionShapeFromParametricCompositionShape(String uuidToRemove){
+        orchestrator.getParametricCompositionShapes().forEach(parametricShape -> {
+            parametricShape.removeCompositionShapeWithID(uuidToRemove);
+        });
+        newParametricCompositionShapes.forEach(ParametricCompositionShape::redrawThumbnail);
+        //TODO: Continua o painel com as variáveis!
+        /*
+        TODO: Se tivermos uma paramétrica com variáveis de output, e depois a removermos,
+        continua... Mas, i mean, será que está bem? Será que deviamos remover uma paramétrica caso tenha 0 figuras?
+        Hmmm, nice problem! :D
+         */
+
+    }
+
     private void deletePowerShape(String uuidToRemove){
         Power powerToRemove = powerArrayList.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
         powerArrayList.remove(powerToRemove);
         GridCanvas.clearEverything();
         transformersBox.getChildren().clear();
         sideBarThumbnails.remove(powerToRemove);
+
+        deletePowerShapeFromParametricCompositionShape(uuidToRemove);
 
         if(basicShapes.size() == 0){
             isCurrentSimple = true;
@@ -1193,11 +1316,13 @@ public class App extends Application {
 
                 Stage tempStage = popupWindow.getStage();
 
-                Pane acceptButton = PopupWindow.getButton("Accept, and delete this shape from compositions shapes and shape rules that use it.", "null",  "#807229", "#E7CE4A", event -> {
+                Pane acceptButton = PopupWindow.getButton("Accept, and delete this shape from compositions shapes, parametric shapes and shape rules that use it.", "null",  "#807229", "#E7CE4A", event -> {
                     deleteCompositionShape(uuidToRemove);
                     deleteCompositionShapeFromCompositionShape(uuidToRemove);
                     deleteCompositionShapeFromShapeRule(uuidToRemove);
                     deleteCompositionShapeFromPowerShape(uuidToRemove);
+                    deleteCompositionShapeFromParametricCompositionShape(uuidToRemove);
+
 
                     tempStage.fireEvent(new WindowEvent(tempStage, WindowEvent.WINDOW_CLOSE_REQUEST));
                 });
@@ -1211,6 +1336,8 @@ public class App extends Application {
 
                 deleteCompositionShape(uuidToRemove);
                 deleteCompositionShapeFromShapeRule(uuidToRemove);
+                deleteCompositionShapeFromParametricCompositionShape(uuidToRemove);
+                deleteCompositionShapeFromPowerShape(uuidToRemove);
 
             }
 
@@ -1221,10 +1348,8 @@ public class App extends Application {
 
     private Function<String, Double> getProceedWhenDeletingParametricCompositionShape(){
         return uuidToRemove -> {
-
                 deleteParametricCompositionShape(uuidToRemove);
                 //TODO: deleteCompositionShapeFromShapeRule(uuidToRemove);
-
             return null;
         };
     }
@@ -1351,8 +1476,6 @@ public class App extends Application {
                             addShape(selectedCompositionShape.addBasicShape(basicShapes.get(Integer.parseInt(db.getString())).getUUID().toString()));
                         else if(inDragCustomShape instanceof Power && selectedParametricCompositionShape != null){
                             addPowerShape(selectedParametricCompositionShape.addPowerShape(powerArrayList.get(Integer.parseInt(db.getString())).getUUID().toString()));
-                        }else if(inDragCustomShape instanceof BasicShape && selectedParametricCompositionShape != null){
-                            addShape(selectedParametricCompositionShape.addBasicShape(basicShapes.get(Integer.parseInt(db.getString())).getUUID().toString()));
                         }
                     }else{
                         if(inDragCustomShape instanceof NewCompositionShape){
@@ -1546,10 +1669,8 @@ public class App extends Application {
     }
 
     private void saveCurrentShape(){
-        System.out.println("basic shapes aqui era: " + basicShapes.size());
 
         if(isCurrentSimple){
-            System.out.println("basic shapes aqui era: " + basicShapes.size());
 
             BasicShape currentRectangle = gridCanvas.getSimpleRectangle();
             currentRectangle.setShapeName(currentName.getText());
@@ -1573,7 +1694,6 @@ public class App extends Application {
             orchestrator.addAllCompositionShapes(newCompositionShapes);
             orchestrator.addAllPowerShapes(powerArrayList);
             orchestrator.addAllParametricCompositionShapes(newParametricCompositionShapes);
-            System.out.println("basic shapes aqui é: " + basicShapes.size());
         }else if(selectedCompositionShape != null){
             selectedCompositionShape.setShapeName(currentName.getText());
             newCompositionShapes.forEach(NewCompositionShape::redrawThumbnail);
