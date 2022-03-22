@@ -20,6 +20,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import marrf.iscte.ShapeRules.*;
+import org.json.simple.JSONArray;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -445,6 +446,65 @@ public class NewShapeRuleEditor {
         return toReturn.toString();
     }
 
+    public  String getProcessAndRulesJSON(){
+        StringBuilder toReturn = new StringBuilder();
+
+        orchestrator.getProcesses().forEach(process -> {
+            toReturn.append("[\n");
+
+            toReturn.append("\"").append(process.getProcessName()).append("\",\n");
+            toReturn.append("\"").append(process.getProcessName()).append("\"\n");
+
+            toReturn.append("],\n");
+        });
+
+        orchestrator.getShapeRules().forEach(shapeRule -> {
+            toReturn.append("[\n");
+
+            toReturn.append("\"").append(shapeRule.getShapeRuleName()).append("\",\n");
+            toReturn.append("\"").append(shapeRule.getShapeRuleName()).append("\"\n");
+
+            toReturn.append("],\n");
+        });
+
+        return toReturn.toString();
+    }
+    public JSONArray getProcessAndRulesJSONToJSON(){
+        JSONArray jsonArray = new JSONArray();
+
+        orchestrator.getProcesses().forEach(process -> {
+            JSONArray innerJSONArray = new JSONArray();
+
+            innerJSONArray.add(process.getProcessName());
+            innerJSONArray.add(process.getProcessName());
+
+
+            jsonArray.add(innerJSONArray);
+        });
+
+        orchestrator.getShapeRules().forEach(shapeRule -> {
+            JSONArray innerJSONArray = new JSONArray();
+
+            innerJSONArray.add(shapeRule.getShapeRuleName());
+            innerJSONArray.add(shapeRule.getShapeRuleName());
+
+
+            jsonArray.add(innerJSONArray);
+        });
+        return jsonArray;
+    }
+
+    private void updateProcessesAndRulesNames(WebView webView){
+        JSONArray processAndRulesToSend = getProcessAndRulesJSONToJSON();
+        System.out.println("vou colocar: ");
+        System.out.println(processAndRulesToSend.toJSONString());
+        webView.getEngine().executeScript("updateProcessesAndRulesNames('" + processAndRulesToSend.toJSONString() +"')");
+        System.out.println("updateProcessesAndRulesNamesToolBox: ");
+        System.out.println( processAndRulesToSend.toJSONString());
+        webView.getEngine().executeScript("updateProcessesAndRulesNamesToolBox('" + processAndRulesToSend.toJSONString() +"')");
+        //webView.getEngine().executeScript("addUpdateProcessesAndRulesNamesSectionToToolBox()");
+    }
+
     private File setUpFiles(String fileName){
         Path htmlOriginal = Paths.get(Orchestrator.path + "/" + fileName + ".html");
 
@@ -463,6 +523,12 @@ public class NewShapeRuleEditor {
             Files.copy(htmlOriginal, htmlCopied, StandardCopyOption.REPLACE_EXISTING);
 
             String fileContentJS = new String(Files.readAllBytes(htmlCopied));
+
+            if(orchestrator.getProcesses().size() != 0 || orchestrator.getShapeRules().size() != 0){
+                fileContentJS = fileContentJS.replace("<!--CHANGE_HERE_3-->", "<block type=\"availableProcessesAndRules\"></block>" );
+            }
+
+
             fileContentJS = fileContentJS.replace("myBlocksCopied.js","myBlocksCopied.js?c=r_" + randomNum);
             Files.write(htmlCopied, fileContentJS.getBytes());
 
@@ -474,7 +540,7 @@ public class NewShapeRuleEditor {
 
 
             String fileContent = new String(Files.readAllBytes(copied));
-            fileContent = fileContent.replace("//CHANGE_HERE", "{\n" +
+            fileContent = fileContent.replace("//CHANGE_HERE1", "{\n" +
                     "  \"type\": \"availableshapes\",\n" +
                     "  \"message0\": \"%1\",\n" +
                     "  \"args0\": [\n" +
@@ -491,6 +557,26 @@ public class NewShapeRuleEditor {
                     "  \"tooltip\": \"\",\n" +
                     "  \"helpUrl\": \"\"\n" +
                     "},");
+
+            fileContent = fileContent.replace("//CHANGE_HERE2", "{\n" +
+                    "  \"type\": \"availableProcessesAndRules\",\n" +
+                    "  \"message0\": \"%1\",\n" +
+                    "  \"args0\": [\n" +
+                    "    {\n" +
+                    "      \"type\": \"field_dropdown\",\n" +
+                    "      \"name\": \"NAME\",\n" +
+                    "      \"options\": [\n" +
+                    "       " + getProcessAndRulesJSON() +
+                    "      ]\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"output\": null,\n" +
+                    "  \"colour\": 20,\n" +
+                    "  \"tooltip\": \"\",\n" +
+                    "  \"helpUrl\": \"\"\n" +
+                    "},");
+
+
             Files.write(copied, fileContent.getBytes());
 
 
@@ -591,6 +677,7 @@ public class NewShapeRuleEditor {
                         if(t1 == Worker.State.SUCCEEDED){
                             webView.getEngine().executeScript("novoTeste('"+ currentShapeRule.getBoolXML() +"')");
                             startBlurAnimation(vBox, 30.0, 0.0, Duration.millis(100), false);
+                            updateProcessesAndRulesNames(webView);
 
                         }
                     });
@@ -605,6 +692,7 @@ public class NewShapeRuleEditor {
                         if(t1 == Worker.State.SUCCEEDED){
                             webView.getEngine().executeScript("novoTeste('"+ currentShapeRule.getProcessXML() +"')");
                             startBlurAnimation(vBox, 30.0, 0.0, Duration.millis(100), false);
+                            updateProcessesAndRulesNames(webView);
 
                         }
                     });

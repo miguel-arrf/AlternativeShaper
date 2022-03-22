@@ -1102,8 +1102,10 @@ public class App extends Application {
         ParametricCompositionShape temp = newParametricCompositionShapes.stream().filter(p -> p.getUUID().toString().equals(uuidToRemove)).findFirst().get();
         newParametricCompositionShapes.remove(temp);
         GridCanvas.clearEverything();
+        sectionToKeep.getChildren().clear();
         transformersBox.getChildren().clear();
         sideBarThumbnails.remove(temp);
+
 
         newParametricCompositionShapes.forEach(p -> p.removeParametricCompositionShapeWithID(uuidToRemove));
         //Temos que ir às outras parametric onde esta pode ter sido usada, e apagar esta!
@@ -1139,7 +1141,7 @@ public class App extends Application {
         }
 
         newParametricCompositionShapes.forEach(ParametricCompositionShape::redrawThumbnail);
-
+        saveCurrentShape();
     }
 
     private void deleteCompositionShape(String uuidToRemove){
