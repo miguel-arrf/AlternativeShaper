@@ -25,8 +25,14 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +43,8 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static marrf.iscte.PopupWindow.startBlurAnimation;
 
@@ -77,6 +85,48 @@ public class ProcessesEditor {
             return inputStream;
         }
 
+    }
+
+    private JSONArray getProcessesAndParametricFiguresVariablesWithInit(ArrayList<String> newParametricshapesToAdd){
+        JSONArray jsonArray = new JSONArray();
+
+        newParametricshapesToAdd.forEach(parametric -> {
+            JSONArray innerJSONArray = new JSONArray();
+            JSONArray innerInnerJSONArray = new JSONArray();
+
+            innerJSONArray.add(parametric);
+
+            innerJSONArray.add(innerInnerJSONArray);
+            jsonArray.add(innerJSONArray);
+        });
+
+        return jsonArray;
+    }
+
+    public JSONArray getProcessesAndParametricFiguresVariables(){
+        JSONArray jsonArray = new JSONArray();
+
+        orchestrator.getParametricCompositionShapes().forEach(parametricCompositionShape -> {
+
+            JSONArray innerJSONArray = new JSONArray();
+            JSONArray innerInnerJSONArray = new JSONArray();
+
+            innerJSONArray.add(parametricCompositionShape.getShapeName());
+
+            parametricCompositionShape.getOutputVariables().forEach(variable -> {
+                innerInnerJSONArray.add(variable.getVariableName());
+            });
+
+
+            innerJSONArray.add(innerInnerJSONArray);
+            jsonArray.add(innerJSONArray);
+        });
+
+        System.out.println("-------->1");
+        System.out.println(jsonArray.toJSONString());
+        System.out.printf("<---------2");
+
+        return jsonArray;
     }
 
     public JSONArray getProcessAndRulesJSONToJSON(){
@@ -255,6 +305,9 @@ public class ProcessesEditor {
 
         webEngine.load(file.toURI().toString());
 
+
+
+
         return webView;
     }
 
@@ -424,7 +477,6 @@ public class ProcessesEditor {
 
         webView.getEngine().executeScript("updateProcessesAndRulesNamesToolBox('" + processAndRulesToSend.toJSONString() +"')");
         webView.getEngine().executeScript("addUpdateProcessesAndRulesNamesSectionToToolBox()");
-
     }
 
     private Pane setUpAddAndProcessesScrolPane(){
@@ -492,11 +544,40 @@ public class ProcessesEditor {
         dialogScene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
         //Scene dialogScene = new Scene(getTemplate(), 230, 240);
 
+        JSONArray parametricCompositionShapes = getProcessesAndParametricFiguresVariables();
+
         webView.getEngine().getLoadWorker().stateProperty().addListener((observableValue, state, t1) -> {
             if(t1 == Worker.State.SUCCEEDED){
                 System.out.println("PAGE HAS LOADED!");
+                //TODO: É aqui que tratamos do ficheiro xml!
+
+                ArrayList<String> newParametricshapesToAdd = new ArrayList<>();
+                if(processes.size() >= 1)
+                    currentProcess = processes.get(0);
+
+                if(currentProcess != null){
+                    String blocklyXML = currentProcess.getBlocklyXML();
+                    Pattern pattern = Pattern.compile("parametricCompositionShape-0:[^\"]*DELIMITER\"{1}");
+                    Matcher matcher = pattern.matcher(blocklyXML);
+                    while (matcher.find()) {
+                        String matchGroup = matcher.group(0).replace("\"", "");
+                        System.out.println("Encontrámos: " + matchGroup);
+                        //TODO: Se alguma shape tiver nome com ':' então não funciona.
+                        String[] splits = matchGroup.split(":");
+                        System.out.println("splits: " + splits);
+                        newParametricshapesToAdd.add(splits[1]);
+                    }
+                }
+
+                if(newParametricshapesToAdd.size() > 0){
+                    webView.getEngine().executeScript("addNewParametricCompositionShapeBoxToDelete('" + getProcessesAndParametricFiguresVariablesWithInit(newParametricshapesToAdd).toJSONString() +"')");
+                }
+
+                webView.getEngine().executeScript("addNewParametricCompositionShapeBox('" + parametricCompositionShapes.toJSONString() +"')");
+
                 loadProcesses();
                 startBlurAnimation(dialogScene.getRoot(), 30.0, 0.0, Duration.millis(100), true);
+                System.err.println("AQUI CHEGÁMOS SIM!!!!!!!1");
 
             }
         });
@@ -527,15 +608,9 @@ public class ProcessesEditor {
         if(processes.size() >= 1){
             scrollBarThumbnails.addAll(processes);
             selectTheFirstProcess();
-
-            //addButton_ProcessesScrollPanel.getChildren().addAll(getSeparator(), processesScrollPanel);
         }else{
             currentProcess = new Process();
             currentProcess.setProcessName(nameTextfield.getText());
-            //We have no processes.
-            /*Node lastChild = mainPanel.getChildren().get(mainPanel.getChildren().size() - 1);
-            mainPanel.getChildren().clear();
-            mainPanel.getChildren().add(lastChild);*/
         }
     }
 
